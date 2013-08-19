@@ -31,8 +31,14 @@ func ParsePdu(data []byte) (Pdu, error) {
 	case SUBMIT_SM:
 		n, err := NewSubmitSm(header, data[16:])
 		return Pdu(n), err
+	case SUBMIT_SM_RESP:
+		n, err := NewSubmitSmResp(header, data[16:])
+		return Pdu(n), err
 	case DELIVER_SM:
 		n, err := NewDeliverSm(header, data[16:])
+		return Pdu(n), err
+	case DELIVER_SM_RESP:
+		n, err := NewDeliverSmResp(header, data[16:])
 		return Pdu(n), err
 	case BIND_TRANSCEIVER:
 		n, err := NewBind(header, data[16:])
@@ -51,7 +57,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, err
 	var f Field
 	for i, k := range fieldNames {
 		switch k {
-		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "short_message", "system_id", "password", "system_type", "address_range":
+		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "short_message", "system_id", "password", "system_type", "address_range", "message_id":
 			t, err := r.ReadBytes(0x00)
 
 			if err == io.EOF {
