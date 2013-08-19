@@ -1,9 +1,11 @@
 package smpp34
 
+import "strconv"
+
 type Field interface {
 	Length() interface{}
 	Value() interface{}
-	V2() []byte
+	String() string
 }
 
 type VariableField struct {
@@ -12,7 +14,7 @@ type VariableField struct {
 
 type FixedField struct {
 	size  uint8
-	value interface{}
+	value uint8
 }
 
 func (v *VariableField) Length() interface{} {
@@ -24,8 +26,8 @@ func (v *VariableField) Value() interface{} {
 	return v.value
 }
 
-func (v *VariableField) V2() []byte {
-	return v.value
+func (v *VariableField) String() string {
+	return string(v.value)
 }
 
 func (f *FixedField) Length() interface{} {
@@ -36,6 +38,6 @@ func (f *FixedField) Value() interface{} {
 	return f.value
 }
 
-func (f *FixedField) V2() []byte {
-	return make([]byte, 0)
+func (f *FixedField) String() string {
+	return strconv.Itoa(int(f.value))
 }

@@ -6,8 +6,7 @@ import (
 )
 
 var (
-	// Required SubmitSm Fields
-	reqSSMFields = []string{
+	reqDSMFields = []string{
 		"service_type",
 		"source_addr_ton",
 		"source_addr_npi",
@@ -29,26 +28,26 @@ var (
 	}
 )
 
-type SubmitSm struct {
+type DeliverSm struct {
 	*Header
 	mandatoryFields map[int]Field
 }
 
-func NewSubmitSm(hdr *Header, b []byte) (*SubmitSm, error) {
+func NewDeliverSm(hdr *Header, b []byte) (*DeliverSm, error) {
 	r := bytes.NewBuffer(b)
 
-	fields, err := create_pdu_fields(reqSSMFields, r)
+	fields, err := create_pdu_fields(reqDSMFields, r)
 
 	if err != nil {
 		return nil, err
 	}
 
-	s := &SubmitSm{Header: hdr, mandatoryFields: fields}
+	s := &DeliverSm{Header: hdr, mandatoryFields: fields}
 
 	return s, nil
 }
 
-func (s *SubmitSm) GetField(f string) (Field, error) {
+func (s *DeliverSm) GetField(f string) (Field, error) {
 	for i, v := range s.MandatoryFieldsList() {
 		if v == f {
 			return s.mandatoryFields[i], nil
@@ -58,10 +57,10 @@ func (s *SubmitSm) GetField(f string) (Field, error) {
 	return nil, errors.New("field not found")
 }
 
-func (s *SubmitSm) Fields() map[int]Field {
+func (s *DeliverSm) Fields() map[int]Field {
 	return s.mandatoryFields
 }
 
-func (s *SubmitSm) MandatoryFieldsList() []string {
-	return reqSSMFields
+func (s *DeliverSm) MandatoryFieldsList() []string {
+	return reqDSMFields
 }
