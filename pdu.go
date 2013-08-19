@@ -30,20 +30,16 @@ func ParsePdu(data []byte) (Pdu, error) {
 	switch header.Id {
 	case SUBMIT_SM:
 		n, err := NewSubmitSm(header, data[16:])
-
-		if err != nil {
-			return nil, err
-		}
-
-		return Pdu(n), nil
+		return Pdu(n), err
 	case DELIVER_SM:
 		n, err := NewDeliverSm(header, data[16:])
-
-		if err != nil {
-			return nil, err
-		}
-
-		return Pdu(n), nil
+		return Pdu(n), err
+	case BIND_TRANSCEIVER:
+		n, err := NewBind(header, data[16:])
+		return Pdu(n), err
+	case BIND_TRANSCEIVER_RESP:
+		n, err := NewBindResp(header, data[16:])
+		return Pdu(n), err
 	default:
 		return nil, errors.New("Unknown PDU Command ID: " + strconv.Itoa(int(header.Id)))
 	}
@@ -55,7 +51,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, err
 	var f Field
 	for i, k := range fieldNames {
 		switch k {
-		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "short_message":
+		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "short_message", "system_id", "password", "system_type", "address_range":
 			t, err := r.ReadBytes(0x00)
 
 			if err == io.EOF {
@@ -67,7 +63,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, err
 			v := &VariableField{t}
 			f = v
 			fields[i] = f
-		case "source_addr_ton", "source_addr_npi", "dest_addr_ton", "dest_addr_npi", "esm_class", "protocol_id", "priority_flag", "registered_delivery", "replace_if_present_flag", "data_coding", "sm_default_msg_id", "sm_length":
+		case "source_addr_ton", "source_addr_npi", "dest_addr_ton", "dest_addr_npi", "esm_class", "protocol_id", "priority_flag", "registered_delivery", "replace_if_present_flag", "data_coding", "sm_default_msg_id", "sm_length", "interface_version", "addr_ton", "addr_npi":
 			t, err := r.ReadByte()
 
 			if err == io.EOF {
