@@ -177,14 +177,6 @@ func unpackUi16(b []byte) (n uint16) {
 	return
 }
 
-func unpackUint(p []byte) (n uint64) {
-	l := uint8(len(p))
-	for i := uint8(0); i < l; i++ {
-		n |= uint64(p[i]) << ((l - i - 1) * 8)
-	}
-	return
-}
-
 func packUi16(n uint16) (b []byte) {
 	b = make([]byte, 2)
 	binary.BigEndian.PutUint16(b, n)
