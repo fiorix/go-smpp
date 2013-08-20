@@ -12,12 +12,13 @@ var (
 type DeliverSmResp struct {
 	*Header
 	mandatoryFields map[int]Field
+	tlvFields       []*TLVField
 }
 
 func NewDeliverSmResp(hdr *Header, b []byte) (*DeliverSmResp, error) {
 	r := bytes.NewBuffer(b)
 
-	fields, err := create_pdu_fields(reqDSMRespFields, r)
+	fields, _, err := create_pdu_fields(reqDSMRespFields, r)
 
 	if err != nil {
 		return nil, err
@@ -44,4 +45,12 @@ func (s *DeliverSmResp) Fields() map[int]Field {
 
 func (s *DeliverSmResp) MandatoryFieldsList() []string {
 	return reqDSMRespFields
+}
+
+func (s *DeliverSmResp) GetHeader() *Header {
+	return s.Header
+}
+
+func (s *DeliverSmResp) TLVFields() []*TLVField {
+	return s.tlvFields
 }

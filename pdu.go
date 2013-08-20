@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	// "fmt"
 	"io"
 	"strconv"
 )
@@ -13,6 +12,8 @@ type Pdu interface {
 	Fields() map[int]Field
 	MandatoryFieldsList() []string
 	GetField(string) (Field, error)
+	GetHeader() *Header
+	TLVFields() []*TLVField
 }
 
 func ParsePdu(data []byte) (Pdu, error) {
@@ -46,45 +47,118 @@ func ParsePdu(data []byte) (Pdu, error) {
 	case BIND_TRANSCEIVER_RESP:
 		n, err := NewBindResp(header, data[16:])
 		return Pdu(n), err
+	case ENQUIRE_LINK:
+		n, err := NewEnquireLink(header)
+		return Pdu(n), err
+	case ENQUIRE_LINK_RESP:
+		n, err := NewEnquireLinkResp(header)
+		return Pdu(n), err
 	default:
 		return nil, errors.New("Unknown PDU Command ID: " + strconv.Itoa(int(header.Id)))
 	}
 }
 
-func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, error) {
+func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*TLVField, error) {
 
 	fields := make(map[int]Field)
-	var f Field
+	eof := false
 	for i, k := range fieldNames {
 		switch k {
-		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "short_message", "system_id", "password", "system_type", "address_range", "message_id":
+		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "system_id", "password", "system_type", "address_range", "message_id":
 			t, err := r.ReadBytes(0x00)
 
 			if err == io.EOF {
-				// continue
+				eof = true
 			} else if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
-			v := &VariableField{t}
-			f = v
-			fields[i] = f
-		case "source_addr_ton", "source_addr_npi", "dest_addr_ton", "dest_addr_npi", "esm_class", "protocol_id", "priority_flag", "registered_delivery", "replace_if_present_flag", "data_coding", "sm_default_msg_id", "sm_length", "interface_version", "addr_ton", "addr_npi":
+			fields[i] = NewVariableField(t)
+		case "source_addr_ton", "source_addr_npi", "dest_addr_ton", "dest_addr_npi", "esm_class", "protocol_id", "priority_flag", "registered_delivery", "replace_if_present_flag", "data_coding", "sm_default_msg_id", "interface_version", "addr_ton", "addr_npi":
 			t, err := r.ReadByte()
 
 			if err == io.EOF {
-				// continue
+				eof = true
 			} else if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
-			v := &FixedField{1, t}
-			f = v
-			fields[i] = f
+			fields[i] = NewFixedField(t)
+		case "sm_length":
+			// Short Message Length
+			t, err := r.ReadByte()
+
+			if err == io.EOF {
+				eof = true
+			} else if err != nil {
+				return nil, nil, err
+			}
+
+			fields[i] = NewFixedField(t)
+
+			// Short Message
+			p := make([]byte, t)
+
+			_, err = r.Read(p)
+			if err == io.EOF {
+				eof = true
+			} else if err != nil {
+				return nil, nil, err
+			}
+
+			fields[i+1] = NewVariableField(p)
+		case "short_message":
+			continue
 		}
 	}
 
-	return fields, nil
+	// Optional Fields
+	tlvs := []*TLVField{}
+	var err error
+
+	if !eof {
+		tlvs, err = parse_tlv_fields(r)
+
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return fields, tlvs, nil
+}
+
+func parse_tlv_fields(r *bytes.Buffer) ([]*TLVField, error) {
+	tlvs := make([]*TLVField, 0)
+
+	for {
+		p := make([]byte, 4)
+		_, err := r.Read(p)
+
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+
+		// length
+		l := unpackUi16(p[2:4])
+
+		// Get Value
+		v := make([]byte, l)
+
+		_, err = r.Read(v)
+		if err != nil {
+			return nil, err
+		}
+
+		tlvs = append(tlvs, &TLVField{
+			unpackUi16(p[0:2]),
+			unpackUi16(p[2:4]),
+			v,
+		})
+	}
+
+	return tlvs, nil
 }
 
 func unpackUi32(b []byte) (n uint32) {
@@ -100,6 +174,14 @@ func packUi32(n uint32) (b []byte) {
 
 func unpackUi16(b []byte) (n uint16) {
 	n = binary.BigEndian.Uint16(b)
+	return
+}
+
+func unpackUint(p []byte) (n uint64) {
+	l := uint8(len(p))
+	for i := uint8(0); i < l; i++ {
+		n |= uint64(p[i]) << ((l - i - 1) * 8)
+	}
 	return
 }
 

@@ -31,18 +31,19 @@ var (
 type DeliverSm struct {
 	*Header
 	mandatoryFields map[int]Field
+	tlvFields       []*TLVField
 }
 
 func NewDeliverSm(hdr *Header, b []byte) (*DeliverSm, error) {
 	r := bytes.NewBuffer(b)
 
-	fields, err := create_pdu_fields(reqDSMFields, r)
+	fields, tlvs, err := create_pdu_fields(reqDSMFields, r)
 
 	if err != nil {
 		return nil, err
 	}
 
-	s := &DeliverSm{Header: hdr, mandatoryFields: fields}
+	s := &DeliverSm{hdr, fields, tlvs}
 
 	return s, nil
 }
@@ -63,4 +64,12 @@ func (s *DeliverSm) Fields() map[int]Field {
 
 func (s *DeliverSm) MandatoryFieldsList() []string {
 	return reqDSMFields
+}
+
+func (s *DeliverSm) GetHeader() *Header {
+	return s.Header
+}
+
+func (s *DeliverSm) TLVFields() []*TLVField {
+	return s.tlvFields
 }

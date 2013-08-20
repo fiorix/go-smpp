@@ -17,6 +17,18 @@ type FixedField struct {
 	value uint8
 }
 
+func NewVariableField(v []byte) Field {
+	i := &VariableField{v}
+	f := Field(i)
+	return f
+}
+
+func NewFixedField(v uint8) Field {
+	i := &FixedField{1, v}
+	f := Field(i)
+	return f
+}
+
 func (v *VariableField) Length() interface{} {
 	l := len(v.value)
 	return l

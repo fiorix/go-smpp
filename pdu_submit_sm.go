@@ -32,18 +32,19 @@ var (
 type SubmitSm struct {
 	*Header
 	mandatoryFields map[int]Field
+	tlvFields       []*TLVField
 }
 
 func NewSubmitSm(hdr *Header, b []byte) (*SubmitSm, error) {
 	r := bytes.NewBuffer(b)
 
-	fields, err := create_pdu_fields(reqSSMFields, r)
+	fields, tlvs, err := create_pdu_fields(reqSSMFields, r)
 
 	if err != nil {
 		return nil, err
 	}
 
-	s := &SubmitSm{Header: hdr, mandatoryFields: fields}
+	s := &SubmitSm{hdr, fields, tlvs}
 
 	return s, nil
 }
@@ -64,4 +65,12 @@ func (s *SubmitSm) Fields() map[int]Field {
 
 func (s *SubmitSm) MandatoryFieldsList() []string {
 	return reqSSMFields
+}
+
+func (s *SubmitSm) GetHeader() *Header {
+	return s.Header
+}
+
+func (s *SubmitSm) TLVFields() []*TLVField {
+	return s.tlvFields
 }

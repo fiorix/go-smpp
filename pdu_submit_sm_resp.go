@@ -12,12 +12,13 @@ var (
 type SubmitSmResp struct {
 	*Header
 	mandatoryFields map[int]Field
+	tlvFields       []*TLVField
 }
 
 func NewSubmitSmResp(hdr *Header, b []byte) (*SubmitSmResp, error) {
 	r := bytes.NewBuffer(b)
 
-	fields, err := create_pdu_fields(reqSSMRespFields, r)
+	fields, _, err := create_pdu_fields(reqSSMRespFields, r)
 
 	if err != nil {
 		return nil, err
@@ -44,4 +45,12 @@ func (s *SubmitSmResp) Fields() map[int]Field {
 
 func (s *SubmitSmResp) MandatoryFieldsList() []string {
 	return reqSSMRespFields
+}
+
+func (s *SubmitSmResp) GetHeader() *Header {
+	return s.Header
+}
+
+func (s *SubmitSmResp) TLVFields() []*TLVField {
+	return s.tlvFields
 }

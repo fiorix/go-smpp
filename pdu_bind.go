@@ -20,12 +20,13 @@ var (
 type Bind struct {
 	*Header
 	mandatoryFields map[int]Field
+	tlvFields       []*TLVField
 }
 
 func NewBind(hdr *Header, b []byte) (*Bind, error) {
 	r := bytes.NewBuffer(b)
 
-	fields, err := create_pdu_fields(reqBindFields, r)
+	fields, _, err := create_pdu_fields(reqBindFields, r)
 
 	if err != nil {
 		return nil, err
@@ -52,4 +53,12 @@ func (s *Bind) Fields() map[int]Field {
 
 func (s *Bind) MandatoryFieldsList() []string {
 	return reqBindFields
+}
+
+func (s *Bind) GetHeader() *Header {
+	return s.Header
+}
+
+func (s *Bind) TLVFields() []*TLVField {
+	return s.tlvFields
 }
