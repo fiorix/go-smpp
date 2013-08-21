@@ -6,3 +6,7 @@ type Header struct {
 	Status   uint32
 	Sequence uint32
 }
+
+func NewPduHeader(l, id, status, seq uint32) *Header {
+	return &Header{l, id, status, seq}
+}

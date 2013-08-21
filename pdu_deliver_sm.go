@@ -43,33 +43,64 @@ func NewDeliverSm(hdr *Header, b []byte) (*DeliverSm, error) {
 		return nil, err
 	}
 
-	s := &DeliverSm{hdr, fields, tlvs}
+	d := &DeliverSm{hdr, fields, tlvs}
 
-	return s, nil
+	return d, nil
 }
 
-func (s *DeliverSm) GetField(f string) (Field, error) {
-	for i, v := range s.MandatoryFieldsList() {
+func (d *DeliverSm) GetField(f string) (Field, error) {
+	for i, v := range d.MandatoryFieldsList() {
 		if v == f {
-			return s.mandatoryFields[i], nil
+			return d.mandatoryFields[i], nil
 		}
 	}
 
 	return nil, errors.New("field not found")
 }
 
-func (s *DeliverSm) Fields() map[int]Field {
-	return s.mandatoryFields
+func (d *DeliverSm) Fields() map[int]Field {
+	return d.mandatoryFields
 }
 
-func (s *DeliverSm) MandatoryFieldsList() []string {
+func (d *DeliverSm) MandatoryFieldsList() []string {
 	return reqDSMFields
 }
 
-func (s *DeliverSm) GetHeader() *Header {
-	return s.Header
+func (d *DeliverSm) GetHeader() *Header {
+	return d.Header
 }
 
-func (s *DeliverSm) TLVFields() []*TLVField {
-	return s.tlvFields
+func (d *DeliverSm) TLVFields() []*TLVField {
+	return d.tlvFields
+}
+
+func (d *DeliverSm) writeFields() []byte {
+	b := []byte{}
+
+	for i, _ := range d.MandatoryFieldsList() {
+		v := d.mandatoryFields[i].ByteArray()
+		b = append(b, v...)
+	}
+
+	return b
+}
+
+func (d *DeliverSm) writeTLVFields() []byte {
+	b := []byte{}
+
+	for _, v := range d.tlvFields {
+		b = append(b, v.Writer()...)
+	}
+
+	return b
+}
+
+func (d *DeliverSm) Writer() []byte {
+	b := append(d.writeFields(), d.writeTLVFields()...)
+	h := packUi32(uint32(len(b) + 16))
+	h = append(h, packUi32(DELIVER_SM)...)
+	h = append(h, packUi32(d.Header.Status)...)
+	h = append(h, packUi32(d.Header.Sequence)...)
+
+	return append(h, b...)
 }

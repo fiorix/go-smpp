@@ -13,3 +13,11 @@ func (t *TLVField) Value() []byte {
 func (t *TLVField) String() string {
 	return string(t.Value())
 }
+
+func (t *TLVField) Writer() []byte {
+	b := []byte{}
+	b = append(b, packUi16(t.Tag)...)
+	b = append(b, packUi16(t.Length)...)
+	b = append(b, t.Value()...)
+	return b
+}

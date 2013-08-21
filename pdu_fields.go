@@ -6,6 +6,7 @@ type Field interface {
 	Length() interface{}
 	Value() interface{}
 	String() string
+	ByteArray() []byte
 }
 
 type VariableField struct {
@@ -42,6 +43,10 @@ func (v *VariableField) String() string {
 	return string(v.value)
 }
 
+func (v *VariableField) ByteArray() []byte {
+	return v.value
+}
+
 func (f *FixedField) Length() interface{} {
 	return uint8(1)
 }
@@ -52,4 +57,8 @@ func (f *FixedField) Value() interface{} {
 
 func (f *FixedField) String() string {
 	return strconv.Itoa(int(f.value))
+}
+
+func (f *FixedField) ByteArray() []byte {
+	return packUi8(f.value)
 }

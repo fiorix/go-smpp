@@ -14,6 +14,7 @@ type Pdu interface {
 	GetField(string) (Field, error)
 	GetHeader() *Header
 	TLVFields() []*TLVField
+	Writer() []byte
 }
 
 func ParsePdu(data []byte) (Pdu, error) {
@@ -21,12 +22,7 @@ func ParsePdu(data []byte) (Pdu, error) {
 		return nil, errors.New("Invalid PDU. Length under 16 bytes")
 	}
 
-	header := &Header{
-		unpackUi32(data[:4]),
-		unpackUi32(data[4:8]),
-		unpackUi32(data[8:12]),
-		unpackUi32(data[12:16]),
-	}
+	header := ParsePduHeader(data[:16])
 
 	switch header.Id {
 	case SUBMIT_SM:
@@ -56,6 +52,15 @@ func ParsePdu(data []byte) (Pdu, error) {
 	default:
 		return nil, errors.New("Unknown PDU Command ID: " + strconv.Itoa(int(header.Id)))
 	}
+}
+
+func ParsePduHeader(data []byte) *Header {
+	return NewPduHeader(
+		unpackUi32(data[:4]),
+		unpackUi32(data[4:8]),
+		unpackUi32(data[8:12]),
+		unpackUi32(data[12:16]),
+	)
 }
 
 func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*TLVField, error) {
@@ -181,4 +186,10 @@ func packUi16(n uint16) (b []byte) {
 	b = make([]byte, 2)
 	binary.BigEndian.PutUint16(b, n)
 	return
+}
+
+func packUi8(n uint8) (b []byte) {
+	b = make([]byte, 2)
+	binary.BigEndian.PutUint16(b, uint16(n))
+	return b[1:]
 }

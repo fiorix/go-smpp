@@ -54,3 +54,33 @@ func (s *BindResp) GetHeader() *Header {
 func (s *BindResp) TLVFields() []*TLVField {
 	return s.tlvFields
 }
+
+func (s *BindResp) writeFields() []byte {
+	b := []byte{}
+
+	for i, _ := range s.MandatoryFieldsList() {
+		v := s.mandatoryFields[i].ByteArray()
+		b = append(b, v...)
+	}
+
+	return b
+}
+
+func (s *BindResp) writeTLVFields() []byte {
+	b := []byte{}
+
+	for _, v := range s.tlvFields {
+		b = append(b, v.Writer()...)
+	}
+
+	return b
+}
+
+func (s *BindResp) Writer() []byte {
+	b := append(s.writeFields(), s.writeTLVFields()...)
+	h := packUi32(uint32(len(b) + 16))
+	h = append(h, packUi32(s.Header.Id)...)
+	h = append(h, packUi32(s.Header.Status)...)
+	h = append(h, packUi32(s.Header.Sequence)...)
+	return append(h, b...)
+}
