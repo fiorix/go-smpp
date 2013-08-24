@@ -1,16 +1,12 @@
 package smpp34
 
-import (
-	"errors"
-)
-
 var (
 	reqELFields = []string{}
 )
 
 type EnquireLink struct {
 	*Header
-	mandatoryFields map[int]Field
+	mandatoryFields map[string]Field
 	tlvFields       []*TLVField
 }
 
@@ -20,17 +16,11 @@ func NewEnquireLink(hdr *Header) (*EnquireLink, error) {
 	return s, nil
 }
 
-func (s *EnquireLink) GetField(f string) (Field, error) {
-	for i, v := range s.MandatoryFieldsList() {
-		if v == f {
-			return s.mandatoryFields[i], nil
-		}
-	}
-
-	return nil, errors.New("field not found")
+func (s *EnquireLink) GetField(f string) Field {
+	return nil
 }
 
-func (s *EnquireLink) Fields() map[int]Field {
+func (s *EnquireLink) Fields() map[string]Field {
 	return s.mandatoryFields
 }
 
@@ -47,14 +37,7 @@ func (s *EnquireLink) TLVFields() []*TLVField {
 }
 
 func (s *EnquireLink) writeFields() []byte {
-	b := []byte{}
-
-	for i, _ := range s.MandatoryFieldsList() {
-		v := s.mandatoryFields[i].ByteArray()
-		b = append(b, v...)
-	}
-
-	return b
+	return []byte{}
 }
 
 func (s *EnquireLink) Writer() []byte {

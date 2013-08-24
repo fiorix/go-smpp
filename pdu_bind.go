@@ -2,7 +2,6 @@ package smpp34
 
 import (
 	"bytes"
-	"errors"
 )
 
 var (
@@ -19,7 +18,7 @@ var (
 
 type Bind struct {
 	*Header
-	mandatoryFields map[int]Field
+	mandatoryFields map[string]Field
 	tlvFields       []*TLVField
 }
 
@@ -37,17 +36,11 @@ func NewBind(hdr *Header, b []byte) (*Bind, error) {
 	return s, nil
 }
 
-func (s *Bind) GetField(f string) (Field, error) {
-	for i, v := range s.MandatoryFieldsList() {
-		if v == f {
-			return s.mandatoryFields[i], nil
-		}
-	}
-
-	return nil, errors.New("field not found")
+func (s *Bind) GetField(f string) Field {
+	return s.mandatoryFields[f]
 }
 
-func (s *Bind) Fields() map[int]Field {
+func (s *Bind) Fields() map[string]Field {
 	return s.mandatoryFields
 }
 
@@ -66,7 +59,7 @@ func (s *Bind) TLVFields() []*TLVField {
 func (s *Bind) writeFields() []byte {
 	b := []byte{}
 
-	for i, _ := range s.MandatoryFieldsList() {
+	for _, i := range s.MandatoryFieldsList() {
 		v := s.mandatoryFields[i].ByteArray()
 		b = append(b, v...)
 	}

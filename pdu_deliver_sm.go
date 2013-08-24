@@ -2,7 +2,6 @@ package smpp34
 
 import (
 	"bytes"
-	"errors"
 )
 
 var (
@@ -30,7 +29,7 @@ var (
 
 type DeliverSm struct {
 	*Header
-	mandatoryFields map[int]Field
+	mandatoryFields map[string]Field
 	tlvFields       []*TLVField
 }
 
@@ -48,17 +47,11 @@ func NewDeliverSm(hdr *Header, b []byte) (*DeliverSm, error) {
 	return d, nil
 }
 
-func (d *DeliverSm) GetField(f string) (Field, error) {
-	for i, v := range d.MandatoryFieldsList() {
-		if v == f {
-			return d.mandatoryFields[i], nil
-		}
-	}
-
-	return nil, errors.New("field not found")
+func (d *DeliverSm) GetField(f string) Field {
+	return d.mandatoryFields[f]
 }
 
-func (d *DeliverSm) Fields() map[int]Field {
+func (d *DeliverSm) Fields() map[string]Field {
 	return d.mandatoryFields
 }
 
@@ -77,7 +70,7 @@ func (d *DeliverSm) TLVFields() []*TLVField {
 func (d *DeliverSm) writeFields() []byte {
 	b := []byte{}
 
-	for i, _ := range d.MandatoryFieldsList() {
+	for _, i := range d.MandatoryFieldsList() {
 		v := d.mandatoryFields[i].ByteArray()
 		b = append(b, v...)
 	}

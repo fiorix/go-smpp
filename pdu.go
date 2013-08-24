@@ -9,9 +9,9 @@ import (
 )
 
 type Pdu interface {
-	Fields() map[int]Field
+	Fields() map[string]Field
 	MandatoryFieldsList() []string
-	GetField(string) (Field, error)
+	GetField(string) Field
 	GetHeader() *Header
 	TLVFields() []*TLVField
 	Writer() []byte
@@ -63,11 +63,11 @@ func ParsePduHeader(data []byte) *Header {
 	)
 }
 
-func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*TLVField, error) {
+func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, []*TLVField, error) {
 
-	fields := make(map[int]Field)
+	fields := make(map[string]Field)
 	eof := false
-	for i, k := range fieldNames {
+	for _, k := range fieldNames {
 		switch k {
 		case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID:
 			t, err := r.ReadBytes(0x00)
@@ -78,7 +78,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 				return nil, nil, err
 			}
 
-			fields[i] = NewVariableField(t)
+			fields[k] = NewVariableField(t)
 		case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI:
 			t, err := r.ReadByte()
 
@@ -88,7 +88,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 				return nil, nil, err
 			}
 
-			fields[i] = NewFixedField(t)
+			fields[k] = NewFixedField(t)
 		case SM_LENGTH:
 			// Short Message Length
 			t, err := r.ReadByte()
@@ -99,7 +99,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 				return nil, nil, err
 			}
 
-			fields[i] = NewFixedField(t)
+			fields[k] = NewFixedField(t)
 
 			// Short Message
 			p := make([]byte, t)
@@ -111,7 +111,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 				return nil, nil, err
 			}
 
-			fields[i+1] = NewVariableField(p)
+			fields[SHORT_MESSAGE] = NewVariableField(p)
 		case SHORT_MESSAGE:
 			continue
 		}
