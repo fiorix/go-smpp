@@ -91,3 +91,33 @@ const (
 	DATA_SM               = 0x00000103
 	DATA_SM_RESP          = 0x80000103
 )
+
+const (
+	// FIELDS
+	SYSTEM_ID               = "system_id"
+	PASSWORD                = "password"
+	SYSTEM_TYPE             = "system_type"
+	INTERFACE_VERSION       = "interface_version"
+	ADDR_TON                = "addr_ton"
+	ADDR_NPI                = "addr_npi"
+	ADDRESS_RANGE           = "address_range"
+	SERVICE_TYPE            = "service_type"
+	SOURCE_ADDR_TON         = "source_addr_ton"
+	SOURCE_ADDR_NPI         = "source_addr_npi"
+	SOURCE_ADDR             = "source_addr"
+	DEST_ADDR_TON           = "dest_addr_ton"
+	DEST_ADDR_NPI           = "dest_addr_npi"
+	DESTINATION_ADDR        = "destination_addr"
+	ESM_CLASS               = "esm_class"
+	PROTOCOL_ID             = "protocol_id"
+	PRIORITY_FLAG           = "priority_flag"
+	SCHEDULE_DELIVERY_TIME  = "schedule_delivery_time"
+	VALIDITY_PERIOD         = "validity_period"
+	REGISTERED_DELIVERY     = "registered_delivery"
+	REPLACE_IF_PRESENT_FLAG = "replace_if_present_flag"
+	DATA_CODING             = "data_coding"
+	SM_DEFAULT_MSG_ID       = "sm_default_msg_id"
+	SM_LENGTH               = "sm_length"
+	SHORT_MESSAGE           = "short_message"
+	MESSAGE_ID              = "message_id"
+)

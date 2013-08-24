@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	reqBindRespFields = []string{"system_id"}
+	reqBindRespFields = []string{SYSTEM_ID}
 )
 
 type BindResp struct {

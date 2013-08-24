@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	reqDSMRespFields = []string{"message_id"}
+	reqDSMRespFields = []string{MESSAGE_ID}
 )
 
 type DeliverSmResp struct {

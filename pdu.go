@@ -69,7 +69,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 	eof := false
 	for i, k := range fieldNames {
 		switch k {
-		case "service_type", "source_addr", "destination_addr", "schedule_delivery_time", "validity_period", "system_id", "password", "system_type", "address_range", "message_id":
+		case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID:
 			t, err := r.ReadBytes(0x00)
 
 			if err == io.EOF {
@@ -79,7 +79,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 			}
 
 			fields[i] = NewVariableField(t)
-		case "source_addr_ton", "source_addr_npi", "dest_addr_ton", "dest_addr_npi", "esm_class", "protocol_id", "priority_flag", "registered_delivery", "replace_if_present_flag", "data_coding", "sm_default_msg_id", "interface_version", "addr_ton", "addr_npi":
+		case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI:
 			t, err := r.ReadByte()
 
 			if err == io.EOF {
@@ -89,7 +89,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 			}
 
 			fields[i] = NewFixedField(t)
-		case "sm_length":
+		case SM_LENGTH:
 			// Short Message Length
 			t, err := r.ReadByte()
 
@@ -112,7 +112,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[int]Field, []*
 			}
 
 			fields[i+1] = NewVariableField(p)
-		case "short_message":
+		case SHORT_MESSAGE:
 			continue
 		}
 	}

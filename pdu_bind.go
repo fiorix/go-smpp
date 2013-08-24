@@ -7,13 +7,13 @@ import (
 
 var (
 	reqBindFields = []string{
-		"system_id",
-		"password",
-		"system_type",
-		"interface_version",
-		"addr_ton",
-		"addr_npi",
-		"address_range",
+		SYSTEM_ID,
+		PASSWORD,
+		SYSTEM_TYPE,
+		INTERFACE_VERSION,
+		ADDR_TON,
+		ADDR_NPI,
+		ADDRESS_RANGE,
 	}
 )
 
