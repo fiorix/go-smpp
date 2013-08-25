@@ -11,7 +11,7 @@ var (
 type EnquireLinkResp struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewEnquireLinkResp(hdr *Header) (*EnquireLinkResp, error) {
@@ -40,7 +40,7 @@ func (s *EnquireLinkResp) GetHeader() *Header {
 	return s.Header
 }
 
-func (s *EnquireLinkResp) TLVFields() []*TLVField {
+func (s *EnquireLinkResp) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
 

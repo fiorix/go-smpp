@@ -20,7 +20,7 @@ var (
 type Bind struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewBind(hdr *Header, b []byte) (*Bind, error) {
@@ -74,7 +74,7 @@ func (s *Bind) validate_field(f string, v interface{}) bool {
 	return false
 }
 
-func (s *Bind) TLVFields() []*TLVField {
+func (s *Bind) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
 

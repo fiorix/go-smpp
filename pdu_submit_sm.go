@@ -32,7 +32,7 @@ var (
 type SubmitSm struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewSubmitSm(hdr *Header, b []byte) (*SubmitSm, error) {
@@ -86,7 +86,7 @@ func (s *SubmitSm) validate_field(f string, v interface{}) bool {
 	return false
 }
 
-func (s *SubmitSm) TLVFields() []*TLVField {
+func (s *SubmitSm) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
 

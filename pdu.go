@@ -14,7 +14,7 @@ type Pdu interface {
 	MandatoryFieldsList() []string
 	GetField(string) Field
 	GetHeader() *Header
-	TLVFields() []*TLVField
+	TLVFields() map[uint16]*TLVField
 	Writer() []byte
 	SetField(f string, v interface{}) error
 }
@@ -65,7 +65,7 @@ func ParsePduHeader(data []byte) *Header {
 	)
 }
 
-func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, []*TLVField, error) {
+func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, map[uint16]*TLVField, error) {
 
 	fields := make(map[string]Field)
 	eof := false
@@ -120,7 +120,7 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, 
 	}
 
 	// Optional Fields
-	tlvs := []*TLVField{}
+	tlvs := map[uint16]*TLVField{}
 	var err error
 
 	if !eof {
@@ -134,8 +134,8 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, 
 	return fields, tlvs, nil
 }
 
-func parse_tlv_fields(r *bytes.Buffer) ([]*TLVField, error) {
-	tlvs := make([]*TLVField, 0)
+func parse_tlv_fields(r *bytes.Buffer) (map[uint16]*TLVField, error) {
+	tlvs := map[uint16]*TLVField{}
 
 	for {
 		p := make([]byte, 4)
@@ -158,11 +158,11 @@ func parse_tlv_fields(r *bytes.Buffer) ([]*TLVField, error) {
 			return nil, err
 		}
 
-		tlvs = append(tlvs, &TLVField{
+		tlvs[unpackUi16(p[0:2])] = &TLVField{
 			unpackUi16(p[0:2]),
 			unpackUi16(p[2:4]),
 			v,
-		})
+		}
 	}
 
 	return tlvs, nil

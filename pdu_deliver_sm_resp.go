@@ -12,7 +12,7 @@ var (
 type DeliverSmResp struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewDeliverSmResp(hdr *Header, b []byte) (*DeliverSmResp, error) {
@@ -66,7 +66,7 @@ func (s *DeliverSmResp) validate_field(f string, v interface{}) bool {
 	return false
 }
 
-func (s *DeliverSmResp) TLVFields() []*TLVField {
+func (s *DeliverSmResp) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
 

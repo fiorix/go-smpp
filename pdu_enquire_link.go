@@ -11,7 +11,7 @@ var (
 type EnquireLink struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewEnquireLink(hdr *Header) (*EnquireLink, error) {
@@ -40,7 +40,7 @@ func (s *EnquireLink) SetField(f string, v interface{}) error {
 	return errors.New("Invalid field value")
 }
 
-func (s *EnquireLink) TLVFields() []*TLVField {
+func (s *EnquireLink) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
 

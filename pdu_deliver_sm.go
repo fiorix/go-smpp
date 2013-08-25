@@ -31,7 +31,7 @@ var (
 type DeliverSm struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewDeliverSm(hdr *Header, b []byte) (*DeliverSm, error) {
@@ -85,7 +85,7 @@ func (d *DeliverSm) validate_field(f string, v interface{}) bool {
 	return false
 }
 
-func (d *DeliverSm) TLVFields() []*TLVField {
+func (d *DeliverSm) TLVFields() map[uint16]*TLVField {
 	return d.tlvFields
 }
 

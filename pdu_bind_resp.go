@@ -12,7 +12,7 @@ var (
 type BindResp struct {
 	*Header
 	mandatoryFields map[string]Field
-	tlvFields       []*TLVField
+	tlvFields       map[uint16]*TLVField
 }
 
 func NewBindResp(hdr *Header, b []byte) (*BindResp, error) {
@@ -66,7 +66,7 @@ func (s *BindResp) validate_field(f string, v interface{}) bool {
 	return false
 }
 
-func (s *BindResp) TLVFields() []*TLVField {
+func (s *BindResp) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
 
