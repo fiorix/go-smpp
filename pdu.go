@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"reflect"
 	"strconv"
 )
 
@@ -15,6 +16,7 @@ type Pdu interface {
 	GetHeader() *Header
 	TLVFields() []*TLVField
 	Writer() []byte
+	SetField(f string, v interface{}) error
 }
 
 func ParsePdu(data []byte) (Pdu, error) {
@@ -164,6 +166,37 @@ func parse_tlv_fields(r *bytes.Buffer) ([]*TLVField, error) {
 	}
 
 	return tlvs, nil
+}
+
+func validate_pdu_field(f string, v interface{}) bool {
+	switch f {
+	case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI, SM_LENGTH:
+		if validate_pdu_field_type(0x00, v) {
+			return true
+		}
+	case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID, SHORT_MESSAGE:
+		if validate_pdu_field_type("string", v) {
+			return true
+		}
+	}
+	return false
+}
+
+func validate_pdu_field_type(t interface{}, v interface{}) bool {
+	if reflect.TypeOf(t) == reflect.TypeOf(v) {
+		return true
+	}
+
+	return false
+}
+
+func included_check(a []string, v string) bool {
+	for _, k := range a {
+		if k == v {
+			return true
+		}
+	}
+	return false
 }
 
 func unpackUi32(b []byte) (n uint32) {

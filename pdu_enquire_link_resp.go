@@ -1,5 +1,9 @@
 package smpp34
 
+import (
+	"errors"
+)
+
 var (
 	reqELRespFields = []string{}
 )
@@ -18,6 +22,10 @@ func NewEnquireLinkResp(hdr *Header) (*EnquireLinkResp, error) {
 
 func (s *EnquireLinkResp) GetField(f string) Field {
 	return nil
+}
+
+func (s *EnquireLinkResp) SetField(f string, v interface{}) error {
+	return errors.New("Invalid field value")
 }
 
 func (s *EnquireLinkResp) Fields() map[string]Field {

@@ -18,6 +18,16 @@ type FixedField struct {
 	value uint8
 }
 
+func NewField(f string, v interface{}) Field {
+	switch f {
+	case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI, SM_LENGTH:
+		return NewFixedField(uint8(v.(int)))
+	case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID, SHORT_MESSAGE:
+		return NewVariableField([]byte(v.(string)))
+	}
+	return nil
+}
+
 func NewVariableField(v []byte) Field {
 	i := &VariableField{v}
 	f := Field(i)

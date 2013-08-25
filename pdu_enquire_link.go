@@ -1,5 +1,9 @@
 package smpp34
 
+import (
+	"errors"
+)
+
 var (
 	reqELFields = []string{}
 )
@@ -30,6 +34,10 @@ func (s *EnquireLink) MandatoryFieldsList() []string {
 
 func (s *EnquireLink) GetHeader() *Header {
 	return s.Header
+}
+
+func (s *EnquireLink) SetField(f string, v interface{}) error {
+	return errors.New("Invalid field value")
 }
 
 func (s *EnquireLink) TLVFields() []*TLVField {

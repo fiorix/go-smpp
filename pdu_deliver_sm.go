@@ -2,6 +2,7 @@ package smpp34
 
 import (
 	"bytes"
+	"errors"
 )
 
 var (
@@ -61,6 +62,27 @@ func (d *DeliverSm) MandatoryFieldsList() []string {
 
 func (d *DeliverSm) GetHeader() *Header {
 	return d.Header
+}
+
+func (d *DeliverSm) SetField(f string, v interface{}) error {
+	if d.validate_field(f, v) {
+		field := NewField(f, v)
+
+		if field != nil {
+			d.mandatoryFields[f] = field
+
+			return nil
+		}
+	}
+
+	return errors.New("Invalid field value")
+}
+
+func (d *DeliverSm) validate_field(f string, v interface{}) bool {
+	if included_check(d.MandatoryFieldsList(), f) && validate_pdu_field(f, v) {
+		return true
+	}
+	return false
 }
 
 func (d *DeliverSm) TLVFields() []*TLVField {
