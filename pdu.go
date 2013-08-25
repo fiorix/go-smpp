@@ -17,6 +17,7 @@ type Pdu interface {
 	TLVFields() map[uint16]*TLVField
 	Writer() []byte
 	SetField(f string, v interface{}) error
+	SetTLVField(t, l int, v []byte) error
 }
 
 func ParsePdu(data []byte) (Pdu, error) {

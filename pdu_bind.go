@@ -67,6 +67,10 @@ func (s *Bind) SetField(f string, v interface{}) error {
 	return errors.New("Invalid field value")
 }
 
+func (s *Bind) SetTLVField(t, l int, v []byte) error {
+	return errors.New("Invalid TLV value lenght")
+}
+
 func (s *Bind) validate_field(f string, v interface{}) bool {
 	if included_check(s.MandatoryFieldsList(), f) && validate_pdu_field(f, v) {
 		return true

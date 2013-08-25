@@ -28,6 +28,10 @@ func (s *EnquireLinkResp) SetField(f string, v interface{}) error {
 	return errors.New("Invalid field value")
 }
 
+func (s *EnquireLinkResp) SetTLVField(t, l int, v []byte) error {
+	return errors.New("Invalid TLV value lenght")
+}
+
 func (s *EnquireLinkResp) Fields() map[string]Field {
 	return s.mandatoryFields
 }

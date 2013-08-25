@@ -40,6 +40,10 @@ func (s *EnquireLink) SetField(f string, v interface{}) error {
 	return errors.New("Invalid field value")
 }
 
+func (s *EnquireLink) SetTLVField(t, l int, v []byte) error {
+	return errors.New("Invalid TLV value lenght")
+}
+
 func (s *EnquireLink) TLVFields() map[uint16]*TLVField {
 	return s.tlvFields
 }
