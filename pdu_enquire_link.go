@@ -40,6 +40,10 @@ func (s *EnquireLink) SetField(f string, v interface{}) error {
 	return errors.New("Invalid field value")
 }
 
+func (s *EnquireLink) SetSeqNum(i uint32) {
+	s.Header.Sequence = i
+}
+
 func (s *EnquireLink) SetTLVField(t, l int, v []byte) error {
 	return errors.New("Invalid TLV value lenght")
 }

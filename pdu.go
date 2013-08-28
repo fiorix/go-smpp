@@ -18,6 +18,7 @@ type Pdu interface {
 	Writer() []byte
 	SetField(f string, v interface{}) error
 	SetTLVField(t, l int, v []byte) error
+	SetSeqNum(uint32)
 }
 
 func ParsePdu(data []byte) (Pdu, error) {

@@ -59,6 +59,10 @@ func (s *DeliverSmResp) SetField(f string, v interface{}) error {
 	return errors.New("Invalid field value")
 }
 
+func (s *DeliverSmResp) SetSeqNum(i uint32) {
+	s.Header.Sequence = i
+}
+
 func (s *DeliverSmResp) SetTLVField(t, l int, v []byte) error {
 	return errors.New("Invalid TLV value lenght")
 }
