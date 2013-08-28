@@ -126,6 +126,10 @@ func (s *SubmitSm) writeTLVFields() []byte {
 }
 
 func (s *SubmitSm) Writer() []byte {
+	// Set SM_LENGTH
+	sm := len(s.GetField(SHORT_MESSAGE).ByteArray())
+	s.SetField(SM_LENGTH, sm)
+
 	b := append(s.writeFields(), s.writeTLVFields()...)
 	h := packUi32(uint32(len(b) + 16))
 	h = append(h, packUi32(SUBMIT_SM)...)
