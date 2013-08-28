@@ -4,6 +4,9 @@ const (
 	// SMPP Protocol Version
 	SMPP_VERSION = 0x34
 
+	// Max PDU size to minimize some attack vectors
+	MAX_PDU_SIZE = 4096 // 4KB
+
 	// Sequence number start/end
 	SEQUENCE_NUM_START = 0x00000001
 	SEQUENCE_NUM_END   = 0x7FFFFFFF
