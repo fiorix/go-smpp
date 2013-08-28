@@ -41,6 +41,14 @@ func (s *BindResp) MandatoryFieldsList() []string {
 	return reqBindRespFields
 }
 
+func (s *BindResp) Ok() bool {
+	if s.Header.Status == ESME_ROK {
+		return true
+	}
+
+	return false
+}
+
 func (s *BindResp) GetHeader() *Header {
 	return s.Header
 }

@@ -60,6 +60,10 @@ func (d *DeliverSm) MandatoryFieldsList() []string {
 	return reqDSMFields
 }
 
+func (d *DeliverSm) Ok() bool {
+	return true
+}
+
 func (d *DeliverSm) GetHeader() *Header {
 	return d.Header
 }

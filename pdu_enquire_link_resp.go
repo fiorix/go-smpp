@@ -44,6 +44,14 @@ func (s *EnquireLinkResp) MandatoryFieldsList() []string {
 	return reqELRespFields
 }
 
+func (s *EnquireLinkResp) Ok() bool {
+	if s.Header.Status == ESME_ROK {
+		return true
+	}
+
+	return false
+}
+
 func (s *EnquireLinkResp) GetHeader() *Header {
 	return s.Header
 }

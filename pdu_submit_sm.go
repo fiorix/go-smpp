@@ -61,6 +61,10 @@ func (s *SubmitSm) MandatoryFieldsList() []string {
 	return reqSSMFields
 }
 
+func (s *SubmitSm) Ok() bool {
+	return true
+}
+
 func (s *SubmitSm) GetHeader() *Header {
 	return s.Header
 }

@@ -32,6 +32,10 @@ func (s *EnquireLink) MandatoryFieldsList() []string {
 	return reqELFields
 }
 
+func (s *EnquireLink) Ok() bool {
+	return true
+}
+
 func (s *EnquireLink) GetHeader() *Header {
 	return s.Header
 }

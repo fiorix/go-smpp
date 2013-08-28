@@ -49,6 +49,10 @@ func (s *Bind) MandatoryFieldsList() []string {
 	return reqBindFields
 }
 
+func (s *Bind) Ok() bool {
+	return true
+}
+
 func (s *Bind) GetHeader() *Header {
 	return s.Header
 }

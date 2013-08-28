@@ -41,6 +41,14 @@ func (s *DeliverSmResp) MandatoryFieldsList() []string {
 	return reqDSMRespFields
 }
 
+func (s *DeliverSmResp) Ok() bool {
+	if s.Header.Status == ESME_ROK {
+		return true
+	}
+
+	return false
+}
+
 func (s *DeliverSmResp) GetHeader() *Header {
 	return s.Header
 }
