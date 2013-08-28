@@ -54,6 +54,12 @@ func ParsePdu(data []byte) (Pdu, error) {
 	case ENQUIRE_LINK_RESP:
 		n, err := NewEnquireLinkResp(header)
 		return Pdu(n), err
+	case UNBIND:
+		n, err := NewUnbind(header)
+		return Pdu(n), err
+	case UNBIND_RESP:
+		n, err := NewUnbindResp(header)
+		return Pdu(n), err
 	default:
 		return nil, errors.New("Unknown PDU Command ID: " + strconv.Itoa(int(header.Id)))
 	}
