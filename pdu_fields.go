@@ -54,7 +54,7 @@ func (v *VariableField) String() string {
 }
 
 func (v *VariableField) ByteArray() []byte {
-	return v.value
+	return append(v.value, 0x00)
 }
 
 func (f *FixedField) Length() interface{} {
