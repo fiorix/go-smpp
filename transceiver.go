@@ -152,7 +152,7 @@ func (t *Transceiver) Read() (Pdu, error) {
 	case ENQUIRE_LINK_RESP:
 		// Reset EnquireLink Check
 		t.eLCheckTimer.Reset(time.Duration(t.eLDuration) * time.Second)
-	case SUBMIT_SM, DELIVER_SM_RESP, BIND_TRANSCEIVER:
+	default:
 		// Should not have received these PDUs on a TRx bind
 		return nil, errors.New("Received out of spec PDU for TRx")
 	}
