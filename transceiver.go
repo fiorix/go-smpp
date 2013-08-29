@@ -45,6 +45,10 @@ func (t *Transceiver) Bind(system_id string, password string, params *Params) er
 		return err
 	}
 
+	// If BindResp NOT received in 5secs close connection
+	go t.bindCheck()
+
+	// Read (blocking)
 	pdu, err = t.Smpp.Read()
 
 	if err != nil {
@@ -92,6 +96,15 @@ func (t *Transceiver) DeliverSmResp(seq, status uint32) error {
 	}
 
 	return nil
+}
+
+func (t *Transceiver) bindCheck() {
+	// Block
+	<-time.After(time.Duration(5 * time.Second))
+	if !t.Bound {
+		fmt.Println("No Bind Response from SMSC")
+		t.Close()
+	}
 }
 
 func (t *Transceiver) startEnquireLink(eli int) {
@@ -148,8 +161,13 @@ func (t *Transceiver) Read() (Pdu, error) {
 }
 
 func (t *Transceiver) Close() {
-	t.eLCheckTimer.Stop()
-	t.eLTicker.Stop()
+	if t.eLCheckTimer != nil {
+		t.eLCheckTimer.Stop()
+	}
+
+	if t.eLTicker != nil {
+		t.eLTicker.Stop()
+	}
 
 	t.Smpp.Close()
 }
