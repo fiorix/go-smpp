@@ -1,6 +1,8 @@
 SMPP34
 ======
 
+Check examples folder for details
+
 ## License
 
 This repository is Copyright (c) 2013 Kevin Patel. All rights reserved.
