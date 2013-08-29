@@ -131,7 +131,7 @@ func (t *Receiver) Read() (Pdu, error) {
 	}
 
 	switch pdu.GetHeader().Id {
-	case DELIVER_SM_RESP:
+	case DELIVER_SM:
 		return pdu, nil
 	case ENQUIRE_LINK:
 		p, _ := t.Smpp.EnquireLinkResp(pdu.GetHeader().Sequence)
