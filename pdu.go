@@ -42,10 +42,10 @@ func ParsePdu(data []byte) (Pdu, error) {
 	case DELIVER_SM_RESP:
 		n, err := NewDeliverSmResp(header, data[16:])
 		return Pdu(n), err
-	case BIND_TRANSCEIVER:
+	case BIND_TRANSCEIVER, BIND_RECEIVER, BIND_TRANSMITTER:
 		n, err := NewBind(header, data[16:])
 		return Pdu(n), err
-	case BIND_TRANSCEIVER_RESP:
+	case BIND_TRANSCEIVER_RESP, BIND_RECEIVER_RESP, BIND_TRANSMITTER_RESP:
 		n, err := NewBindResp(header, data[16:])
 		return Pdu(n), err
 	case ENQUIRE_LINK:
