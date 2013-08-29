@@ -128,7 +128,7 @@ func (t *Transceiver) Read() (Pdu, error) {
 	}
 
 	switch pdu.GetHeader().Id {
-	case SUBMIT_SM, SUBMIT_SM_RESP, DELIVER_SM_RESP, DELIVER_SM:
+	case SUBMIT_SM_RESP, DELIVER_SM:
 		return pdu, nil
 	case ENQUIRE_LINK:
 		p, _ := t.Smpp.EnquireLinkResp(pdu.GetHeader().Sequence)
@@ -139,6 +139,9 @@ func (t *Transceiver) Read() (Pdu, error) {
 	case ENQUIRE_LINK_RESP:
 		// Reset EnquireLink Check
 		t.eLCheckTimer.Reset(time.Duration(t.eLDuration) * time.Second)
+	case SUBMIT_SM, DELIVER_SM_RESP, BIND_TRANSCEIVER:
+		// Should not have received these PDUs on a TRx bind
+		return nil, errors.New("Received out of spec PDU for TRx")
 	}
 
 	return pdu, nil
