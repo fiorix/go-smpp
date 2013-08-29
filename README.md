@@ -3,9 +3,7 @@ SMPP34
 
 Check [examples](https://github.com/CodeMonkeyKevin/smpp34/tree/master/examples) folder for usage details
 
-### PDU
-
-#####Supported/Unsupported PDUs List
+##### Supported/Unsupported PDUs
 - [x] bind_transmitter
 - [x] bind_transmitter_resp
 - [x] bind_receiver
