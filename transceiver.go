@@ -66,33 +66,6 @@ func (t *Transceiver) Bind(system_id string, password string, params *Params) er
 	return nil
 }
 
-func (t *Transceiver) startEnquireLink(eli int) {
-	t.eLTicker = time.NewTicker(time.Duration(eli) * time.Second)
-	// check delay is half the time of enquire link intervel
-	d := time.Duration(eli/2) * time.Second
-	t.eLCheckTimer = time.NewTimer(d)
-	t.eLCheckTimer.Stop()
-
-	for {
-		select {
-		case <-t.eLTicker.C:
-
-			p, _ := t.EnquireLink()
-			if err := t.Write(p); err != nil {
-				fmt.Println("Err writing ELR PDU:", err)
-				t.Close()
-				return
-			}
-
-			t.eLCheckTimer.Reset(d)
-		case <-t.eLCheckTimer.C:
-			fmt.Println("No enquire link response")
-			t.Close()
-			return
-		}
-	}
-}
-
 func (t *Transceiver) SubmitSm(source_addr, destination_addr, short_message string, params *Params) (seq uint32, err error) {
 	p, err := t.Smpp.SubmitSm(source_addr, destination_addr, short_message, params)
 
@@ -119,6 +92,33 @@ func (t *Transceiver) DeliverSmResp(seq, status uint32) error {
 	}
 
 	return nil
+}
+
+func (t *Transceiver) startEnquireLink(eli int) {
+	t.eLTicker = time.NewTicker(time.Duration(eli) * time.Second)
+	// check delay is half the time of enquire link intervel
+	d := time.Duration(eli/2) * time.Second
+	t.eLCheckTimer = time.NewTimer(d)
+	t.eLCheckTimer.Stop()
+
+	for {
+		select {
+		case <-t.eLTicker.C:
+
+			p, _ := t.EnquireLink()
+			if err := t.Write(p); err != nil {
+				fmt.Println("Err writing ELR PDU:", err)
+				t.Close()
+				return
+			}
+
+			t.eLCheckTimer.Reset(d)
+		case <-t.eLCheckTimer.C:
+			fmt.Println("No enquire link response")
+			t.Close()
+			return
+		}
+	}
 }
 
 func (t *Transceiver) Read() (Pdu, error) {

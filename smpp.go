@@ -11,13 +11,12 @@ import (
 )
 
 type Smpp struct {
-	mu        sync.Mutex
-	conn      net.Conn
-	reader    *bufio.Reader
-	writer    *bufio.Writer
-	Connected bool
-	Sequence  uint32
-	Bound     bool
+	mu       sync.Mutex
+	conn     net.Conn
+	reader   *bufio.Reader
+	writer   *bufio.Writer
+	Sequence uint32
+	Bound    bool
 }
 
 type Params map[string]interface{}
