@@ -43,9 +43,9 @@ func (s *Smpp) NewSeqNum() uint32 {
 	return s.Sequence
 }
 
-func (s *Smpp) Bind(system_id string, password string, params *Params) (Pdu, error) {
+func (s *Smpp) Bind(cmdId uint32, system_id string, password string, params *Params) (Pdu, error) {
 	b, _ := NewBind(
-		&Header{Id: BIND_TRANSCEIVER},
+		&Header{Id: cmdId},
 		[]byte{},
 	)
 

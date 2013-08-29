@@ -40,7 +40,7 @@ func NewTransceiver(host string, port int, eli int, bindParams Params) (*Transce
 }
 
 func (t *Transceiver) Bind(system_id string, password string, params *Params) error {
-	pdu, err := t.Smpp.Bind(system_id, password, params)
+	pdu, err := t.Smpp.Bind(BIND_TRANSCEIVER, system_id, password, params)
 	if err := t.Write(pdu); err != nil {
 		return err
 	}
@@ -161,6 +161,7 @@ func (t *Transceiver) Read() (Pdu, error) {
 }
 
 func (t *Transceiver) Close() {
+	// Check timers exists incase we Close() before timers are created
 	if t.eLCheckTimer != nil {
 		t.eLCheckTimer.Stop()
 	}
