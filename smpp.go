@@ -125,6 +125,19 @@ func (s *Smpp) Unbind() (Pdu, error) {
 	return Pdu(p), nil
 }
 
+func (s *Smpp) DeliverSmResp(seq, status uint32) (Pdu, error) {
+	p, _ := NewDeliverSmResp(
+		&Header{
+			Id:       DELIVER_SM_RESP,
+			Status:   status,
+			Sequence: seq,
+		},
+		[]byte{},
+	)
+
+	return Pdu(p), nil
+}
+
 func (s *Smpp) Read() (Pdu, error) {
 	l := make([]byte, 4)
 	_, err := s.conn.Read(l)

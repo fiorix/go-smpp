@@ -107,6 +107,20 @@ func (t *Transceiver) SubmitSm(source_addr, destination_addr, short_message stri
 	return p.GetHeader().Sequence, nil
 }
 
+func (t *Transceiver) DeliverSmResp(seq, status uint32) error {
+	p, err := t.Smpp.DeliverSmResp(seq, status)
+
+	if err != nil {
+		return err
+	}
+
+	if err := t.Write(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (t *Transceiver) Read() (Pdu, error) {
 	pdu, err := t.Smpp.Read()
 	if err != nil {
@@ -114,7 +128,7 @@ func (t *Transceiver) Read() (Pdu, error) {
 	}
 
 	switch pdu.GetHeader().Id {
-	case SUBMIT_SM, SUBMIT_SM_RESP, DELIVER_SM, DELIVER_SM_RESP:
+	case SUBMIT_SM, SUBMIT_SM_RESP, DELIVER_SM_RESP, DELIVER_SM:
 		return pdu, nil
 	case ENQUIRE_LINK:
 		p, _ := t.Smpp.EnquireLinkResp(pdu.GetHeader().Sequence)
