@@ -65,6 +65,22 @@ func (s *Smpp) Bind(system_id string, password string, params *Params) (Pdu, err
 	return Pdu(b), nil
 }
 
+func (s *Smpp) BindResp(cmdId, seq, status uint32, sysId string) (Pdu, error) {
+	p, _ := NewBindResp(
+		&Header{
+			Id:       cmdId,
+			Status:   status,
+			Sequence: seq,
+		},
+		[]byte{},
+	)
+
+	p.SetField(SYSTEM_ID, sysId)
+	p.SetTLVField(0x0210, 1, []byte{0x34}) // sc_interface_version TLV
+
+	return Pdu(p), nil
+}
+
 func (s *Smpp) EnquireLink() (Pdu, error) {
 	p, _ := NewEnquireLink(
 		&Header{
