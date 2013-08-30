@@ -88,6 +88,28 @@ func (t *Receiver) DeliverSmResp(seq, status uint32) error {
 	return nil
 }
 
+func (t *Receiver) Unbind() error {
+	p, _ := t.Smpp.Unbind()
+
+	if err := t.Write(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *Receiver) UnbindResp(seq uint32) error {
+	p, _ := t.Smpp.UnbindResp(seq)
+
+	if err := t.Write(p); err != nil {
+		return err
+	}
+
+	t.Bound = false
+
+	return nil
+}
+
 func (t *Receiver) bindCheck() {
 	// Block
 	<-time.After(time.Duration(5 * time.Second))
@@ -142,6 +164,9 @@ func (t *Receiver) Read() (Pdu, error) {
 	case ENQUIRE_LINK_RESP:
 		// Reset EnquireLink Check
 		t.eLCheckTimer.Reset(time.Duration(t.eLDuration) * time.Second)
+	case UNBIND:
+		t.UnbindResp(pdu.GetHeader().Sequence)
+		t.Close()
 	default:
 		// Should not have received these PDUs on a RX bind
 		return nil, errors.New("Received out of spec PDU for RX")
