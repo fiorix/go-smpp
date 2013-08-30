@@ -140,6 +140,17 @@ func (s *Smpp) Unbind() (Pdu, error) {
 	return Pdu(p), nil
 }
 
+func (s *Smpp) UnbindResp(seq uint32) (Pdu, error) {
+	p, _ := NewUnbindResp(
+		&Header{
+			Id:       UNBIND_RESP,
+			Sequence: seq,
+		},
+	)
+
+	return Pdu(p), nil
+}
+
 func (s *Smpp) DeliverSmResp(seq, status uint32) (Pdu, error) {
 	p, _ := NewDeliverSmResp(
 		&Header{
