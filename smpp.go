@@ -43,7 +43,7 @@ func (s *Smpp) NewSeqNum() uint32 {
 	return s.Sequence
 }
 
-func (s *Smpp) Bind(cmdId uint32, system_id string, password string, params *Params) (Pdu, error) {
+func (s *Smpp) Bind(cmdId CMDId, system_id string, password string, params *Params) (Pdu, error) {
 	b, _ := NewBind(
 		&Header{Id: cmdId},
 		[]byte{},
@@ -65,7 +65,7 @@ func (s *Smpp) Bind(cmdId uint32, system_id string, password string, params *Par
 	return Pdu(b), nil
 }
 
-func (s *Smpp) BindResp(cmdId, seq, status uint32, sysId string) (Pdu, error) {
+func (s *Smpp) BindResp(cmdId CMDId, seq uint32, status CMDStatus, sysId string) (Pdu, error) {
 	p, _ := NewBindResp(
 		&Header{
 			Id:       cmdId,
@@ -151,7 +151,7 @@ func (s *Smpp) UnbindResp(seq uint32) (Pdu, error) {
 	return Pdu(p), nil
 }
 
-func (s *Smpp) DeliverSmResp(seq, status uint32) (Pdu, error) {
+func (s *Smpp) DeliverSmResp(seq uint32, status CMDStatus) (Pdu, error) {
 	p, _ := NewDeliverSmResp(
 		&Header{
 			Id:       DELIVER_SM_RESP,

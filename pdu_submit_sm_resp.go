@@ -100,8 +100,8 @@ func (s *SubmitSmResp) writeFields() []byte {
 func (s *SubmitSmResp) Writer() []byte {
 	b := s.writeFields()
 	h := packUi32(uint32(len(b) + 16))
-	h = append(h, packUi32(SUBMIT_SM_RESP)...)
-	h = append(h, packUi32(s.Header.Status)...)
+	h = append(h, packUi32(uint32(SUBMIT_SM_RESP))...)
+	h = append(h, packUi32(uint32(s.Header.Status))...)
 	h = append(h, packUi32(s.Header.Sequence)...)
 
 	return append(h, b...)

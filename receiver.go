@@ -74,7 +74,7 @@ func (t *Receiver) SubmitSm(source_addr, destination_addr, short_message string,
 	return 0, errors.New("SubmitSm out of spec for RX bind")
 }
 
-func (t *Receiver) DeliverSmResp(seq, status uint32) error {
+func (t *Receiver) DeliverSmResp(seq uint32, status CMDStatus) error {
 	p, err := t.Smpp.DeliverSmResp(seq, status)
 
 	if err != nil {

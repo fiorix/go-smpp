@@ -136,8 +136,8 @@ func (s *SubmitSm) Writer() []byte {
 
 	b := append(s.writeFields(), s.writeTLVFields()...)
 	h := packUi32(uint32(len(b) + 16))
-	h = append(h, packUi32(SUBMIT_SM)...)
-	h = append(h, packUi32(s.Header.Status)...)
+	h = append(h, packUi32(uint32(SUBMIT_SM))...)
+	h = append(h, packUi32(uint32(s.Header.Status))...)
 	h = append(h, packUi32(s.Header.Sequence)...)
 
 	return append(h, b...)

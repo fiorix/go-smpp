@@ -67,8 +67,8 @@ func (s *EnquireLinkResp) writeFields() []byte {
 func (s *EnquireLinkResp) Writer() []byte {
 	b := s.writeFields()
 	h := packUi32(uint32(len(b) + 16))
-	h = append(h, packUi32(ENQUIRE_LINK_RESP)...)
-	h = append(h, packUi32(s.Header.Status)...)
+	h = append(h, packUi32(uint32(ENQUIRE_LINK_RESP))...)
+	h = append(h, packUi32(uint32(s.Header.Status))...)
 	h = append(h, packUi32(s.Header.Sequence)...)
 	return append(h, b...)
 }

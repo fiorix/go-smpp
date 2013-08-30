@@ -68,8 +68,8 @@ func ParsePdu(data []byte) (Pdu, error) {
 func ParsePduHeader(data []byte) *Header {
 	return NewPduHeader(
 		unpackUi32(data[:4]),
-		unpackUi32(data[4:8]),
-		unpackUi32(data[8:12]),
+		CMDId(unpackUi32(data[4:8])),
+		CMDStatus(unpackUi32(data[8:12])),
 		unpackUi32(data[12:16]),
 	)
 }

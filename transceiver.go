@@ -84,7 +84,7 @@ func (t *Transceiver) SubmitSm(source_addr, destination_addr, short_message stri
 	return p.GetHeader().Sequence, nil
 }
 
-func (t *Transceiver) DeliverSmResp(seq, status uint32) error {
+func (t *Transceiver) DeliverSmResp(seq uint32, status CMDStatus) error {
 	p, err := t.Smpp.DeliverSmResp(seq, status)
 
 	if err != nil {

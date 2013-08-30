@@ -131,8 +131,8 @@ func (d *DeliverSm) writeTLVFields() []byte {
 func (d *DeliverSm) Writer() []byte {
 	b := append(d.writeFields(), d.writeTLVFields()...)
 	h := packUi32(uint32(len(b) + 16))
-	h = append(h, packUi32(DELIVER_SM)...)
-	h = append(h, packUi32(d.Header.Status)...)
+	h = append(h, packUi32(uint32(DELIVER_SM))...)
+	h = append(h, packUi32(uint32(d.Header.Status))...)
 	h = append(h, packUi32(d.Header.Sequence)...)
 
 	return append(h, b...)
