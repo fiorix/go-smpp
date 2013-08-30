@@ -3,11 +3,11 @@ package smpp34
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"reflect"
-	"strconv"
 )
+
+type PduReadErr string
 
 type Pdu interface {
 	Fields() map[string]Field
@@ -22,9 +22,13 @@ type Pdu interface {
 	Ok() bool
 }
 
+func (p PduReadErr) Error() string {
+	return string(p)
+}
+
 func ParsePdu(data []byte) (Pdu, error) {
 	if len(data) < 16 {
-		return nil, errors.New("Invalid PDU. Length under 16 bytes")
+		return nil, PduReadErr("Invalid PDU. Length under 16 bytes")
 	}
 
 	header := ParsePduHeader(data[:16])
@@ -61,7 +65,7 @@ func ParsePdu(data []byte) (Pdu, error) {
 		n, err := NewUnbindResp(header)
 		return Pdu(n), err
 	default:
-		return nil, errors.New("Unknown PDU Command ID: " + strconv.Itoa(int(header.Id)))
+		return nil, PduReadErr(header.Id.Error())
 	}
 }
 
