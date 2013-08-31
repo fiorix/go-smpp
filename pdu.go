@@ -69,6 +69,9 @@ func ParsePdu(data []byte) (Pdu, error) {
 	case UNBIND_RESP:
 		n, err := NewUnbindResp(header)
 		return Pdu(n), err
+	case GENERIC_NACK:
+		n, err := NewGenericNack(header)
+		return Pdu(n), err
 	default:
 		return nil, PduCmdIdErr(header.Id.Error())
 	}
