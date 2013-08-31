@@ -117,6 +117,16 @@ func (t *Transceiver) UnbindResp(seq uint32) error {
 	return nil
 }
 
+func (t *Transceiver) GenericNack(seq uint32, status CMDStatus) error {
+	p, _ := t.Smpp.GenericNack(seq, status)
+
+	if err := t.Write(p); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (t *Transceiver) bindCheck() {
 	// Block
 	<-time.After(time.Duration(5 * time.Second))

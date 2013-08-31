@@ -30,7 +30,7 @@ Check [examples](https://github.com/CodeMonkeyKevin/smpp34/tree/master/examples)
 - [x] enquire_link
 - [x] enquire_link_resp
 - [ ] alert_notification
-- [ ] generic_nack
+- [x] generic_nack
 
 ## License
 

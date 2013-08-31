@@ -183,6 +183,18 @@ func (s *Smpp) DeliverSmResp(seq uint32, status CMDStatus) (Pdu, error) {
 	return Pdu(p), nil
 }
 
+func (s *Smpp) GenericNack(seq uint32, status CMDStatus) (Pdu, error) {
+	p, _ := NewGenericNack(
+		&Header{
+			Id:       GENERIC_NACK,
+			Status:   status,
+			Sequence: seq,
+		},
+	)
+
+	return Pdu(p), nil
+}
+
 func (s *Smpp) Read() (Pdu, error) {
 	l := make([]byte, 4)
 	_, err := s.conn.Read(l)
