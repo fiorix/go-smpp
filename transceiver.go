@@ -167,6 +167,14 @@ func (t *Transceiver) startEnquireLink(eli int) {
 func (t *Transceiver) Read() (Pdu, error) {
 	pdu, err := t.Smpp.Read()
 	if err != nil {
+		if _, ok := err.(PduCmdIdErr); ok {
+			// Invalid PDU Command ID, should send back GenericNack
+			t.GenericNack(uint32(0), ESME_RINVCMDID)
+		} else if SmppPduLenErr == err {
+			// Invalid PDU, PDU read or Len error
+			t.GenericNack(uint32(0), ESME_RINVCMDLEN)
+		}
+
 		return nil, err
 	}
 
