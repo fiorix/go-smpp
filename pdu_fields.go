@@ -2,12 +2,16 @@ package smpp34
 
 import "strconv"
 
+const FieldValueErr FieldErr = "Invalid field value"
+
 type Field interface {
 	Length() interface{}
 	Value() interface{}
 	String() string
 	ByteArray() []byte
 }
+
+type FieldErr string
 
 type VariableField struct {
 	value []byte
@@ -71,4 +75,8 @@ func (f *FixedField) String() string {
 
 func (f *FixedField) ByteArray() []byte {
 	return packUi8(f.value)
+}
+
+func (f FieldErr) Error() string {
+	return string(f)
 }

@@ -2,7 +2,6 @@ package smpp34
 
 import (
 	"bytes"
-	"errors"
 )
 
 var (
@@ -64,7 +63,7 @@ func (s *DeliverSmResp) SetField(f string, v interface{}) error {
 		}
 	}
 
-	return errors.New("Invalid field value")
+	return FieldValueErr
 }
 
 func (s *DeliverSmResp) SetSeqNum(i uint32) {
@@ -72,7 +71,7 @@ func (s *DeliverSmResp) SetSeqNum(i uint32) {
 }
 
 func (s *DeliverSmResp) SetTLVField(t, l int, v []byte) error {
-	return errors.New("Invalid TLV value lenght")
+	return TLVFieldPduErr
 }
 
 func (s *DeliverSmResp) validate_field(f string, v interface{}) bool {

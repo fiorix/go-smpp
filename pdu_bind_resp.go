@@ -2,7 +2,6 @@ package smpp34
 
 import (
 	"bytes"
-	"errors"
 )
 
 var (
@@ -64,7 +63,7 @@ func (s *BindResp) SetField(f string, v interface{}) error {
 		}
 	}
 
-	return errors.New("Invalid field value")
+	return FieldValueErr
 }
 
 func (s *BindResp) SetSeqNum(i uint32) {
@@ -73,7 +72,7 @@ func (s *BindResp) SetSeqNum(i uint32) {
 
 func (s *BindResp) SetTLVField(t, l int, v []byte) error {
 	if l != len(v) {
-		return errors.New("Invalid TLV value lenght")
+		return TLVFieldLenErr
 	}
 
 	s.tlvFields[uint16(t)] = &TLVField{uint16(t), uint16(l), v}

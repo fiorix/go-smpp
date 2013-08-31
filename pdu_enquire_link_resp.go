@@ -1,9 +1,5 @@
 package smpp34
 
-import (
-	"errors"
-)
-
 var (
 	reqELRespFields = []string{}
 )
@@ -25,7 +21,7 @@ func (s *EnquireLinkResp) GetField(f string) Field {
 }
 
 func (s *EnquireLinkResp) SetField(f string, v interface{}) error {
-	return errors.New("Invalid field value")
+	return FieldValueErr
 }
 
 func (s *EnquireLinkResp) SetSeqNum(i uint32) {
@@ -33,7 +29,7 @@ func (s *EnquireLinkResp) SetSeqNum(i uint32) {
 }
 
 func (s *EnquireLinkResp) SetTLVField(t, l int, v []byte) error {
-	return errors.New("Invalid TLV value lenght")
+	return TLVFieldPduErr
 }
 
 func (s *EnquireLinkResp) Fields() map[string]Field {

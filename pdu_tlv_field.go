@@ -1,9 +1,20 @@
 package smpp34
 
+const (
+	TLVFieldLenErr TLVFieldErr = "Invalid TLV value lenght"
+	TLVFieldPduErr TLVFieldErr = "PDU Type does not support TLV"
+)
+
 type TLVField struct {
 	Tag    uint16
 	Length uint16
 	value  []byte
+}
+
+type TLVFieldErr string
+
+func (t TLVFieldErr) Error() string {
+	return string(t)
 }
 
 func (t *TLVField) Value() []byte {

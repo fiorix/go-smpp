@@ -1,9 +1,5 @@
 package smpp34
 
-import (
-	"errors"
-)
-
 var (
 	reqUnbindRespFields = []string{}
 )
@@ -25,7 +21,7 @@ func (s *UnbindResp) GetField(f string) Field {
 }
 
 func (s *UnbindResp) SetField(f string, v interface{}) error {
-	return errors.New("Invalid field value")
+	return FieldValueErr
 }
 
 func (s *UnbindResp) SetSeqNum(i uint32) {
@@ -33,7 +29,7 @@ func (s *UnbindResp) SetSeqNum(i uint32) {
 }
 
 func (s *UnbindResp) SetTLVField(t, l int, v []byte) error {
-	return errors.New("Invalid TLV value lenght")
+	return TLVFieldPduErr
 }
 
 func (s *UnbindResp) Fields() map[string]Field {
