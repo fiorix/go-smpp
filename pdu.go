@@ -98,7 +98,11 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, 
 				return nil, nil, err
 			}
 
-			fields[k] = NewVariableField(t)
+			if len(t) == 0 {
+				fields[k] = NewVariableField(t)
+			} else {
+				fields[k] = NewVariableField(t[:len(t)-1])
+			}
 		case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI:
 			t, err := r.ReadByte()
 
