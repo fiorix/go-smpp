@@ -1,7 +1,6 @@
 package smpp34
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
@@ -52,17 +51,15 @@ func (t *Transceiver) Bind(system_id string, password string, params *Params) er
 	pdu, err = t.Smpp.Read()
 
 	if err != nil {
-		fmt.Println("pdu read err in bind:", err)
 		return err
 	}
 
 	if pdu.GetHeader().Id != BIND_TRANSCEIVER_RESP {
-		fmt.Println("TRX BIND Resp not received")
-		return errors.New("TRX BIND Resp not received")
+		return SmppBindRespErr
 	}
 
 	if !pdu.Ok() {
-		return errors.New("Bind failed with status code" + string(pdu.GetHeader().Id))
+		return SmppBindAuthErr("Bind auth failed. " + pdu.GetHeader().Status.Error())
 	}
 
 	t.Bound = true
@@ -179,7 +176,7 @@ func (t *Transceiver) Read() (Pdu, error) {
 		t.Close()
 	default:
 		// Should not have received these PDUs on a TRx bind
-		return nil, errors.New("Received out of spec PDU for TRx")
+		return nil, SmppPduErr
 	}
 
 	return pdu, nil

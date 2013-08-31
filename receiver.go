@@ -1,7 +1,6 @@
 package smpp34
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
@@ -52,17 +51,15 @@ func (t *Receiver) Bind(system_id string, password string, params *Params) error
 	pdu, err = t.Smpp.Read()
 
 	if err != nil {
-		fmt.Println("pdu read err in bind:", err)
 		return err
 	}
 
 	if pdu.GetHeader().Id != BIND_RECEIVER_RESP {
-		fmt.Println("RX BIND Resp not received")
-		return errors.New("RX BIND Resp not received")
+		return SmppBindRespErr
 	}
 
 	if !pdu.Ok() {
-		return errors.New("Bind failed with status code" + string(pdu.GetHeader().Id))
+		return SmppBindAuthErr("Bind auth failed. " + pdu.GetHeader().Status.Error())
 	}
 
 	t.Bound = true
@@ -71,7 +68,7 @@ func (t *Receiver) Bind(system_id string, password string, params *Params) error
 }
 
 func (t *Receiver) SubmitSm(source_addr, destination_addr, short_message string, params *Params) (seq uint32, err error) {
-	return 0, errors.New("SubmitSm out of spec for RX bind")
+	return 0, SmppPduErr
 }
 
 func (t *Receiver) DeliverSmResp(seq uint32, status CMDStatus) error {
@@ -169,7 +166,7 @@ func (t *Receiver) Read() (Pdu, error) {
 		t.Close()
 	default:
 		// Should not have received these PDUs on a RX bind
-		return nil, errors.New("Received out of spec PDU for RX")
+		return nil, SmppPduErr
 	}
 
 	return pdu, nil

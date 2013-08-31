@@ -3,7 +3,6 @@ package smpp34
 import (
 	"bufio"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -19,7 +18,25 @@ type Smpp struct {
 	Bound    bool
 }
 
+type SmppErr string
+type SmppBindAuthErr string
+
 type Params map[string]interface{}
+
+const (
+	SmppBindRespErr SmppErr = "BIND Resp not received"
+	SmppPduErr      SmppErr = "PDU out of spec for this connection type"
+	SmppPduSizeErr  SmppErr = "PDU Len larger than MAX_PDU_SIZE"
+	SmppPduLenErr   SmppErr = "PDU Len different than read bytes"
+)
+
+func (p SmppErr) Error() string {
+	return string(p)
+}
+
+func (p SmppBindAuthErr) Error() string {
+	return string(p)
+}
 
 func NewSmppConnect(host string, port int) (*Smpp, error) {
 	s := &Smpp{}
@@ -173,7 +190,7 @@ func (s *Smpp) Read() (Pdu, error) {
 
 	pduLength := unpackUi32(l) - 4
 	if pduLength > MAX_PDU_SIZE {
-		return nil, errors.New("PDU Len larger than MAX_PDU_SIZE")
+		return nil, SmppPduSizeErr
 	}
 
 	data := make([]byte, pduLength)
@@ -184,7 +201,7 @@ func (s *Smpp) Read() (Pdu, error) {
 	}
 
 	if i != int(pduLength) {
-		return nil, errors.New("PDU Len different than read bytes")
+		return nil, SmppPduLenErr
 	}
 
 	pkt := append(l, data...)
