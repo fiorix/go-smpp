@@ -28,6 +28,8 @@ const (
 	SmppPduErr      SmppErr = "PDU out of spec for this connection type"
 	SmppPduSizeErr  SmppErr = "PDU Len larger than MAX_PDU_SIZE"
 	SmppPduLenErr   SmppErr = "PDU Len different than read bytes"
+	SmppELWriteErr  SmppErr = "Error writing ELR PDU"
+	SmppELRespErr   SmppErr = "No enquire link response"
 )
 
 func (p SmppErr) Error() string {

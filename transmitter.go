@@ -1,7 +1,6 @@
 package smpp34
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -10,6 +9,7 @@ type Transmitter struct {
 	eLTicker     *time.Ticker // Enquire Link ticker
 	eLCheckTimer *time.Timer  // Enquire Link Check timer
 	eLDuration   int          // Enquire Link Duration
+	Err          error        // Errors generated in go routines that lead to conn close
 }
 
 // eli = EnquireLink Interval in Seconds
@@ -111,7 +111,8 @@ func (t *Transmitter) bindCheck() {
 	// Block
 	<-time.After(time.Duration(5 * time.Second))
 	if !t.Bound {
-		fmt.Println("No Bind Response from SMSC")
+		// send error to t.err? So it can be read before closing.
+		t.Err = SmppBindRespErr
 		t.Close()
 	}
 }
@@ -129,14 +130,14 @@ func (t *Transmitter) startEnquireLink(eli int) {
 
 			p, _ := t.EnquireLink()
 			if err := t.Write(p); err != nil {
-				fmt.Println("Err writing ELR PDU:", err)
+				t.Err = SmppELWriteErr
 				t.Close()
 				return
 			}
 
 			t.eLCheckTimer.Reset(d)
 		case <-t.eLCheckTimer.C:
-			fmt.Println("No enquire link response")
+			t.Err = SmppELRespErr
 			t.Close()
 			return
 		}
