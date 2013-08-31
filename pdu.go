@@ -8,6 +8,7 @@ import (
 )
 
 type PduReadErr string
+type PduCmdIdErr string
 
 type Pdu interface {
 	Fields() map[string]Field
@@ -23,6 +24,10 @@ type Pdu interface {
 }
 
 func (p PduReadErr) Error() string {
+	return string(p)
+}
+
+func (p PduCmdIdErr) Error() string {
 	return string(p)
 }
 
@@ -65,7 +70,7 @@ func ParsePdu(data []byte) (Pdu, error) {
 		n, err := NewUnbindResp(header)
 		return Pdu(n), err
 	default:
-		return nil, PduReadErr(header.Id.Error())
+		return nil, PduCmdIdErr(header.Id.Error())
 	}
 }
 
