@@ -3,7 +3,23 @@ package smpp34
 import (
 	"encoding/hex"
 	. "launchpad.net/gocheck"
+	"math/rand"
 	"testing"
+	"time"
+)
+
+const (
+	bindPdu            = "000000240000000900000000000000016875676f0067676f6f687500434d540034000000"
+	bindRespPdu        = "0000001d80000009000000000000000474657374696e67000210000134"
+	deliverSmPdu       = "0000004d000000050000000052227280000001746573743200010174657374000000010000010000002338393261386563303634633064373639666134353366373762343a2074657374206d6f"
+	deliverSmRespPdu   = "0000001180000005000000005222728000"
+	enquireLinkPdu     = "00000010000000150000000000000005"
+	enquireLinkRespPdu = "00000010800000150000000000000005"
+	genericNackPdu     = "00000010800000000000000200000000"
+	submitSmPdu        = "0000002d00000004000000000000000200000074657374000000746573743200000000000000000000036d7367"
+	submitSmRespPdu    = "0000003580000004000000005221ac3831303039343665342d356138662d343835642d386536342d65646639616133373761323200"
+	unbindPdu          = "00000010000000060000000000000003"
+	unbindRespPdu      = "00000010800000060000000000000003"
 )
 
 func Test(t *testing.T) { TestingT(t) }
@@ -13,8 +29,7 @@ type MySuite struct{}
 var _ = Suite(&MySuite{})
 
 func (s *MySuite) Test_BindPdu(c *C) {
-	h := "000000240000000900000000000000016875676f0067676f6f687500434d540034000000"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(bindPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -32,8 +47,7 @@ func (s *MySuite) Test_BindPdu(c *C) {
 }
 
 func (s *MySuite) Test_BindRespPdu(c *C) {
-	h := "0000001d80000009000000000000000474657374696e67000210000134"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(bindRespPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -44,8 +58,7 @@ func (s *MySuite) Test_BindRespPdu(c *C) {
 }
 
 func (s *MySuite) Test_DeliverSmPdu(c *C) {
-	h := "0000004d000000050000000052227280000001746573743200010174657374000000010000010000002338393261386563303634633064373639666134353366373762343a2074657374206d6f"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(deliverSmPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -59,8 +72,7 @@ func (s *MySuite) Test_DeliverSmPdu(c *C) {
 }
 
 func (s *MySuite) Test_DeliverSmRespPdu(c *C) {
-	h := "0000001180000005000000005222728000"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(deliverSmRespPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -69,8 +81,7 @@ func (s *MySuite) Test_DeliverSmRespPdu(c *C) {
 }
 
 func (s *MySuite) Test_EnquireLinkPdu(c *C) {
-	h := "00000010000000150000000000000005"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(enquireLinkPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -79,8 +90,7 @@ func (s *MySuite) Test_EnquireLinkPdu(c *C) {
 }
 
 func (s *MySuite) Test_EnquireLinkRespPdu(c *C) {
-	h := "00000010800000150000000000000005"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(enquireLinkRespPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -89,8 +99,7 @@ func (s *MySuite) Test_EnquireLinkRespPdu(c *C) {
 }
 
 func (s *MySuite) Test_GenericNackPdu(c *C) {
-	h := "00000010800000000000000200000000"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(genericNackPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -99,8 +108,7 @@ func (s *MySuite) Test_GenericNackPdu(c *C) {
 }
 
 func (s *MySuite) Test_SubmitSmPdu(c *C) {
-	h := "0000002d00000004000000000000000200000074657374000000746573743200000000000000000000036d7367"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(submitSmPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -114,8 +122,7 @@ func (s *MySuite) Test_SubmitSmPdu(c *C) {
 }
 
 func (s *MySuite) Test_SubmitSmRespPdu(c *C) {
-	h := "0000003580000004000000005221ac3831303039343665342d356138662d343835642d386536342d65646639616133373761323200"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(submitSmRespPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -125,8 +132,7 @@ func (s *MySuite) Test_SubmitSmRespPdu(c *C) {
 }
 
 func (s *MySuite) Test_UnbindPdu(c *C) {
-	h := "00000010000000060000000000000003"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(unbindPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
@@ -134,10 +140,34 @@ func (s *MySuite) Test_UnbindPdu(c *C) {
 }
 
 func (s *MySuite) Test_UnbindRespPdu(c *C) {
-	h := "00000010800000060000000000000003"
-	data, _ := hex.DecodeString(h)
+	data, _ := hex.DecodeString(unbindRespPdu)
 	p, err := ParsePdu(data)
 
 	c.Check(err, IsNil)
 	c.Check(p.GetHeader(), DeepEquals, NewPduHeader(0x10, UNBIND_RESP, ESME_ROK, uint32(3)))
+}
+
+func (s *MySuite) BenchmarkPduParsing(c *C) {
+	c.StopTimer()
+	pdus := []string{
+		bindPdu,
+		bindRespPdu,
+		deliverSmPdu,
+		deliverSmRespPdu,
+		enquireLinkPdu,
+		enquireLinkRespPdu,
+		genericNackPdu,
+		submitSmPdu,
+		submitSmRespPdu,
+		unbindPdu,
+		unbindRespPdu,
+	}
+
+	for i := 0; i < c.N; i++ {
+		p, _ := hex.DecodeString(pdus[rand.Intn(len(pdus))])
+		c.StartTimer()
+		ParsePdu(p)
+		c.StopTimer()
+		rand.Seed(time.Now().UTC().UnixNano())
+	}
 }
