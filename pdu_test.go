@@ -44,6 +44,9 @@ func (s *MySuite) Test_BindPdu(c *C) {
 	p.SetField(SYSTEM_ID, "test1")
 	c.Check(p.GetField(SYSTEM_ID).String(), Equals, "test1")
 	c.Check(hex.EncodeToString(p.Writer()), DeepEquals, "0000002500000009000000000000000174657374310067676f6f687500434d540034000000")
+
+	c.Check(p.SetTLVField(0x210, 0, []byte{0x1, 0x2}), Equals, TLVFieldPduErr)
+	c.Check(p.GetField("UNKNOWN_STR"), IsNil)
 }
 
 func (s *MySuite) Test_BindRespPdu(c *C) {
@@ -55,6 +58,9 @@ func (s *MySuite) Test_BindRespPdu(c *C) {
 	c.Check(p.GetField(SYSTEM_ID).String(), Equals, "testing")
 	c.Check(p.TLVFields()[0x210].Value(), DeepEquals, []uint8{0x34})
 	c.Check(p.Writer(), DeepEquals, data)
+
+	c.Check(p.SetTLVField(0x210, 0, []byte{0x1, 0x2}), Equals, TLVFieldLenErr)
+	c.Check(p.SetTLVField(0x210, 5, []byte{0x1, 0x2}), Equals, TLVFieldLenErr)
 }
 
 func (s *MySuite) Test_DeliverSmPdu(c *C) {
@@ -113,6 +119,7 @@ func (s *MySuite) Test_SubmitSmPdu(c *C) {
 
 	c.Check(err, IsNil)
 	c.Check(p.GetHeader(), DeepEquals, NewPduHeader(0x2d, SUBMIT_SM, ESME_ROK, uint32(2)))
+	c.Check(p.SetField(SHORT_MESSAGE, 1).Error(), Equals, FieldValueErr.Error())
 	c.Check(p.Writer(), DeepEquals, data)
 
 	// Change Short Message
