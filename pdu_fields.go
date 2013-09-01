@@ -13,6 +13,10 @@ type Field interface {
 
 type FieldErr string
 
+type SMField struct {
+	value []byte
+}
+
 type VariableField struct {
 	value []byte
 }
@@ -26,10 +30,18 @@ func NewField(f string, v interface{}) Field {
 	switch f {
 	case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI, SM_LENGTH:
 		return NewFixedField(uint8(v.(int)))
-	case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID, SHORT_MESSAGE:
+	case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID:
 		return NewVariableField([]byte(v.(string)))
+	case SHORT_MESSAGE:
+		return NewSMField([]byte(v.(string)))
 	}
 	return nil
+}
+
+func NewSMField(v []byte) Field {
+	i := &SMField{v}
+	f := Field(i)
+	return f
 }
 
 func NewVariableField(v []byte) Field {
@@ -79,4 +91,21 @@ func (f *FixedField) ByteArray() []byte {
 
 func (f FieldErr) Error() string {
 	return string(f)
+}
+
+func (v *SMField) Length() interface{} {
+	l := len(v.value)
+	return l
+}
+
+func (v *SMField) Value() interface{} {
+	return v.value
+}
+
+func (v *SMField) String() string {
+	return string(v.value)
+}
+
+func (v *SMField) ByteArray() []byte {
+	return v.value
 }
