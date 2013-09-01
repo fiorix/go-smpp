@@ -68,7 +68,7 @@ func startServer(c *C) {
 
 func handleConnection(n net.Conn, c *C) {
 	l := make([]byte, 1024)
-	i, err := n.Read(l)
+	_, err := n.Read(l)
 
 	if err != nil {
 		fmt.Println("server read error")
@@ -95,6 +95,4 @@ func handleConnection(n net.Conn, c *C) {
 	// Max PDU Len err
 	d, _ = hex.DecodeString("0000F01080000015000000005222b526")
 	n.Write(d)
-
-	fmt.Println(i)
 }
