@@ -28,6 +28,22 @@ type MySuite struct{}
 
 var _ = Suite(&MySuite{})
 
+func (s *MySuite) Test_PduCmdIdErrors(c *C) {
+	data, _ := hex.DecodeString("00000010900000060000000000000003")
+	_, err := ParsePdu(data)
+	c.Check(err.Error(), Equals, "Unknown PDU Type. ID:2415919110")
+}
+
+func (s *MySuite) Test_PduLenErrors(c *C) {
+	data, _ := hex.DecodeString("000000100000000600000000000000")
+	_, err := ParsePdu(data)
+	c.Check(err.Error(), Equals, "Invalid PDU length")
+
+	data, _ = hex.DecodeString("000000F00000000600000000000000")
+	_, err = ParsePdu(data)
+	c.Check(err.Error(), Equals, "Invalid PDU length")
+}
+
 func (s *MySuite) Test_BindPdu(c *C) {
 	data, _ := hex.DecodeString(bindPdu)
 	p, err := ParsePdu(data)

@@ -7,6 +7,10 @@ import (
 	"reflect"
 )
 
+const (
+	PduLenErr PduReadErr = "Invalid PDU length"
+)
+
 type PduReadErr string
 type PduCmdIdErr string
 
@@ -33,10 +37,14 @@ func (p PduCmdIdErr) Error() string {
 
 func ParsePdu(data []byte) (Pdu, error) {
 	if len(data) < 16 {
-		return nil, PduReadErr("Invalid PDU. Length under 16 bytes")
+		return nil, PduLenErr
 	}
 
 	header := ParsePduHeader(data[:16])
+
+	if int(header.Length) != len(data) {
+		return nil, PduLenErr
+	}
 
 	switch header.Id {
 	case SUBMIT_SM:
