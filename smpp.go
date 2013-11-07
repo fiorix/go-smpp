@@ -9,6 +9,8 @@ import (
 	"sync"
 )
 
+var Debug bool
+
 type Smpp struct {
 	mu       sync.Mutex
 	conn     net.Conn
@@ -219,7 +221,9 @@ func (s *Smpp) Read() (Pdu, error) {
 	}
 
 	pkt := append(l, data...)
-	fmt.Println(hex.Dump(pkt))
+	if Debug {
+		fmt.Println(hex.Dump(pkt))
+	}
 
 	pdu, err := ParsePdu(pkt)
 	if err != nil {
@@ -232,7 +236,9 @@ func (s *Smpp) Read() (Pdu, error) {
 func (s *Smpp) Write(p Pdu) error {
 	_, err := s.conn.Write(p.Writer())
 
-	fmt.Println(hex.Dump(p.Writer()))
+	if Debug {
+		fmt.Println(hex.Dump(p.Writer()))
+	}
 
 	return err
 }
