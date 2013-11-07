@@ -123,4 +123,7 @@ const (
 	SM_LENGTH               = "sm_length"
 	SHORT_MESSAGE           = "short_message"
 	MESSAGE_ID              = "message_id"
+	FINAL_DATE              = "final_date"
+	MESSAGE_STATE           = "message_state"
+	ERROR_CODE              = "error_code"
 )

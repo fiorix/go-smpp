@@ -80,6 +80,12 @@ func ParsePdu(data []byte) (Pdu, error) {
 	case GENERIC_NACK:
 		n, err := NewGenericNack(header)
 		return Pdu(n), err
+	case QUERY_SM:
+		n, err := NewQuerySm(header, data[16:])
+		return Pdu(n), err
+	case QUERY_SM_RESP:
+		n, err := NewQuerySmResp(header, data[16:])
+		return Pdu(n), err
 	default:
 		return nil, PduCmdIdErr(header.Id.Error())
 	}
@@ -100,7 +106,8 @@ func create_pdu_fields(fieldNames []string, r *bytes.Buffer) (map[string]Field, 
 	eof := false
 	for _, k := range fieldNames {
 		switch k {
-		case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID:
+		case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID, FINAL_DATE, MESSAGE_STATE, ERROR_CODE:
+			// Review this for fields that could be 1 or 17 int in length (E.g: FINAL_DATE)
 			t, err := r.ReadBytes(0x00)
 
 			if err == io.EOF {
@@ -203,11 +210,11 @@ func parse_tlv_fields(r *bytes.Buffer) (map[uint16]*TLVField, error) {
 
 func validate_pdu_field(f string, v interface{}) bool {
 	switch f {
-	case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI, SM_LENGTH:
+	case SOURCE_ADDR_TON, SOURCE_ADDR_NPI, DEST_ADDR_TON, DEST_ADDR_NPI, ESM_CLASS, PROTOCOL_ID, PRIORITY_FLAG, REGISTERED_DELIVERY, REPLACE_IF_PRESENT_FLAG, DATA_CODING, SM_DEFAULT_MSG_ID, INTERFACE_VERSION, ADDR_TON, ADDR_NPI, SM_LENGTH, MESSAGE_STATE, ERROR_CODE:
 		if validate_pdu_field_type(0x00, v) {
 			return true
 		}
-	case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID, SHORT_MESSAGE:
+	case SERVICE_TYPE, SOURCE_ADDR, DESTINATION_ADDR, SCHEDULE_DELIVERY_TIME, VALIDITY_PERIOD, SYSTEM_ID, PASSWORD, SYSTEM_TYPE, ADDRESS_RANGE, MESSAGE_ID, SHORT_MESSAGE, FINAL_DATE:
 		if validate_pdu_field_type("string", v) {
 			return true
 		}

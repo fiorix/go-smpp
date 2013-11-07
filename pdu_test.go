@@ -20,6 +20,8 @@ const (
 	submitSmRespPdu    = "0000003580000004000000005221ac3831303039343665342d356138662d343835642d386536342d65646639616133373761323200"
 	unbindPdu          = "00000010000000060000000000000003"
 	unbindRespPdu      = "00000010800000060000000000000003"
+	querySmPdu         = "0000002000000003000000000000000168656c6c6f00000174657374696e6700"
+	querySmRespPdu     = "0000001a80000003000000000000000168656c6c6f0000010000"
 )
 
 func Test(t *testing.T) { TestingT(t) }
@@ -168,6 +170,30 @@ func (s *MySuite) Test_UnbindRespPdu(c *C) {
 
 	c.Check(err, IsNil)
 	c.Check(p.GetHeader(), DeepEquals, NewPduHeader(0x10, UNBIND_RESP, ESME_ROK, uint32(3)))
+}
+
+func (s *MySuite) Test_QuerySmPdu(c *C) {
+	data, _ := hex.DecodeString(querySmPdu)
+	p, err := ParsePdu(data)
+
+	c.Check(err, IsNil)
+	c.Check(p.GetHeader(), DeepEquals, NewPduHeader(0x20, QUERY_SM, ESME_ROK, uint32(1)))
+	c.Check(p.GetField(MESSAGE_ID).String(), Equals, "hello")
+	c.Check(p.GetField(SOURCE_ADDR_TON).Value(), Equals, uint8(0))
+	c.Check(p.GetField(SOURCE_ADDR_NPI).Value(), Equals, uint8(1))
+	c.Check(p.GetField(SOURCE_ADDR).String(), Equals, "testing")
+	c.Check(p.Writer(), DeepEquals, data)
+}
+
+func (s *MySuite) Test_QuerySmRespPdu(c *C) {
+	data, _ := hex.DecodeString(querySmRespPdu)
+	p, err := ParsePdu(data)
+
+	c.Check(err, IsNil)
+	c.Check(p.GetHeader(), DeepEquals, NewPduHeader(0x1a, QUERY_SM_RESP, ESME_ROK, uint32(1)))
+	c.Check(p.GetField(MESSAGE_ID).String(), Equals, "hello")
+	c.Check(p.GetField(FINAL_DATE).String(), Equals, "")
+	c.Check(p.Writer(), DeepEquals, data)
 }
 
 func (s *MySuite) BenchmarkPduParsing(c *C) {

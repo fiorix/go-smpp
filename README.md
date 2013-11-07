@@ -21,8 +21,8 @@ Check [examples](https://github.com/CodeMonkeyKevin/smpp34/tree/master/examples)
 - [ ] data_sm_resp
 - [x] deliver_sm
 - [x] deliver_sm_resp
-- [ ] query_sm
-- [ ] query_sm_resp
+- [x] query_sm
+- [x] query_sm_resp
 - [ ] cancel_sm
 - [ ] cancel_sm_resp
 - [ ] replace_sm
