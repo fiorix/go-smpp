@@ -81,6 +81,20 @@ func (t *Transmitter) SubmitSm(source_addr, destination_addr, short_message stri
 	return p.GetHeader().Sequence, nil
 }
 
+func (t *Transmitter) QuerySm(message_id, source_addr string, params *Params) (seq uint32, err error) {
+	p, err := t.Smpp.QuerySm(message_id, source_addr, params)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if err := t.Write(p); err != nil {
+		return 0, err
+	}
+
+	return p.GetHeader().Sequence, nil
+}
+
 func (t *Transmitter) DeliverSmResp(seq, status uint32) error {
 	return SmppPduErr
 }
@@ -160,6 +174,8 @@ func (t *Transmitter) Read() (Pdu, error) {
 
 	switch pdu.GetHeader().Id {
 	case SUBMIT_SM_RESP:
+		return pdu, nil
+	case QUERY_SM_RESP:
 		return pdu, nil
 	case ENQUIRE_LINK:
 		p, _ := t.Smpp.EnquireLinkResp(pdu.GetHeader().Sequence)
