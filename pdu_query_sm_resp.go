@@ -2,6 +2,7 @@ package smpp34
 
 import (
 	"bytes"
+	"encoding/binary"
 )
 
 var (
@@ -35,7 +36,15 @@ func NewQuerySmResp(hdr *Header, b []byte) (*QuerySmResp, error) {
 }
 
 func (s *QuerySmResp) GetField(f string) Field {
-	return s.mandatoryFields[f]
+	switch f {
+	case MESSAGE_STATE, ERROR_CODE:
+		var v uint8
+		binary.Read(bytes.NewBuffer(s.mandatoryFields[f].ByteArray()),
+			binary.BigEndian, &v)
+		return NewFixedField(v)
+	default:
+		return s.mandatoryFields[f]
+	}
 }
 
 func (s *QuerySmResp) Fields() map[string]Field {
