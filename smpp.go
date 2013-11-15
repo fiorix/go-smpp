@@ -150,6 +150,30 @@ func (s *Smpp) SubmitSm(source_addr, destination_addr, short_message string, par
 	return p, nil
 }
 
+func (s *Smpp) QuerySm(message_id, source_addr string, params *Params) (Pdu, error) {
+
+	p, _ := NewQuerySm(
+		&Header{
+			Id:       QUERY_SM,
+			Sequence: s.NewSeqNum(),
+		},
+		[]byte{},
+	)
+
+	p.SetField(MESSAGE_ID, message_id)
+	p.SetField(SOURCE_ADDR, source_addr)
+
+	for f, v := range *params {
+		err := p.SetField(f, v)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return p, nil
+}
+
 func (s *Smpp) Unbind() (Pdu, error) {
 	p, _ := NewUnbind(
 		&Header{
