@@ -150,6 +150,21 @@ func (s *Smpp) SubmitSm(source_addr, destination_addr, short_message string, par
 	return p, nil
 }
 
+func (s *Smpp) SubmitSmResp(seq uint32, status CMDStatus, messageId string) (Pdu, error) {
+	p, _ := NewSubmitSmResp(
+		&Header{
+			Id:       SUBMIT_SM_RESP,
+			Status:   status,
+			Sequence: seq,
+		},
+		[]byte{},
+	)
+
+	p.SetField(MESSAGE_ID, messageId)
+
+	return Pdu(p), nil
+}
+
 func (s *Smpp) QuerySm(message_id, source_addr string, params *Params) (Pdu, error) {
 
 	p, _ := NewQuerySm(
