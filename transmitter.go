@@ -184,8 +184,8 @@ func (t *Transmitter) Read() (Pdu, error) {
 			return nil, err
 		}
 	case ENQUIRE_LINK_RESP:
-		// Reset EnquireLink Check
-		t.eLCheckTimer.Reset(time.Duration(t.eLDuration) * time.Second)
+		// Stop EnquireLink Check.
+		t.eLCheckTimer.Stop()
 	case UNBIND:
 		t.UnbindResp(pdu.GetHeader().Sequence)
 		t.Close()
