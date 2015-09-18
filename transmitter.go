@@ -14,11 +14,13 @@ type Transmitter struct {
 }
 
 // NewTransmitter creates and initializes a new Transmitter.
+// The eli parameter is for EnquireLink interval, in seconds.
 func NewTransmitter(host string, port int, eli int, bindParams Params) (*Transmitter, error) {
 	return newTransmitter(host, port, eli, bindParams, nil)
 }
 
 // NewTransmitterTLs creates and initializes a new Transmitter using TLS.
+// The eli parameter is for EnquireLink interval, in seconds.
 func NewTransmitterTLS(host string, port int, eli int, bindParams Params, config *tls.Config) (*Transmitter, error) {
 	if config == nil {
 		config = &tls.Config{}
