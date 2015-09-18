@@ -1,6 +1,7 @@
 package smpp34
 
 import (
+	"crypto/tls"
 	"time"
 )
 
@@ -12,10 +13,31 @@ type Transceiver struct {
 	Err          error        // Errors generated in go routines that lead to conn close
 }
 
-// eli = EnquireLink Interval in Seconds
+// NewTransceiver creates and initializes a new Transceiver.
+// The eli parameter is for EnquireLink interval, in seconds.
 func NewTransceiver(host string, port int, eli int, bindParams Params) (*Transceiver, error) {
+	return newTransceiver(host, port, eli, bindParams, nil)
+}
+
+// NewTransceiver creates and initializes a new Transceiver using TLS.
+// The eli parameter is for EnquireLink interval, in seconds.
+func NewTransceiverTLS(host string, port int, eli int, bindParams Params, config *tls.Config) (*Transceiver, error) {
+	if config == nil {
+		config = &tls.Config{}
+	}
+	return newTransceiver(host, port, eli, bindParams, config)
+}
+
+// eli = EnquireLink Interval in Seconds
+func newTransceiver(host string, port int, eli int, bindParams Params, config *tls.Config) (*Transceiver, error) {
 	trx := &Transceiver{}
-	if err := trx.Connect(host, port); err != nil {
+	var err error
+	if config == nil {
+		err = trx.Connect(host, port)
+	} else {
+		err = trx.ConnectTLS(host, port, config)
+	}
+	if err != nil {
 		return nil, err
 	}
 
