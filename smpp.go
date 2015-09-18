@@ -2,6 +2,7 @@ package smpp34
 
 import (
 	"bufio"
+	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"net"
@@ -53,6 +54,26 @@ func NewSmppConnect(host string, port int) (*Smpp, error) {
 func (s *Smpp) Connect(host string, port int) (err error) {
 	s.conn, err = net.Dial("tcp", host+":"+strconv.Itoa(port))
 
+	return err
+}
+
+func NewSmppConnectTLS(host string, port int, config *tls.Config) (*Smpp, error) {
+	s := &Smpp{}
+
+	err := s.ConnectTLS(host, port, config)
+
+	return s, err
+}
+
+func (s *Smpp) ConnectTLS(host string, port int, config *tls.Config) error {
+	conn, err := net.Dial("tcp", host+":"+strconv.Itoa(port))
+	if err != nil {
+		return err
+	}
+	if config == nil {
+		config = &tls.Config{}
+	}
+	s.conn = tls.Client(conn, config)
 	return err
 }
 
