@@ -1,2 +1,1 @@
-bench_test.go
-bench/client_bench.go
+*.swp
