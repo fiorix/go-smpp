@@ -18,66 +18,39 @@ type (
 	Status uint32
 )
 
+var idString = map[ID]string{
+	GenericNACKID:         "GenericNACK",
+	BindReceiverID:        "BindReceiver",
+	BindReceiverRespID:    "BindReceiverResp",
+	BindTransmitterID:     "BindTransmitter",
+	BindTransmitterRespID: "BindTransmitterResp",
+	QuerySMID:             "QuerySM",
+	QuerySMRespID:         "QuerySMResp",
+	SubmitSMID:            "SubmitSM",
+	SubmitSMRespID:        "SubmitSMResp",
+	DeliverSMID:           "DeliverSM",
+	DeliverSMRespID:       "DeliverSMResp",
+	UnbindID:              "Unbind",
+	UnbindRespID:          "UnbindResp",
+	ReplaceSMID:           "ReplaceSM",
+	ReplaceSMRespID:       "ReplaceSMResp",
+	CancelSMID:            "CancelSM",
+	CancelSMRespID:        "CancelSMResp",
+	BindTransceiverID:     "BindTransceiver",
+	BindTransceiverRespID: "BindTransceiverResp",
+	OutbindID:             "Outbind",
+	EnquireLinkID:         "EnquireLink",
+	EnquireLinkRespID:     "EnquireLinkResp",
+	SubmitMultiID:         "SubmitMulti",
+	SubmitMultiRespID:     "SubmitMultiResp",
+	AlertNotificationID:   "AlertNotification",
+	DataSMID:              "DataSM",
+	DataSMRespID:          "DataSMResp",
+}
+
 // String returns the PDU type as a string.
 func (id ID) String() string {
-	switch id {
-	case GenericNACKID:
-		return "GenericNACK"
-	case BindReceiverID:
-		return "BindReceiver"
-	case BindReceiverRespID:
-		return "BindReceiverResp"
-	case BindTransmitterID:
-		return "BindTransmitter"
-	case BindTransmitterRespID:
-		return "BindTransmitterResp"
-	case QuerySMID:
-		return "QuerySM"
-	case QuerySMRespID:
-		return "QuerySMResp"
-	case SubmitSMID:
-		return "SubmitSM"
-	case SubmitSMRespID:
-		return "SubmitSMResp"
-	case DeliverSMID:
-		return "DeliverSM"
-	case DeliverSMRespID:
-		return "DeliverSMResp"
-	case UnbindID:
-		return "Unbind"
-	case UnbindRespID:
-		return "UnbindResp"
-	case ReplaceSMID:
-		return "ReplaceSM"
-	case ReplaceSMRespID:
-		return "ReplaceSMResp"
-	case CancelSMID:
-		return "CancelSM"
-	case CancelSMRespID:
-		return "CancelSMResp"
-	case BindTransceiverID:
-		return "BindTransceiver"
-	case BindTransceiverRespID:
-		return "BindTransceiverResp"
-	case OutbindID:
-		return "Outbind"
-	case EnquireLinkID:
-		return "EnquireLink"
-	case EnquireLinkRespID:
-		return "EnquireLinkResp"
-	case SubmitMultiID:
-		return "SubmitMulti"
-	case SubmitMultiRespID:
-		return "SubmitMultiResp"
-	case AlertNotificationID:
-		return "AlertNotification"
-	case DataSMID:
-		return "DataSM"
-	case DataSMRespID:
-		return "DataSMResp"
-	default:
-		return "Unknown"
-	}
+	return idString[id]
 }
 
 // HeaderLen is the PDU header length.
