@@ -93,7 +93,6 @@ func (c *client) init() {
 // Bind starts the connection manager and blocks until Close is called.
 // It must be called in a goroutine.
 func (c *client) Bind() {
-	c.init()
 	delay := 1.0
 	const maxdelay = 120.0
 	for !c.closed() {

@@ -46,6 +46,7 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 		BindFunc:    t.bindFunc,
 	}
 	t.conn.client = c
+	c.init()
 	go c.Bind()
 	return c.Status
 }
