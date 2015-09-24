@@ -28,19 +28,23 @@ func (m Map) Set(k Name, v interface{}) error {
 		m[k] = New(k, []byte{v.(uint8)})
 	case int:
 		m[k] = New(k, []byte{uint8(v.(int))})
-	case pdutext.Codec:
-		c := v.(pdutext.Codec)
-		m[k] = New(k, c.Encode())
-		if k == ShortMessage {
-			m[SMLength] = &Fixed{Data: uint8(m[k].Len())}
-			m[DataCoding] = &Fixed{Data: uint8(c.Type())}
-		}
 	case string:
 		m[k] = New(k, []byte(v.(string)))
 	case []byte:
 		m[k] = New(k, []byte(v.([]byte)))
+	case Body:
+		m[k] = v.(Body)
+	case pdutext.Codec:
+		c := v.(pdutext.Codec)
+		m[k] = New(k, c.Encode())
+		if k == ShortMessage {
+			m[DataCoding] = &Fixed{Data: uint8(c.Type())}
+		}
 	default:
 		return fmt.Errorf("unsupported field data: %#v", v)
+	}
+	if k == ShortMessage {
+		m[SMLength] = &Fixed{Data: uint8(m[k].Len())}
 	}
 	return nil
 }

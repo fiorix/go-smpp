@@ -25,6 +25,7 @@ func TestMapSet(t *testing.T) {
 		{DataCoding, uint8(1), true},
 		{DataCoding, int(1), true},
 		{DataCoding, t, false},
+		{DataCoding, New(DataCoding, []byte{0x03}), true},
 	}
 	for _, el := range test {
 		if err := m.Set(el.k, el.v); el.ok && err != nil {
