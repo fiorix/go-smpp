@@ -60,12 +60,12 @@ func TestShortMessage(t *testing.T) {
 
 func TestQuerySM(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
-	s.Handler = func(c smpptest.Conn, m pdu.Body) {
-		p := pdu.NewQuerySMResp()
-		p.Header().Seq = m.Header().Seq
-		p.Fields().Set(pdufield.MessageID, m.Fields()[pdufield.MessageID])
-		p.Fields().Set(pdufield.MessageState, 2)
-		c.Write(p)
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		r := pdu.NewQuerySMResp()
+		r.Header().Seq = p.Header().Seq
+		r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
+		r.Fields().Set(pdufield.MessageState, 2)
+		c.Write(r)
 	}
 	s.Start()
 	defer s.Close()
