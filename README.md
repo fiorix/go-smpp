@@ -10,9 +10,11 @@ transformation for LATIN-1 and UCS-2.
 
 It is not fully compliant, there are some TODOs in the code.
 
-### Usage
+[![Build Status](https://secure.travis-ci.org/fiorix/go-smpp.png)](https://travis-ci.org/fiorix/go-smpp)
 
 [![GoDoc](https://godoc.org/github.com/fiorix/go-smpp?status.svg)](https://godoc.org/github.com/fiorix/go-smpp)
+
+### Usage
 
 Following is an SMPP client transmitter wrapped by an HTTP server
 that can send Short Messages (SMS):
