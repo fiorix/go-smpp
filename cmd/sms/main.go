@@ -121,11 +121,11 @@ var cmdShortMessage = cli.Command{
 }
 
 var cmdQueryMessage = cli.Command{
-	Name:  "status",
+	Name:  "query",
 	Usage: "status of short message",
 	Action: func(c *cli.Context) {
 		if len(c.Args()) != 2 {
-			fmt.Println("usage: status [sender] [message ID]")
+			fmt.Println("usage: query [sender] [message ID]")
 			return
 		}
 		log.Println("Connecting...")
@@ -133,7 +133,7 @@ var cmdQueryMessage = cli.Command{
 		defer tx.Close()
 		log.Println("Connected to", tx.Addr)
 		sender, msgid := c.Args()[0], c.Args()[1]
-		log.Printf("Command: status %q %q", sender, msgid)
+		log.Printf("Command: query %q %q", sender, msgid)
 		qr, err := tx.QuerySM(sender, msgid)
 		if err != nil {
 			log.Fatalln("Failed:", err)
@@ -145,8 +145,14 @@ var cmdQueryMessage = cli.Command{
 func newTransmitter(c *cli.Context) *smpp.Transmitter {
 	tx := &smpp.Transmitter{
 		Addr:   c.GlobalString("addr"),
-		User:   c.GlobalString("user"),
-		Passwd: c.GlobalString("passwd"),
+		User:   os.Getenv("SMPP_USER"),
+		Passwd: os.Getenv("SMPP_PASSWD"),
+	}
+	if s := c.GlobalString("user"); s != "" {
+		tx.User = s
+	}
+	if s := c.GlobalString("passwd"); s != "" {
+		tx.Passwd = s
 	}
 	if c.GlobalBool("tls") {
 		tx.TLS = &tls.Config{}
