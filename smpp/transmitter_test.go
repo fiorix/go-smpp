@@ -15,15 +15,15 @@ import (
 
 func TestShortMessage(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
-	s.Handler = func(c smpptest.Conn, m pdu.Body) {
-		switch m.Header().ID {
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		switch p.Header().ID {
 		case pdu.SubmitSMID:
-			p := pdu.NewSubmitSMResp()
-			p.Header().Seq = m.Header().Seq
-			p.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(p)
+			r := pdu.NewSubmitSMResp()
+			r.Header().Seq = p.Header().Seq
+			r.Fields().Set(pdufield.MessageID, "foobar")
+			c.Write(r)
 		default:
-			smpptest.EchoHandler(c, m)
+			smpptest.EchoHandler(c, p)
 		}
 	}
 	s.Start()

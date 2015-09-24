@@ -17,26 +17,26 @@ import (
 
 func TestTransceiver(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
-	s.Handler = func(c smpptest.Conn, m pdu.Body) {
-		switch m.Header().ID {
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		switch p.Header().ID {
 		case pdu.SubmitSMID:
-			p := pdu.NewSubmitSMResp()
-			p.Header().Seq = m.Header().Seq
-			p.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(p)
-			mf := m.Fields()
-			rd := mf[pdufield.RegisteredDelivery]
+			r := pdu.NewSubmitSMResp()
+			r.Header().Seq = p.Header().Seq
+			r.Fields().Set(pdufield.MessageID, "foobar")
+			c.Write(r)
+			pf := p.Fields()
+			rd := pf[pdufield.RegisteredDelivery]
 			if rd.Bytes()[0] == 0 {
 				return
 			}
-			p = pdu.NewDeliverSM()
-			f := p.Fields()
-			f.Set(pdufield.SourceAddr, mf[pdufield.SourceAddr])
-			f.Set(pdufield.DestinationAddr, mf[pdufield.DestinationAddr])
-			f.Set(pdufield.ShortMessage, mf[pdufield.ShortMessage])
-			c.Write(p)
+			r = pdu.NewDeliverSM()
+			f := r.Fields()
+			f.Set(pdufield.SourceAddr, pf[pdufield.SourceAddr])
+			f.Set(pdufield.DestinationAddr, pf[pdufield.DestinationAddr])
+			f.Set(pdufield.ShortMessage, pf[pdufield.ShortMessage])
+			c.Write(r)
 		default:
-			smpptest.EchoHandler(c, m)
+			smpptest.EchoHandler(c, p)
 		}
 	}
 	s.Start()

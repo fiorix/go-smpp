@@ -32,7 +32,7 @@ type Receiver struct {
 
 // HandlerFunc is the handler function that a Receiver calls
 // when a new PDU arrives.
-type HandlerFunc func(m pdu.Body)
+type HandlerFunc func(p pdu.Body)
 
 // Bind starts the Receiver. It creates a persistent connection
 // to the server, update its status via the returned channel,

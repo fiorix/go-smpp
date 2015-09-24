@@ -20,7 +20,7 @@ func TestReceiver(t *testing.T) {
 		Addr:    s.Addr(),
 		User:    smpptest.DefaultUser,
 		Passwd:  smpptest.DefaultPasswd,
-		Handler: func(m pdu.Body) { rc <- m },
+		Handler: func(p pdu.Body) { rc <- p },
 	}
 	defer r.Close()
 	conn := <-r.Bind()
