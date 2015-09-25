@@ -23,12 +23,12 @@ import (
 )
 
 func main() {
-	listen := flag.String("l", ":8080", "ip:port to listen on")
+	laddr := flag.String("http", ":8080", "host:port to listen on")
 	logreq := flag.Bool("log", false, "log http requests to stderr")
 	certf := flag.String("cert", "", "ssl certificate file for http server, optional")
 	keyf := flag.String("key", "", "ssl key file for http server, optional")
 	prefix := flag.String("prefix", "/", "prefix for http endpoints")
-	cliaddr := flag.String("c", "localhost:2775", "ip:port of the smsc to connect to via smpp 3.4")
+	cliaddr := flag.String("smpp", "localhost:2775", "host:port of the smsc to connect to via smpp 3.4")
 	clitls := flag.Bool("tls", false, "connect to smsc using tls")
 	cliprecaire := flag.Bool("precaire", false, "accept invalid ssl certificate from smsc")
 	flag.Usage = func() {
@@ -72,8 +72,8 @@ func main() {
 	if *logreq {
 		mux = handlers.LoggingHandler(os.Stderr, mux)
 	}
-	if *certf == "" && *keyf == "" {
-		log.Fatal(http.ListenAndServe(*listen, mux))
+	if *certf == "" || *keyf == "" {
+		log.Fatal(http.ListenAndServe(*laddr, mux))
 	}
-	log.Fatal(http.ListenAndServeTLS(*listen, *certf, *keyf, mux))
+	log.Fatal(http.ListenAndServeTLS(*laddr, *certf, *keyf, mux))
 }
