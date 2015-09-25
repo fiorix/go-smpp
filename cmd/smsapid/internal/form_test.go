@@ -12,7 +12,7 @@ import (
 
 func TestForm(t *testing.T) {
 	var a, b, c, d string
-	form := Form{
+	f := form{
 		{"a", "param a", true, nil, &a},
 		{"b", "param b", false, nil, &b},
 		{"c", "param c", true, []string{"1", "2"}, &c},
@@ -31,7 +31,7 @@ func TestForm(t *testing.T) {
 	}
 	for _, el := range test {
 		r := &http.Request{Form: el.Form}
-		err := form.Validate(r)
+		err := f.Validate(r)
 		if el.Good && err != nil {
 			t.Fatal(err)
 		}

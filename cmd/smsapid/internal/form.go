@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// Param defines a parameter from HTTP POST.
-type Param struct {
+// param defines a parameter from HTTP POST.
+type param struct {
 	Name     string
 	Desc     string
 	Required bool
@@ -19,12 +19,26 @@ type Param struct {
 	Value    *string
 }
 
-// Form is a list of parameters.
-type Form []Param
+// Valid checks whether the given value match the defined options for
+// for the parameter, if options are defined.
+func (p param) Valid(v string) bool {
+	if p.Options == nil {
+		return true
+	}
+	for _, opt := range p.Options {
+		if v == opt {
+			return true
+		}
+	}
+	return false
+}
+
+// form is a list of parameters.
+type form []param
 
 // Validate validates each Param in this form, and store the parameter's
 // value in the Value field.
-func (f Form) Validate(r *http.Request) error {
+func (f form) Validate(r *http.Request) error {
 	for _, p := range f {
 		v := r.FormValue(p.Name)
 		if v == "" && p.Required {
@@ -38,18 +52,4 @@ func (f Form) Validate(r *http.Request) error {
 		*p.Value = v
 	}
 	return nil
-}
-
-// Valid checks whether the given value match the defined options for
-// for the parameter, if options are defined.
-func (p Param) Valid(v string) bool {
-	if p.Options == nil {
-		return true
-	}
-	for _, opt := range p.Options {
-		if v == opt {
-			return true
-		}
-	}
-	return false
 }
