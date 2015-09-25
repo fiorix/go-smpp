@@ -189,7 +189,7 @@ func TestSend_BadGateway(t *testing.T) {
 func TestSend_OK(t *testing.T) {
 	mux := http.NewServeMux()
 	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
+	<-h.Register(mux)
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
@@ -268,7 +268,7 @@ func TestQuery_BadGateway(t *testing.T) {
 func TestQuery_OK(t *testing.T) {
 	mux := http.NewServeMux()
 	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
+	<-h.Register(mux)
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
@@ -289,7 +289,7 @@ func TestQuery_OK(t *testing.T) {
 func TestDeliveryReceipt(t *testing.T) {
 	mux := http.NewServeMux()
 	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
+	<-h.Register(mux)
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
@@ -398,7 +398,7 @@ func sseClient(serverURL string) (chan *serverSentEvent, error) {
 func TestSSE(t *testing.T) {
 	mux := http.NewServeMux()
 	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
+	<-h.Register(mux)
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
