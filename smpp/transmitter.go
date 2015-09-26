@@ -168,6 +168,12 @@ func (sm *ShortMessage) RespID() string {
 }
 
 func (t *Transmitter) do(p pdu.Body) (*tx, error) {
+	t.conn.Lock()
+	notbound := t.conn.client == nil
+	t.conn.Unlock()
+	if notbound {
+		return nil, ErrNotBound
+	}
 	rc := make(chan *tx, 1)
 	seq := p.Header().Seq
 	t.tx.Lock()

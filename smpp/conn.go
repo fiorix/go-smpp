@@ -16,6 +16,15 @@ import (
 	"github.com/fiorix/go-smpp/smpp/pdu"
 )
 
+var (
+	// ErrNotConnected is returned on attempts to use a dead connection.
+	ErrNotConnected = errors.New("not connected")
+
+	// ErrNotBound is returned on attempts to use a Transmitter,
+	// Receiver or Transceiver before calling Bind.
+	ErrNotBound = errors.New("not bound")
+)
+
 // Conn is an SMPP connection.
 type Conn interface {
 	Reader
@@ -93,9 +102,6 @@ func (c *conn) Write(w pdu.Body) error {
 func (c *conn) Close() error {
 	return c.rwc.Close()
 }
-
-// ErrNotConnected is returned on attempts to use a dead connection.
-var ErrNotConnected = errors.New("not connected")
 
 // connSwitch implements the Conn interface but allows switching
 // the actual Conn object it wraps.
