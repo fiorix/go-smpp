@@ -61,6 +61,11 @@ If you don't have an SMPP server to test, check out
 [Selenium SMPPSim](http://www.seleniumsoftware.com/downloads.html).
 It has been used for the development of this package.
 
+## Tools
+
+See the tools under `cmd/`. There's a command line tool for sending
+SMS from the command line, and an HTTP server with WebSocket support.
+
 ## Supported PDUs
 
 - [x] bind_transmitter
