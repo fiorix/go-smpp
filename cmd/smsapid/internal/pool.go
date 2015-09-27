@@ -35,7 +35,7 @@ func (pool *deliveryPool) Handler(p pdu.Body) {
 
 // Register adds peer k to receiving delivery receipts over the
 // returned channel.
-func (pool *deliveryPool) Register(k string) chan *DeliveryReceipt {
+func (pool *deliveryPool) Register(k string) <-chan *DeliveryReceipt {
 	c := make(chan *DeliveryReceipt, 10)
 	pool.mu.Lock()
 	pool.m[k] = c
