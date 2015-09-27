@@ -21,9 +21,27 @@
 <script>
 angular.module("sms", [])
 .controller("rpcController", function($scope) {
+	<!-- TODO: count msg chars -->
 	$scope.id = 0;
 	$scope.conn = null;
 	$scope.backoff = 1e3;
+	$scope.resp = {id: null, err: null};
+	$scope.reset = function() {
+		$scope.sm = {dst:"", text:"", enc:"", register:"final"};
+	};
+	$scope.reset();
+	$scope.msgok = function() {
+		switch ($scope.sm.enc) {
+		case "":
+		case "latin1":
+			if ($scope.sm.text.length > 140) return false;
+			break;
+		case "ucs2":
+			if ($scope.sm.text.length > 80) return false;
+			break;
+		}
+		return true;
+	}
 	$scope.send = function() {
 		if (!$scope.conn) {
 			return;
@@ -33,14 +51,10 @@ angular.module("sms", [])
 			method: "SM.Submit",
 			params: [$scope.sm]
 		}));
+		$scope.reset();
 		$scope.id++;
 	};
 	<!-- TODO: query -->
-	$scope.reset = function() {
-		$scope.resp = {id: null, err: null};
-		$scope.sm = {dst:"", text:"", enc:"", register:"final"};
-	};
-	$scope.reset();
 	function conn() {
 		var ws = new WebSocket("ws://" + location.host + "/v1/ws/jsonrpc");
 		ws.onopen = function(ev) {
@@ -143,6 +157,7 @@ angular.module("sms", [])
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label for="msg">Message</label>
+								<span class="pull-right label" ng-class="msgok() ? 'label-primary' : 'label-danger'">{{sm.text.length}} chars</span>
 								<input id="msg" type="text" class="form-control" placeholder="É nóis Bozo!" ng-model="sm.text">
 							</div>
 						</div>
@@ -157,15 +172,15 @@ angular.module("sms", [])
 							</div>
 						</div>
 					</div>
-					<button type="submit" class="btn btn-primary" ng-disabled="!conn" ng-click="send()">Send</button>
+					<button type="submit" class="btn btn-primary" ng-disabled="!conn||!msgok()||!sm.text.length||!sm.dst.length" ng-click="send()">Send</button>
 					<button type="submit" class="btn btn-default" ng-click="reset()">Reset</button>
 					<hr ng-show="resp.id||resp.err">
 					<div class="alert alert-success" ng-show="resp.id">
-						<button type="button" class="close" ng-click="reset()"><span aria-hidden="true">&times;</span></button>
+						<button type="button" class="close" ng-click="resp.id=null"><span aria-hidden="true">&times;</span></button>
 						Done! Message ID: {{resp.id}}
 					</div>
 					<div class="alert alert-danger" ng-show="resp.err">
-						<button type="button" class="close" ng-click="reset()"><span aria-hidden="true">&times;</span></button>
+						<button type="button" class="close" ng-click="resp.err=null"><span aria-hidden="true">&times;</span></button>
 						Failed: {{resp.err}}
 					</div>
 				</form>
