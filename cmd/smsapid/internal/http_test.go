@@ -147,7 +147,7 @@ func TestDeliveryReceipt(t *testing.T) {
 		if r.Text != "delivery receipt here" {
 			t.Fatalf("unexpected message: %#v", r)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for delivery receipt")
 	}
 }
@@ -276,7 +276,7 @@ func TestSSE(t *testing.T) {
 					el.Field, el.Want, el.Have)
 			}
 		}
-	case <-time.After(time.Second):
+	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for delivery receipt")
 	}
 }

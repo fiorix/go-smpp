@@ -31,7 +31,7 @@ func TestDeliveryStore(t *testing.T) {
 			t.Fatalf("unexpected message: want %q, have %q",
 				want, r.Text)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for delivery receipt")
 	}
 }

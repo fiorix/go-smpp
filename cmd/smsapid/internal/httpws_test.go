@@ -56,7 +56,7 @@ func TestWebSocket_Deliver(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-	case <-time.After(time.Second):
+	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for delivery receipt")
 	}
 }
