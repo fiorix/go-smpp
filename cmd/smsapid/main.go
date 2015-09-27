@@ -24,6 +24,7 @@ import (
 
 func main() {
 	laddr := flag.String("http", ":8080", "host:port to listen on")
+	public := flag.String("public", "", "public dir to serve under \"/\", optional")
 	logreq := flag.Bool("log", false, "log http requests to stderr")
 	certf := flag.String("cert", "", "ssl certificate file for http server, optional")
 	keyf := flag.String("key", "", "ssl key file for http server, optional")
@@ -68,6 +69,9 @@ func main() {
 			log.Println("SMPP connection status:", c.Status())
 		}
 	}()
+	if *public != "" {
+		http.Handle("/", http.FileServer(http.Dir(*public)))
+	}
 	mux := http.Handler(http.DefaultServeMux)
 	if *logreq {
 		mux = handlers.LoggingHandler(os.Stderr, mux)
