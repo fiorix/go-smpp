@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func Test_cors(t *testing.T) {
+func TestCORS(t *testing.T) {
 	// set up the test server
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "hello world")

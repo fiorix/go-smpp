@@ -7,15 +7,16 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/rpc"
+	"net/rpc/jsonrpc"
 	"path/filepath"
 	"strings"
-	"sync"
+
+	"golang.org/x/net/websocket"
 
 	"github.com/fiorix/go-smpp/smpp"
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 )
 
 // Handler is an HTTP handler that provides the endpoints of this service.
@@ -28,7 +29,7 @@ type Handler struct {
 	Prefix string
 
 	// VersionTag that follows the prefix.
-	// Defaults to "v1" of not set.
+	// Defaults to "v1" if not set.
 	VersionTag string
 
 	// SMPP Transceiver for sending and receiving SMS.
@@ -36,18 +37,22 @@ type Handler struct {
 	Tx *smpp.Transceiver
 
 	// clients registered for receipt
-	ds *deliveryStore
+	pool *deliveryPool
+
+	// sm for smpp functionality
+	sm *SM
 }
 
 func (h *Handler) init() <-chan smpp.ConnStatus {
 	// TODO: handle nil h.Tx
-	h.ds = &deliveryStore{m: make(map[string]chan *deliveryReceipt)}
-	h.Tx.Handler = h.delivery
+	h.pool = &deliveryPool{m: make(map[string]chan *DeliveryReceipt)}
+	h.sm = NewSM(h.Tx, rpc.NewServer())
+	h.Tx.Handler = h.pool.Handler
 	return h.Tx.Bind()
 }
 
 // Register add the endpoints of this service to the given ServeMux,
-// and binds Handler.Tx. Returns the ConnStatus channel from Bind.
+// and binds Tx. Returns the ConnStatus channel from Tx.Bind.
 //
 // Must be called once, before the server is started.
 func (h *Handler) Register(mux *http.ServeMux) <-chan smpp.ConnStatus {
@@ -55,7 +60,9 @@ func (h *Handler) Register(mux *http.ServeMux) <-chan smpp.ConnStatus {
 	p := urlprefix(h)
 	mux.Handle(p+"/send", h.send())
 	mux.Handle(p+"/query", h.query())
-	mux.Handle(p+"/delivery", h.sse())
+	mux.Handle(p+"/sse", h.sse())
+	mux.Handle(p+"/ws/jsonrpc", h.wsrpc())
+	mux.Handle(p+"/ws/jsonrpc/events", h.wsrpcEvents())
 	h.Handler = mux
 	return conn
 }
@@ -72,94 +79,41 @@ func urlprefix(h *Handler) string {
 
 func (h *Handler) send() http.Handler {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		sm := &smpp.ShortMessage{}
-		var msg, enc, reg string
-		form := Form{
-			{"src", "number of sender", false, nil, &sm.Src},
-			{"dst", "number of recipient", true, nil, &sm.Dst},
-			{"msg", "text message", true, nil, &msg},
-			{"enc", "text encoding", false, []string{"latin1", "ucs2"}, &enc},
-			{"register", "registered delivery", false, []string{"final", "failure"}, &reg},
-		}
-		if err := form.Validate(r); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		switch enc {
-		case "":
-			sm.Text = pdutext.Raw(msg)
-		case "latin1", "latin-1":
-			sm.Text = pdutext.Latin1(msg)
-		case "ucs2", "ucs-2":
-			sm.Text = pdutext.UCS2(msg)
-		}
-		switch reg {
-		case "final":
-			sm.Register = smpp.FinalDeliveryReceipt
-		case "failure":
-			sm.Register = smpp.FailureDeliveryReceipt
-		}
-		sm, err := h.Tx.Submit(sm)
-		if err == smpp.ErrNotConnected {
-			http.Error(w,
-				http.StatusText(http.StatusServiceUnavailable),
-				http.StatusServiceUnavailable)
-			return
-		}
+		r.ParseMultipartForm(1 << 20)
+		resp, status, err := h.sm.submit(r.Form)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			http.Error(w, err.Error(), status)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(struct {
-			MessageID string `json:"message_id"`
-		}{sm.RespID()})
+		json.NewEncoder(w).Encode(resp)
 	}
 	return auth(cors(f, "PUT", "POST"))
 }
 
 func (h *Handler) query() http.Handler {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		var src, msgid string
-		form := Form{
-			{"src", "number of sender", false, nil, &src},
-			{"message_id", "message id from send", true, nil, &msgid},
-		}
-		if err := form.Validate(r); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		qr, err := h.Tx.QuerySM(src, msgid)
+		r.ParseForm()
+		resp, status, err := h.sm.query(r.Form)
 		if err != nil {
-		}
-		if err == smpp.ErrNotConnected {
-			http.Error(w,
-				http.StatusText(http.StatusServiceUnavailable),
-				http.StatusServiceUnavailable)
-			return
-		}
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			http.Error(w, err.Error(), status)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(struct {
-			MsgState  string `json:"message_state"`
-			FinalDate string `json:"final_date"`
-			ErrCode   uint8  `json:"error_code"`
-		}{qr.MsgState, qr.FinalDate, qr.ErrCode})
+		json.NewEncoder(w).Encode(resp)
 	}
 	return auth(cors(f, "HEAD", "GET"))
 }
 
 func (h *Handler) sse() http.Handler {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		stop, ok := w.(http.CloseNotifier)
+		n, ok := w.(http.CloseNotifier)
 		if !ok {
 			http.Error(w, "Notifier not supported",
 				http.StatusInternalServerError)
 			return
 		}
+		stop := n.CloseNotify()
 		conn, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, "Flusher not supported",
@@ -169,17 +123,17 @@ func (h *Handler) sse() http.Handler {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
 		conn.Flush()
-		dr := h.ds.Register(r.RemoteAddr)
-		defer h.ds.Unregister(r.RemoteAddr)
+		dr := h.pool.Register(r.RemoteAddr)
+		defer h.pool.Unregister(r.RemoteAddr)
 		j := json.NewEncoder(w)
 		for {
 			select {
 			case r := <-dr:
-				fmt.Fprintf(w, "data: ")
+				fmt.Fprintf(w, "Data: ")
 				j.Encode(&r)
 				fmt.Fprintf(w, "\n")
 				conn.Flush()
-			case <-stop.CloseNotify():
+			case <-stop:
 				return
 			}
 		}
@@ -187,55 +141,44 @@ func (h *Handler) sse() http.Handler {
 	return auth(cors(f, "GET"))
 }
 
-func (h *Handler) delivery(p pdu.Body) {
-	switch p.Header().ID {
-	case pdu.DeliverSMID:
-		f := p.Fields()
-		dr := &deliveryReceipt{
-			Src: f[pdufield.SourceAddr].String(),
-			Dst: f[pdufield.DestinationAddr].String(),
-			Msg: f[pdufield.ShortMessage].String(),
-		}
-		h.ds.Broadcast(dr)
+// WebSocket handler for JSON RPC exposing functions from the SM type.
+func (h *Handler) wsrpc() http.Handler {
+	f := func(ws *websocket.Conn) {
+		h.sm.rpc.ServeCodec(jsonrpc.NewServerCodec(ws))
 	}
+	return auth(cors(websocket.Handler(f).ServeHTTP, "GET"))
 }
 
-type deliveryReceipt struct {
-	Src string `json:"src"`
-	Dst string `json:"dst"`
-	Msg string `json:"message"`
-}
-
-type deliveryStore struct {
-	mu sync.Mutex
-	m  map[string]chan *deliveryReceipt
-}
-
-func (ds *deliveryStore) Register(k string) chan *deliveryReceipt {
-	c := make(chan *deliveryReceipt, 10)
-	ds.mu.Lock()
-	ds.m[k] = c
-	ds.mu.Unlock()
-	return c
-}
-
-func (ds *deliveryStore) Unregister(k string) {
-	ds.mu.Lock()
-	c := ds.m[k]
-	if c != nil {
-		delete(ds.m, k)
-		close(c)
+// WebSocket handler for JSON RPC events, we call the client.
+func (h *Handler) wsrpcEvents() http.Handler {
+	type conn struct {
+		io.Reader
+		io.WriteCloser
 	}
-	ds.mu.Unlock()
-}
-
-func (ds *deliveryStore) Broadcast(r *deliveryReceipt) {
-	ds.mu.Lock()
-	for _, c := range ds.m {
-		select {
-		case c <- r:
-		default:
+	f := func(ws *websocket.Conn) {
+		k := ws.Request().RemoteAddr
+		dr := h.pool.Register(k)
+		defer h.pool.Unregister(k)
+		stop := make(chan struct{})
+		r, w := io.Pipe()
+		defer w.Close()
+		go func() {
+			io.Copy(w, ws)
+			close(stop)
+		}()
+		rwc := &conn{Reader: r, WriteCloser: ws}
+		cli := rpc.NewClientWithCodec(jsonrpc.NewClientCodec(rwc))
+		for {
+			select {
+			case r := <-dr:
+				err := cli.Call("SM.Deliver", r, nil)
+				if err != nil {
+					return
+				}
+			case <-stop:
+				return
+			}
 		}
 	}
-	ds.mu.Unlock()
+	return auth(cors(websocket.Handler(f).ServeHTTP, "GET"))
 }

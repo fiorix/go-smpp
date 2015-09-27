@@ -5,7 +5,6 @@
 package internal
 
 import (
-	"net/http"
 	"net/url"
 	"testing"
 )
@@ -30,8 +29,7 @@ func TestForm(t *testing.T) {
 		{"invalid c", url.Values{"a": {"."}, "c": {"."}}, false},
 	}
 	for _, el := range test {
-		r := &http.Request{Form: el.Form}
-		err := f.Validate(r)
+		err := f.Validate(el.Form)
 		if el.Good && err != nil {
 			t.Fatal(err)
 		}

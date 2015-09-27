@@ -11,76 +11,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"net/rpc"
+	"net/rpc/jsonrpc"
 	"net/textproto"
 	"net/url"
-	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"golang.org/x/net/websocket"
+
 	"github.com/fiorix/go-smpp/smpp"
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
-	"github.com/fiorix/go-smpp/smpp/smpptest"
 )
-
-var ts *smpptest.Server
-
-func TestMain(m *testing.M) {
-	ts = smpptest.NewUnstartedServer()
-	ts.Handler = pduHandler
-	ts.Start()
-	defer ts.Close()
-	os.Exit(m.Run())
-}
-
-func pduHandler(c smpptest.Conn, p pdu.Body) {
-	src := p.Fields()[pdufield.SourceAddr]
-	fail := src != nil && src.String() == "root"
-	switch p.Header().ID {
-	case pdu.SubmitSMID:
-		r := pdu.NewSubmitSMResp()
-		r.Header().Seq = p.Header().Seq
-		if fail {
-			r.Header().Status = 0x00000045 // submitsm failed
-		} else {
-			r.Fields().Set(pdufield.MessageID, "foobar")
-		}
-		c.Write(r)
-		rd := p.Fields()[pdufield.RegisteredDelivery]
-		if rd == nil || rd.Bytes()[0] == 0 {
-			return
-		}
-		r = pdu.NewDeliverSM()
-		rf := r.Fields()
-		pf := p.Fields()
-		rf.Set(pdufield.SourceAddr, pf[pdufield.SourceAddr])
-		rf.Set(pdufield.DestinationAddr, pf[pdufield.DestinationAddr])
-		rf.Set(pdufield.ShortMessage, "delivery receipt here")
-		c.Write(r)
-	case pdu.QuerySMID:
-		r := pdu.NewQuerySMResp()
-		r.Header().Seq = p.Header().Seq
-		if fail {
-			r.Header().Status = 0x00000067 // querysm failed
-		} else {
-			pf := p.Fields()
-			rf := r.Fields()
-			rf.Set(pdufield.MessageID, pf[pdufield.MessageID])
-			rf.Set(pdufield.MessageState, 2) // DELIVERED
-		}
-		c.Write(r)
-	default:
-		smpptest.EchoHandler(c, p)
-	}
-}
-
-func newTransceiver() *smpp.Transceiver {
-	return &smpp.Transceiver{
-		Addr:   ts.Addr(),
-		User:   smpptest.DefaultUser,
-		Passwd: smpptest.DefaultPasswd,
-	}
-}
 
 func TestHandler_Version(t *testing.T) {
 	mux := http.NewServeMux()
@@ -102,10 +44,10 @@ func TestHandler_Version(t *testing.T) {
 	}
 }
 
-func TestSend_BadRequest(t *testing.T) {
+func TestSend_Error(t *testing.T) {
 	mux := http.NewServeMux()
-	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
+	h := Handler{Tx: &smpp.Transceiver{Addr: ":0"}}
+	<-h.Register(mux)
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
@@ -119,73 +61,6 @@ func TestSend_BadRequest(t *testing.T) {
 	}
 }
 
-func TestSend_EncParam(t *testing.T) {
-	mux := http.NewServeMux()
-	h := Handler{Tx: &smpp.Transceiver{Addr: ":0"}}
-	h.Register(mux)
-	defer h.Tx.Close()
-	s := httptest.NewServer(mux)
-	defer s.Close()
-	for _, enc := range []string{"latin1", "ucs2"} {
-		resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
-			"dst": {"root"},
-			"msg": {"gotcha"},
-			"enc": {enc},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusServiceUnavailable {
-			t.Fatal("unexpected status:", resp.Status)
-		}
-	}
-}
-
-func TestSend_RegisterParam(t *testing.T) {
-	mux := http.NewServeMux()
-	h := Handler{Tx: &smpp.Transceiver{Addr: ":0"}}
-	h.Register(mux)
-	defer h.Tx.Close()
-	s := httptest.NewServer(mux)
-	defer s.Close()
-	for _, reg := range []string{"final", "failure"} {
-		resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
-			"dst":      {"root"},
-			"msg":      {"gotcha"},
-			"register": {reg},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusServiceUnavailable {
-			t.Fatal("unexpected status:", resp.Status)
-		}
-	}
-}
-
-func TestSend_BadGateway(t *testing.T) {
-	mux := http.NewServeMux()
-	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
-	defer h.Tx.Close()
-	s := httptest.NewServer(mux)
-	defer s.Close()
-	resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
-		"src": {"root"},
-		"dst": {"root"},
-		"msg": {"gotcha"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadGateway {
-		t.Fatal("unexpected status:", resp.Status)
-	}
-}
-
 func TestSend_OK(t *testing.T) {
 	mux := http.NewServeMux()
 	h := Handler{Tx: newTransceiver()}
@@ -194,8 +69,8 @@ func TestSend_OK(t *testing.T) {
 	s := httptest.NewServer(mux)
 	defer s.Close()
 	resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
-		"dst": {"root"},
-		"msg": {"gotcha"},
+		"dst":  {"root"},
+		"text": {"gotcha"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -206,10 +81,10 @@ func TestSend_OK(t *testing.T) {
 	}
 }
 
-func TestQuery_BadRequest(t *testing.T) {
+func TestQuery_Error(t *testing.T) {
 	mux := http.NewServeMux()
-	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
+	h := Handler{Tx: &smpp.Transceiver{Addr: ":0"}}
+	<-h.Register(mux)
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
@@ -219,48 +94,6 @@ func TestQuery_BadRequest(t *testing.T) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatal("unexpected status:", resp.Status)
-	}
-}
-
-func TestQuery_ServiceUnavailable(t *testing.T) {
-	mux := http.NewServeMux()
-	h := Handler{Tx: &smpp.Transceiver{Addr: ":0"}}
-	h.Register(mux)
-	defer h.Tx.Close()
-	s := httptest.NewServer(mux)
-	defer s.Close()
-	p := url.Values{
-		"src":        {"root"},
-		"message_id": {"foobar"},
-	}
-	resp, err := http.Get(s.URL + "/v1/query?" + p.Encode())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusServiceUnavailable {
-		t.Fatal("unexpected status:", resp.Status)
-	}
-}
-
-func TestQuery_BadGateway(t *testing.T) {
-	mux := http.NewServeMux()
-	h := Handler{Tx: newTransceiver()}
-	h.Register(mux)
-	defer h.Tx.Close()
-	s := httptest.NewServer(mux)
-	defer s.Close()
-	p := url.Values{
-		"src":        {"root"},
-		"message_id": {"foobar"},
-	}
-	resp, err := http.Get(s.URL + "/v1/query?" + p.Encode())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadGateway {
 		t.Fatal("unexpected status:", resp.Status)
 	}
 }
@@ -294,12 +127,12 @@ func TestDeliveryReceipt(t *testing.T) {
 	s := httptest.NewServer(mux)
 	defer s.Close()
 	// cheat: register ourselves for delivery
-	dr := h.ds.Register("foobar")
-	defer h.ds.Unregister("foobar")
+	dr := h.pool.Register("foobar")
+	defer h.pool.Unregister("foobar")
 	// make request
 	resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
 		"dst":      {"root"},
-		"msg":      {"gotcha"},
+		"text":     {"gotcha"},
 		"register": {"final"},
 	})
 	if err != nil {
@@ -311,7 +144,7 @@ func TestDeliveryReceipt(t *testing.T) {
 	}
 	select {
 	case r := <-dr:
-		if r.Msg != "delivery receipt here" {
+		if r.Text != "delivery receipt here" {
 			t.Fatalf("unexpected message: %#v", r)
 		}
 	case <-time.After(time.Second):
@@ -402,14 +235,14 @@ func TestSSE(t *testing.T) {
 	defer h.Tx.Close()
 	s := httptest.NewServer(mux)
 	defer s.Close()
-	sse, err := sseClient(s.URL + "/v1/delivery")
+	sse, err := sseClient(s.URL + "/v1/sse")
 	if err != nil {
 		t.Fatal(err)
 	}
 	// make request
 	resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
 		"dst":      {"root"},
-		"msg":      {"gotcha"},
+		"text":     {"gotcha"},
 		"register": {"final"},
 	})
 	if err != nil {
@@ -425,7 +258,7 @@ func TestSSE(t *testing.T) {
 		if m == nil {
 			t.Fatal("unexpected receipt: empty")
 		}
-		var dr deliveryReceipt
+		var dr DeliveryReceipt
 		err := json.Unmarshal([]byte(m.Data), &dr)
 		if err != nil {
 			t.Fatal(err)
@@ -435,7 +268,7 @@ func TestSSE(t *testing.T) {
 		}{
 			{"src", "", dr.Src},
 			{"dst", "root", dr.Dst},
-			{"msg", "delivery receipt here", dr.Msg},
+			{"msg", "delivery receipt here", dr.Text},
 		}
 		for _, el := range test {
 			if el.Want != el.Have {
@@ -445,5 +278,63 @@ func TestSSE(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timeout waiting for delivery receipt")
+	}
+}
+
+func TestWebSocket_Send(t *testing.T) {
+	mux := http.NewServeMux()
+	h := Handler{Tx: newTransceiver()}
+	<-h.Register(mux)
+	s := httptest.NewServer(mux)
+	defer s.Close()
+	url := strings.Replace(s.URL, "http:", "ws:", -1)
+	ws, err := websocket.Dial(url+"/v1/ws/jsonrpc", "", "http://localhost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ws.Close()
+	cli := rpc.NewClientWithCodec(jsonrpc.NewClientCodec(ws))
+	args := &ShortMessage{
+		Dst:  "root",
+		Text: "hello world",
+	}
+	var resp ShortMessageResp
+	err = cli.Call("SM.Submit", args, &resp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "foobar"
+	if resp.MessageID != want {
+		t.Fatalf("unexpected message id: want %q, have %q",
+			want, resp.MessageID)
+	}
+}
+
+func TestWebSocket_Query(t *testing.T) {
+	mux := http.NewServeMux()
+	h := Handler{Tx: newTransceiver()}
+	<-h.Register(mux)
+	s := httptest.NewServer(mux)
+	defer s.Close()
+	url := strings.Replace(s.URL, "http:", "ws:", 1)
+	ws, err := websocket.Dial(url+"/v1/ws/jsonrpc", "", "http://localhost")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ws.Close()
+	cli := rpc.NewClientWithCodec(jsonrpc.NewClientCodec(ws))
+	args := &QueryMessage{
+		Src:       "nobody",
+		MessageID: "foobar",
+	}
+	var resp QueryMessageResp
+	err = cli.Call("SM.Query", args, &resp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "DELIVERED"
+	if resp.MsgState != want {
+		t.Fatalf("unexpected message state: want %q, have %q",
+			want, resp.MsgState)
 	}
 }
