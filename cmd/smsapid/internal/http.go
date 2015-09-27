@@ -73,7 +73,7 @@ func urlprefix(h *Handler) string {
 	} else {
 		path += h.VersionTag
 	}
-	return filepath.Clean(strings.TrimRight(path, "/"))
+	return strings.TrimRight(filepath.Clean(path), "/")
 }
 
 func (h *Handler) send() http.Handler {
