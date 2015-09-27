@@ -70,7 +70,8 @@ func main() {
 		}
 	}()
 	if *public != "" {
-		http.Handle("/", http.FileServer(http.Dir(*public)))
+		http.Handle("/", http.StripPrefix(*prefix,
+			http.FileServer(http.Dir(*public))))
 	}
 	mux := http.Handler(http.DefaultServeMux)
 	if *logreq {
