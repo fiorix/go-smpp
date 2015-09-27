@@ -43,12 +43,11 @@ type Handler struct {
 	sm *SM
 }
 
-func (h *Handler) init() <-chan smpp.ConnStatus {
+func (h *Handler) init() {
 	// TODO: handle nil h.Tx
 	h.pool = &deliveryPool{m: make(map[string]chan *DeliveryReceipt)}
 	h.sm = NewSM(h.Tx, rpc.NewServer())
 	h.Tx.Handler = h.pool.Handler
-	return h.Tx.Bind()
 }
 
 // Register add the endpoints of this service to the given ServeMux,
@@ -56,7 +55,7 @@ func (h *Handler) init() <-chan smpp.ConnStatus {
 //
 // Must be called once, before the server is started.
 func (h *Handler) Register(mux *http.ServeMux) <-chan smpp.ConnStatus {
-	conn := h.init()
+	h.init()
 	p := urlprefix(h)
 	mux.Handle(p+"/send", h.send())
 	mux.Handle(p+"/query", h.query())
@@ -64,7 +63,7 @@ func (h *Handler) Register(mux *http.ServeMux) <-chan smpp.ConnStatus {
 	mux.Handle(p+"/ws/jsonrpc", h.wsrpc())
 	mux.Handle(p+"/ws/jsonrpc/events", h.wsrpcEvents())
 	h.Handler = mux
-	return conn
+	return h.Tx.Bind()
 }
 
 func urlprefix(h *Handler) string {
