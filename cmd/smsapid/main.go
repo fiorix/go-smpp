@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -54,7 +55,10 @@ func main() {
 		os.Exit(0)
 	}()
 	if *clitls {
-		tx.TLS = &tls.Config{}
+		host, _, _ := net.SplitHostPort(tx.Addr)
+		tx.TLS = &tls.Config{
+			ServerName: host,
+		}
 		if *cliprecaire {
 			tx.TLS.InsecureSkipVerify = true
 		}

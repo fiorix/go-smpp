@@ -13,6 +13,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"strings"
 
@@ -155,7 +156,10 @@ func newTransmitter(c *cli.Context) *smpp.Transmitter {
 		tx.Passwd = s
 	}
 	if c.GlobalBool("tls") {
-		tx.TLS = &tls.Config{}
+		host, _, _ := net.SplitHostPort(tx.Addr)
+		tx.TLS = &tls.Config{
+			ServerName: host,
+		}
 		if c.GlobalBool("precaire") {
 			tx.TLS.InsecureSkipVerify = true
 		}
