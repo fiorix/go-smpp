@@ -14,11 +14,9 @@ import (
 
 func TestDeliveryStore(t *testing.T) {
 	want := "delivery receipt"
-	pool := &deliveryPool{
-		m: make(map[string]chan *DeliveryReceipt),
-	}
-	dr := pool.Register("foobar")
-	defer pool.Unregister("foobar")
+	pool := newPool()
+	id, dr := pool.Register()
+	defer pool.Unregister(id)
 	p := pdu.NewDeliverSM()
 	f := p.Fields()
 	f.Set(pdufield.SourceAddr, "bart")

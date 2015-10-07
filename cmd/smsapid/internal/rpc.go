@@ -149,11 +149,3 @@ func (rpc *SM) query(req url.Values) (resp *QueryMessageResp, status int, err er
 	}
 	return resp, http.StatusOK, nil
 }
-
-// DeliveryReceipt contains the arguments of RPC call to SM.Deliver.
-// We only call it, not handle.
-type DeliveryReceipt struct {
-	Src  string `json:"src"`
-	Dst  string `json:"dst"`
-	Text string `json:"text"`
-}

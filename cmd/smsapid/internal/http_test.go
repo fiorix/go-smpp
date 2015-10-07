@@ -127,8 +127,8 @@ func TestDeliveryReceipt(t *testing.T) {
 	s := httptest.NewServer(mux)
 	defer s.Close()
 	// cheat: register ourselves for delivery
-	dr := h.pool.Register("foobar")
-	defer h.pool.Unregister("foobar")
+	id, dr := h.pool.Register()
+	defer h.pool.Unregister(id)
 	// make request
 	resp, err := http.PostForm(s.URL+"/v1/send", url.Values{
 		"dst":      {"root"},

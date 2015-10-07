@@ -45,7 +45,7 @@ type Handler struct {
 
 func (h *Handler) init() {
 	// TODO: handle nil h.Tx
-	h.pool = &deliveryPool{m: make(map[string]chan *DeliveryReceipt)}
+	h.pool = newPool()
 	h.sm = NewSM(h.Tx, rpc.NewServer())
 	h.Tx.Handler = h.pool.Handler
 }
@@ -122,8 +122,8 @@ func (h *Handler) sse() http.Handler {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
 		conn.Flush()
-		dr := h.pool.Register(r.RemoteAddr)
-		defer h.pool.Unregister(r.RemoteAddr)
+		id, dr := h.pool.Register()
+		defer h.pool.Unregister(id)
 		j := json.NewEncoder(w)
 		for {
 			select {
@@ -155,9 +155,8 @@ func (h *Handler) wsrpcEvents() http.Handler {
 		io.WriteCloser
 	}
 	f := func(ws *websocket.Conn) {
-		k := ws.Request().RemoteAddr
-		dr := h.pool.Register(k)
-		defer h.pool.Unregister(k)
+		id, dr := h.pool.Register()
+		defer h.pool.Unregister(id)
 		stop := make(chan struct{})
 		r, w := io.Pipe()
 		defer w.Close()

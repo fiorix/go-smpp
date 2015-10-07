@@ -6,16 +6,31 @@ package internal
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 )
 
+// DeliveryReceipt contains the arguments of RPC call to SM.Deliver.
+// We only call it, not handle.
+type DeliveryReceipt struct {
+	Src  string `json:"src"`
+	Dst  string `json:"dst"`
+	Text string `json:"text"`
+}
+
+var deliveryID uint64
+
 // deliveryPool let peers register themselves to receive broadcast
 // notifications with delivery receipts.
 type deliveryPool struct {
 	mu sync.Mutex
-	m  map[string]chan *DeliveryReceipt
+	m  map[uint64]chan *DeliveryReceipt
+}
+
+func newPool() *deliveryPool {
+	return &deliveryPool{m: make(map[uint64]chan *DeliveryReceipt)}
 }
 
 // Handler handles DeliverSM coming from a Transceiver SMPP connection.
@@ -33,23 +48,24 @@ func (pool *deliveryPool) Handler(p pdu.Body) {
 	}
 }
 
-// Register adds peer k to receiving delivery receipts over the
-// returned channel.
-func (pool *deliveryPool) Register(k string) <-chan *DeliveryReceipt {
+// Register returns a channel that get broadcasts from the pool.
+// The returned ID (uint64) is used to Unregister.
+func (pool *deliveryPool) Register() (uint64, <-chan *DeliveryReceipt) {
+	id := atomic.AddUint64(&deliveryID, 1)
 	c := make(chan *DeliveryReceipt, 10)
 	pool.mu.Lock()
-	pool.m[k] = c
+	pool.m[id] = c
 	pool.mu.Unlock()
-	return c
+	return id, c
 }
 
-// Unregister removes peer k from the delivery receipt broadcast,
+// Unregister removes an entry from the delivery receipt broadcast,
 // and closes the channel previously returned by Register.
-func (pool *deliveryPool) Unregister(k string) {
+func (pool *deliveryPool) Unregister(id uint64) {
 	pool.mu.Lock()
-	c := pool.m[k]
+	c := pool.m[id]
 	if c != nil {
-		delete(pool.m, k)
+		delete(pool.m, id)
 		close(c)
 	}
 	pool.mu.Unlock()
@@ -62,6 +78,7 @@ func (pool *deliveryPool) Broadcast(r *DeliveryReceipt) {
 		select {
 		case c <- r:
 		default:
+			// TODO: Increment drop counter here.
 		}
 	}
 	pool.mu.Unlock()
