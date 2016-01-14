@@ -136,6 +136,7 @@ type ShortMessage struct {
 	Src      string
 	Dst      string
 	Text     pdutext.Codec
+	Validity time.Duration
 	Register DeliverySetting
 
 	resp struct {
@@ -205,6 +206,10 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 	f.Set(pdufield.SourceAddr, sm.Src)
 	f.Set(pdufield.DestinationAddr, sm.Dst)
 	f.Set(pdufield.ShortMessage, sm.Text)
+	// Check if the message as a validity set
+	if sm.Validity != time.Duration(0) {
+		f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
+	}
 	f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
 	resp, err := t.do(p)
 	if err != nil {
@@ -284,4 +289,10 @@ func (t *Transmitter) QuerySM(src, msgid string) (*QueryResp, error) {
 		qr.ErrCode = ec.Bytes()[0]
 	}
 	return qr, nil
+}
+
+func convertValidity(dur time.Duration) string {
+	validity := time.Now().UTC().Add(dur)
+	// Absolute time format YYMMDDhhmmsstnnp, see SMPP3.4 spec 7.1.1
+	return validity.Format("060102150405") + "000+"
 }
