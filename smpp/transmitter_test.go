@@ -6,6 +6,7 @@ package smpp
 
 import (
 	"testing"
+	"time"
 
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
@@ -44,6 +45,7 @@ func TestShortMessage(t *testing.T) {
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
+		Validity: 10 * time.Minute,
 		Register: NoDeliveryReceipt,
 	})
 	if err != nil {
