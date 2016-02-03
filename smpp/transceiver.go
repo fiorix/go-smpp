@@ -22,6 +22,7 @@ type Transceiver struct {
 	Passwd      string
 	SystemType  string
 	EnquireLink time.Duration
+	RespTimeout time.Duration
 	TLS         *tls.Config
 	Handler     HandlerFunc
 
@@ -42,6 +43,7 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 		Addr:        t.Addr,
 		TLS:         t.TLS,
 		EnquireLink: t.EnquireLink,
+		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
 	}

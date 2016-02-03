@@ -73,6 +73,7 @@ type client struct {
 	Status      chan ConnStatus
 	BindFunc    func(c Conn) error
 	EnquireLink time.Duration
+	RespTimeout time.Duration
 
 	// internal stuff.
 	inbox chan pdu.Body
@@ -209,6 +210,15 @@ func (c *client) closed() bool {
 	default:
 		return false
 	}
+}
+
+// respTimeout returns a channel that fires based on the configured
+// response timeout, or the default 1s.
+func (c *client) respTimeout() <-chan time.Time {
+	if c.RespTimeout == 0 {
+		return time.After(time.Second)
+	}
+	return time.After(c.RespTimeout)
 }
 
 // bind attempts to bind the connection.

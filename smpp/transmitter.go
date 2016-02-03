@@ -58,14 +58,11 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 		Addr:        t.Addr,
 		TLS:         t.TLS,
 		EnquireLink: t.EnquireLink,
+		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
 	}
 	t.conn.client = c
-	// one second default
-	if t.RespTimeout < time.Second {
-		t.RespTimeout = time.Second
-	}
 	c.init()
 	go c.Bind()
 	return c.Status
@@ -198,7 +195,7 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	select {
 	case resp := <-rc:
 		return resp, nil
-	case <-time.After(t.RespTimeout):
+	case <-t.conn.respTimeout():
 		return nil, errors.New("timeout waiting for response")
 	}
 }
