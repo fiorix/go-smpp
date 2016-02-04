@@ -141,6 +141,19 @@ type ShortMessage struct {
 	Validity time.Duration
 	Register DeliverySetting
 
+	// Other fields, normally optional.
+	ServiceType          string
+	SourceAddrTON        uint8
+	SourceAddrNPI        uint8
+	DestAddrTON          uint8
+	DestAddrNPI          uint8
+	ESMClass             uint8
+	ProtocolID           uint8
+	PriorityFlag         uint8
+	ScheduleDeliveryTime string
+	ReplaceIfPresentFlag uint8
+	SMDefaultMsgID       uint8
+
 	resp struct {
 		sync.Mutex
 		p pdu.Body
@@ -213,6 +226,17 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 	if sm.Validity != time.Duration(0) {
 		f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
 	}
+	f.Set(pdufield.ServiceType, sm.ServiceType)
+	f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
+	f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
+	f.Set(pdufield.DestAddrTON, sm.DestAddrTON)
+	f.Set(pdufield.DestAddrNPI, sm.DestAddrNPI)
+	f.Set(pdufield.ESMClass, sm.ESMClass)
+	f.Set(pdufield.ProtocolID, sm.ProtocolID)
+	f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
+	f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
+	f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
+	f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
 	resp, err := t.do(p)
 	if err != nil {
 		return nil, err

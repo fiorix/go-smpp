@@ -80,6 +80,61 @@ var cmdShortMessage = cli.Command{
 			Usage: "set text encoding: raw, ucs2 or latin1",
 			Value: "raw",
 		},
+		cli.StringFlag{
+			Name:  "service-type",
+			Usage: "set service_type PDU (optional)",
+			Value: "",
+		},
+		cli.IntFlag{
+			Name:  "source-addr-ton",
+			Usage: "set source_addr_ton PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "source-addr-npi",
+			Usage: "set source_addr_npi PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "dest-addr-ton",
+			Usage: "set dest_addr_ton PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "dest-addr-npi",
+			Usage: "set dest_addr_npi PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "esm-class",
+			Usage: "set esm_class PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "protocol-id",
+			Usage: "set protocol_id PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "priority-flag",
+			Usage: "set priority_flag PDU (optional)",
+			Value: 0,
+		},
+		cli.StringFlag{
+			Name:  "schedule-delivery-time",
+			Usage: "set schedule_delivery_time PDU (optional)",
+			Value: "",
+		},
+		cli.IntFlag{
+			Name:  "replace-if-present-flag",
+			Usage: "set replace_if_present_flag PDU (optional)",
+			Value: 0,
+		},
+		cli.IntFlag{
+			Name:  "sm-default-msg-id",
+			Usage: "set sm_default_msg_id PDU (optional)",
+			Value: 0,
+		},
 	},
 	Action: func(c *cli.Context) {
 		if len(c.Args()) < 3 {
@@ -109,10 +164,21 @@ var cmdShortMessage = cli.Command{
 			codec = pdutext.Raw(text)
 		}
 		sm, err := tx.Submit(&smpp.ShortMessage{
-			Src:      sender,
-			Dst:      recipient,
-			Text:     codec,
-			Register: register,
+			Src:                  sender,
+			Dst:                  recipient,
+			Text:                 codec,
+			Register:             register,
+			ServiceType:          c.String("service-type"),
+			SourceAddrTON:        uint8(c.Int("source-addr-ton")),
+			SourceAddrNPI:        uint8(c.Int("source-addr-npi")),
+			DestAddrTON:          uint8(c.Int("dest-addr-ton")),
+			DestAddrNPI:          uint8(c.Int("dest-addr-npi")),
+			ESMClass:             uint8(c.Int("esm-class")),
+			ProtocolID:           uint8(c.Int("protocol-id")),
+			PriorityFlag:         uint8(c.Int("priority-flag")),
+			ScheduleDeliveryTime: c.String("schedule-delivery-time"),
+			ReplaceIfPresentFlag: uint8(c.Int("replace-if-present-flag")),
+			SMDefaultMsgID:       uint8(c.Int("sm-default-msg-id")),
 		})
 		if err != nil {
 			log.Println("Failed:", err)
