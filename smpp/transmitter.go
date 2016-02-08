@@ -18,13 +18,14 @@ import (
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	TLS         *tls.Config
+	Addr        string        // Server address in form of host:port.
+	User        string        // Username.
+	Passwd      string        // Password.
+	SystemType  string        // System type, default empty.
+	EnquireLink time.Duration // Enquire link interval, default 10s.
+	RespTimeout time.Duration // Response timeout, default 1s.
+	TLS         *tls.Config   // TLS client settings, optional.
+	RateLimiter RateLimiter   // Rate limiter, optional.
 
 	conn struct {
 		sync.Mutex
@@ -57,10 +58,11 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 	c := &client{
 		Addr:        t.Addr,
 		TLS:         t.TLS,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
+		EnquireLink: t.EnquireLink,
+		RespTimeout: t.RespTimeout,
+		RateLimiter: t.RateLimiter,
 	}
 	t.conn.client = c
 	c.init()
