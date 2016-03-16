@@ -60,6 +60,52 @@ func TestShortMessage(t *testing.T) {
 	}
 }
 
+func TestLongMessage(t *testing.T) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		switch p.Header().ID {
+		case pdu.SubmitSMID:
+			r := pdu.NewSubmitSMResp()
+			r.Header().Seq = p.Header().Seq
+			r.Fields().Set(pdufield.MessageID, "foobar")
+			c.Write(r)
+		default:
+			smpptest.EchoHandler(c, p)
+		}
+	}
+	s.Start()
+	defer s.Close()
+	tx := &Transmitter{
+		Addr:   s.Addr(),
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
+	}
+	defer tx.Close()
+	conn := <-tx.Bind()
+	switch conn.Status() {
+	case Connected:
+	default:
+		t.Fatal(conn.Error())
+	}
+	sm, err := tx.SubmintLongMsg(&ShortMessage{
+		Src:      "root",
+		Dst:      "foobar",
+		Text:     pdutext.Raw("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus."),
+		Validity: 10 * time.Minute,
+		Register: NoDeliveryReceipt,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgid := sm.RespID()
+	if msgid == "" {
+		t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+	}
+	if msgid != "foobar" {
+		t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+	}
+}
+
 func TestQuerySM(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
