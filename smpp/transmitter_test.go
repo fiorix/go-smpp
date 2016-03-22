@@ -87,7 +87,7 @@ func TestLongMessage(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	sm, err := tx.SubmintLongMsg(&ShortMessage{
+	sm, err := tx.SubmitLongMsg(&ShortMessage{
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus."),

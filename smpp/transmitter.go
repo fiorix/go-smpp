@@ -259,7 +259,7 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 // SubmitLongMsg sends a long message (more than 140 bytes)
 // and returns and updates the given sm with the response status.
 // It returns the same sm object.
-func (t *Transmitter) SubmintLongMsg(sm *ShortMessage) (*ShortMessage, error) {
+func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 	maxLen := 134 // 140-6 (UDH)
 	rawMsg := sm.Text.Encode()
 	countParts := int(len(rawMsg)/maxLen) + 1
