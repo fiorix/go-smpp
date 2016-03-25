@@ -49,6 +49,7 @@ type tx struct {
 // return ErrNotConnected.
 func (t *Transmitter) Bind() <-chan ConnStatus {
 	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	t.conn.Lock()
 	defer t.conn.Unlock()
 	if t.conn.client != nil {
