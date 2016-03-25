@@ -126,7 +126,11 @@ func (c *client) Bind() {
 			}
 			switch p.Header().ID {
 			case pdu.EnquireLinkID:
-				// TODO: respond
+				pResp := pdu.NewEnquireLinkRespSeq(p.Header().Seq)
+				err := c.conn.Write(pResp)
+				if err != nil {
+					break
+				}
 			case pdu.EnquireLinkRespID:
 				// TODO: don't just ignore
 			default:

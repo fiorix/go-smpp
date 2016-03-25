@@ -32,7 +32,9 @@ func (pdu *codec) init() {
 	}
 	pdu.f = make(pdufield.Map)
 	pdu.t = make(pdufield.TLVMap)
-	pdu.h.Seq = atomic.AddUint32(&nextSeq, 1)
+	if pdu.h.Seq == 0 { // If Seq not set
+		pdu.h.Seq = atomic.AddUint32(&nextSeq, 1)
+	}
 }
 
 // setup replaces the codec's current maps with the given ones.
