@@ -106,6 +106,10 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 		} else if f != nil {
 			f(p)
 		}
+		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
+			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
+			t.conn.Write(pResp)
+		}
 	}
 	t.tx.Lock()
 	for _, rc := range t.tx.inflight {
