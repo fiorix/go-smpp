@@ -87,7 +87,7 @@ func TestLongMessage(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	sm, err := tx.SubmitLongMsg(&ShortMessage{
+	sms, err := tx.SubmitLongMsg(&ShortMessage{
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus."),
@@ -97,12 +97,14 @@ func TestLongMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	msgid := sm.RespID()
-	if msgid == "" {
-		t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
-	}
-	if msgid != "foobar" {
-		t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+	for _, sm := range sms {
+		msgid := sm.RespID()
+		if msgid == "" {
+			t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+		}
+		if msgid != "foobar" {
+			t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+		}
 	}
 }
 
