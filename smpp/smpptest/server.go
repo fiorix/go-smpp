@@ -165,6 +165,15 @@ func (srv *Server) auth(c *conn) error {
 // EchoHandler is the default Server HandlerFunc, and echoes back
 // any PDUs received.
 func EchoHandler(cli Conn, m pdu.Body) {
-	//log.Printf("smpptest: echo PDU from %s: %#v", cli.RemoteAddr(), m)
+	// log.Printf("smpptest: echo PDU from %s: %#v", cli.RemoteAddr(), m)
+	//
+	// Real servers will reply with at least the same sequence number
+	// from the request:
+	//     resp := pdu.NewSubmitSMResp()
+	//     resp.Header().Seq = m.Header().Seq
+	//     resp.Fields().Set(pdufield.MessageID, "1234")
+	//     cli.Write(resp)
+	//
+	// We just echo m back:
 	cli.Write(m)
 }
