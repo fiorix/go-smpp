@@ -16,7 +16,8 @@ import (
 )
 
 func TestTransceiver(t *testing.T) {
-	s := smpptest.NewUnstartedServer()
+	port := 0 // any port
+	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, port)
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:

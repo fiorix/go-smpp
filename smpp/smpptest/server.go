@@ -53,32 +53,42 @@ func nextMessageId() string {
 
 // NewServer creates and initializes a new Server. Callers are supposed
 // to call Close on that server later.
-func NewServer() *Server {
-	s := NewUnstartedServer()
+func NewServer(user, password string, port int) *Server {
+	s := NewUnstartedServer(user, password, port)
 	s.Start()
 	return s
 }
 
 // NewUnstartedServer creates a new Server with default settings, and
 // does not start it. Callers are supposed to call Start and Close later.
-func NewUnstartedServer() *Server {
+func NewUnstartedServer(user, password string, port int) *Server {
+	if user == "" {
+		user = DefaultUser
+	}
+	if password == "" {
+		password = DefaultPasswd
+	}
 	return &Server{
-		User:    DefaultUser,
-		Passwd:  DefaultPasswd,
+		User:    user,
+		Passwd:  password,
 		Handler: EchoHandler,
-		l:       newLocalListener(),
+		l:       newLocalListener(port),
 	}
 }
 
-func newLocalListener() net.Listener {
-	l, err := net.Listen("tcp", "127.0.0.1:0")
+func newLocalListener(port int) net.Listener {
+	// Try the default port first
+	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err == nil {
 		return l
 	}
-	if l, err = net.Listen("tcp6", "[::1]:0"); err != nil {
-		panic(fmt.Sprintf("smpptest: failed to listen on a port: %v", err))
+	if l, err = net.Listen("tcp", "127.0.0.1:0"); err == nil {
+		return l
 	}
-	return l
+	if l, err = net.Listen("tcp6", "[::1]:0"); err == nil {
+		return l
+	}
+	panic(fmt.Sprintf("%s: failed to listen on a port: %v", DefaultSystemID, err))
 }
 
 // Start starts the server.
