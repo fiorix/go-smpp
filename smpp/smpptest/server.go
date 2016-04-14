@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -71,7 +70,7 @@ func NewUnstartedServer(user, password string, port int) *Server {
 	return &Server{
 		User:    user,
 		Passwd:  password,
-		Handler: EchoHandler,
+		Handler: StubHandler,
 		l:       newLocalListener(port),
 	}
 }
@@ -119,8 +118,10 @@ func (srv *Server) Serve() {
 	for {
 		cli, err := srv.l.Accept()
 		if err != nil {
+			Error.Println("Closing server:", err)
 			break // on srv.l.Close
 		}
+		Info.Println("New client:", cli.RemoteAddr())
 		go srv.handle(newConn(cli))
 	}
 }
@@ -130,7 +131,7 @@ func (srv *Server) handle(c *conn) {
 	defer c.Close()
 	if err := srv.auth(c); err != nil {
 		if err != io.EOF {
-			log.Println("smpptest: server auth failed:", err)
+			Error.Println("Server auth failed:", err)
 		}
 		return
 	}
@@ -138,7 +139,7 @@ func (srv *Server) handle(c *conn) {
 		pdu, err := c.Read()
 		if err != nil {
 			if err != io.EOF {
-				log.Println("smpptest: read failed:", err)
+				Error.Println("Read failed:", err)
 			}
 			break
 		}
@@ -201,7 +202,7 @@ func EchoHandler(cli Conn, m pdu.Body) {
 // StubHandler is a HandlerFunc that returns compliant but dummy PDUs that are useful
 // for testing clients
 func StubHandler(conn Conn, m pdu.Body) {
-	log.Println("smpptest: processing:", m.Header().ID)
+	Info.Println("Processing incoming PDU:", m.Header().ID, "seq:", m.Header().Seq)
 	var resp pdu.Body
 	switch m.Header().ID {
 	case pdu.EnquireLinkID:
@@ -225,7 +226,7 @@ func StubHandler(conn Conn, m pdu.Body) {
 
 	err := conn.Write(resp)
 	if err != nil {
-		log.Println("smpptest: error sending response:", err)
+		Error.Println("Error sending response:", err)
 	}
 }
 
@@ -290,6 +291,6 @@ func processShortMessage(conn Conn, submitSmPdu pdu.Body) {
 
 	err := conn.Write(respPdu)
 	if err != nil {
-		log.Println("smpptest: failed sending delivery_sm:", err)
+		Error.Println("Failed sending delivery_sm:", err)
 	}
 }
