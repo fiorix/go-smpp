@@ -16,18 +16,18 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/fiorix/go-smpp/smpp"
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 )
 
 // Default settings.
 var (
-	DefaultUser           = "client"
-	DefaultPasswd         = "secret"
-	DefaultSystemID       = "smpptest"
-	DeliverDelay          = 1 * time.Second
-	msgIDcounter    int64 = 0
+	DefaultUser                = "client"
+	DefaultPasswd              = "secret"
+	DefaultSystemID            = "smpptest"
+	DeliverDelay               = 1 * time.Second
+	msgIDcounter         int64 = 0
+	FinalDeliveryReceipt       = 0x01 // TODO(cesar0094): move this to an appropriate package, since importing smpp causes import cycle
 )
 
 // HandlerFunc is the signature of a function passed to Server instances,
@@ -266,7 +266,7 @@ func processShortMessage(conn Conn, submitSmPdu pdu.Body) {
 	respFields.Set(pdufield.ESMClass, reqFields[pdufield.ESMClass])
 	respFields.Set(pdufield.ProtocolID, reqFields[pdufield.ProtocolID])
 	respFields.Set(pdufield.PriorityFlag, reqFields[pdufield.PriorityFlag])
-	respFields.Set(pdufield.RegisteredDelivery, smpp.FinalDeliveryReceipt)
+	respFields.Set(pdufield.RegisteredDelivery, FinalDeliveryReceipt)
 	respFields.Set(pdufield.DataCoding, reqFields[pdufield.DataCoding])
 
 	id := reqFields[pdufield.MessageID].String()
