@@ -52,15 +52,15 @@ func nextMessageId() string {
 
 // NewServer creates and initializes a new Server. Callers are supposed
 // to call Close on that server later.
-func NewServer(user, password string, port int) *Server {
-	s := NewUnstartedServer(user, password, port)
+func NewServer(user, password string, listener net.Listener) *Server {
+	s := NewUnstartedServer(user, password, listener)
 	s.Start()
 	return s
 }
 
 // NewUnstartedServer creates a new Server with default settings, and
 // does not start it. Callers are supposed to call Start and Close later.
-func NewUnstartedServer(user, password string, port int) *Server {
+func NewUnstartedServer(user, password string, listener net.Listener) *Server {
 	if user == "" {
 		user = DefaultUser
 	}
@@ -71,11 +71,11 @@ func NewUnstartedServer(user, password string, port int) *Server {
 		User:    user,
 		Passwd:  password,
 		Handler: EchoHandler,
-		l:       newLocalListener(port),
+		l:       listener,
 	}
 }
 
-func newLocalListener(port int) net.Listener {
+func NewLocalListener(port int) net.Listener {
 	// Try the default port first
 	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err == nil {

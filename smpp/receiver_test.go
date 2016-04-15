@@ -14,7 +14,7 @@ import (
 
 func TestReceiver(t *testing.T) {
 	port := 0 // any port
-	s := smpptest.NewServer(smpptest.DefaultUser, smpptest.DefaultPasswd, port)
+	s := smpptest.NewServer(smpptest.DefaultUser, smpptest.DefaultPasswd, smpptest.NewLocalListener(port))
 	defer s.Close()
 	rc := make(chan pdu.Body)
 	r := &Receiver{
