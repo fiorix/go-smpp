@@ -15,8 +15,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/veoo/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 )
 
 // Default settings.
@@ -70,7 +70,7 @@ func NewUnstartedServer(user, password string, port int) *Server {
 	return &Server{
 		User:    user,
 		Passwd:  password,
-		Handler: StubHandler,
+		Handler: EchoHandler,
 		l:       newLocalListener(port),
 	}
 }
