@@ -9,13 +9,14 @@ import (
 	"net"
 	"testing"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
+	"github.com/veoo/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
+	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
 
 func TestServer(t *testing.T) {
-	s := NewServer()
+	port := 0 // any port
+	s := NewServer(DefaultUser, DefaultPasswd, port)
 	defer s.Close()
 	c, err := net.Dial("tcp", s.Addr())
 	if err != nil {
@@ -26,8 +27,8 @@ func TestServer(t *testing.T) {
 	// bind
 	p := pdu.NewBindTransmitter()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, "client")
-	f.Set(pdufield.Password, "secret")
+	f.Set(pdufield.SystemID, DefaultUser)
+	f.Set(pdufield.Password, DefaultPasswd)
 	f.Set(pdufield.InterfaceVersion, 0x34)
 	if err = rw.Write(p); err != nil {
 		t.Fatal(err)

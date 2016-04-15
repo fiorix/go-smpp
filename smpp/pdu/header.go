@@ -18,6 +18,10 @@ type (
 	Status uint32
 )
 
+const (
+	InvalidCommandID Status = 0x00000003
+)
+
 var idString = map[ID]string{
 	GenericNACKID:         "GenericNACK",
 	BindReceiverID:        "BindReceiver",

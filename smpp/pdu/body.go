@@ -7,7 +7,7 @@ package pdu
 import (
 	"io"
 
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 )
 
 // MaxSize is the maximum size allowed for a PDU.

@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/smpptest"
+	"github.com/veoo/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestReceiver(t *testing.T) {
-	s := smpptest.NewServer()
+	port := 0 // any port
+	s := smpptest.NewServer(smpptest.DefaultUser, smpptest.DefaultPasswd, port)
 	defer s.Close()
 	rc := make(chan pdu.Body)
 	r := &Receiver{

@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
-	"github.com/fiorix/go-smpp/smpp/smpptest"
+	"github.com/veoo/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
+	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
+	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestShortMessage(t *testing.T) {
-	s := smpptest.NewUnstartedServer()
+	port := 0 // any port
+	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, port)
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
@@ -61,7 +62,8 @@ func TestShortMessage(t *testing.T) {
 }
 
 func TestLongMessage(t *testing.T) {
-	s := smpptest.NewUnstartedServer()
+	port := 0 // any port
+	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, port)
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
@@ -107,7 +109,8 @@ func TestLongMessage(t *testing.T) {
 }
 
 func TestQuerySM(t *testing.T) {
-	s := smpptest.NewUnstartedServer()
+	port := 0 // any port
+	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, port)
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
