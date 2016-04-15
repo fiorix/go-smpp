@@ -16,7 +16,7 @@ import (
 
 func TestServer(t *testing.T) {
 	port := 0 // any port
-	s := NewServer(DefaultUser, DefaultPasswd, port)
+	s := NewServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
 	defer s.Close()
 	c, err := net.Dial("tcp", s.Addr())
 	if err != nil {
