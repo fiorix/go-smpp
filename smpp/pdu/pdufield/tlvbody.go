@@ -32,6 +32,6 @@ func (tlv *TLVBody) SerializeTo(w io.Writer) error {
 	binary.BigEndian.PutUint16(b[0:2], uint16(tlv.Tag))
 	binary.BigEndian.PutUint16(b[2:4], tlv.Len)
 	copy(b[4:], tlv.data)
-	w.Write(b)
-	return nil
+	_, err := w.Write(b)
+	return err
 }
