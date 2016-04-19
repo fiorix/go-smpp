@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package smpptest
+package smpp
 
 import (
 	"crypto/tls"
@@ -21,17 +21,16 @@ import (
 
 // Default settings.
 var (
-	DefaultUser                = "client"
-	DefaultPasswd              = "secret"
-	DefaultSystemID            = "smpptest"
-	DeliverDelay               = 1 * time.Second
-	msgIDcounter         int64 = 0
-	FinalDeliveryReceipt       = 0x01 // TODO(cesar0094): move this to an appropriate package, since importing smpp causes import cycle
+	DefaultUser           = "client"
+	DefaultPasswd         = "secret"
+	DefaultSystemID       = "smpptest"
+	DeliverDelay          = 1 * time.Second
+	msgIDcounter    int64 = 0
 )
 
-// HandlerFunc is the signature of a function passed to Server instances,
+// RequestHandlerFunc is the signature of a function passed to Server instances,
 // that is called when client PDU messages arrive.
-type HandlerFunc func(c Conn, m pdu.Body)
+type RequestHandlerFunc func(c Conn, m pdu.Body)
 
 // Server is an SMPP server for testing purposes. By default it authenticate
 // clients with the configured credentials, and echoes any other PDUs
@@ -40,7 +39,7 @@ type Server struct {
 	User    string
 	Passwd  string
 	TLS     *tls.Config
-	Handler HandlerFunc
+	Handler RequestHandlerFunc
 
 	mu sync.Mutex
 	l  net.Listener
@@ -183,7 +182,7 @@ func (srv *Server) auth(c *conn) error {
 	return nil
 }
 
-// EchoHandler is the default Server HandlerFunc, and echoes back
+// EchoHandler is the default Server RequestHandlerFunc, and echoes back
 // any PDUs received.
 func EchoHandler(cli Conn, m pdu.Body) {
 	// log.Printf("smpptest: echo PDU from %s: %#v", cli.RemoteAddr(), m)
@@ -199,7 +198,7 @@ func EchoHandler(cli Conn, m pdu.Body) {
 	cli.Write(m)
 }
 
-// StubHandler is a HandlerFunc that returns compliant but dummy PDUs that are useful
+// StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
 // for testing clients
 func StubHandler(conn Conn, m pdu.Body) {
 	Info.Println("Processing incoming PDU:", m.Header().ID, "seq:", m.Header().Seq)
