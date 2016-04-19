@@ -12,13 +12,12 @@ import (
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
-	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestTransceiver(t *testing.T) {
 	port := 0 // any port
-	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, smpptest.NewLocalListener(port))
-	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	s.Handler = func(c Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
@@ -37,7 +36,7 @@ func TestTransceiver(t *testing.T) {
 			f.Set(pdufield.ShortMessage, pf[pdufield.ShortMessage])
 			c.Write(r)
 		default:
-			smpptest.EchoHandler(c, p)
+			EchoHandler(c, p)
 		}
 	}
 	s.Start()
@@ -51,8 +50,8 @@ func TestTransceiver(t *testing.T) {
 	}
 	tc := &Transceiver{
 		Addr:    s.Addr(),
-		User:    smpptest.DefaultUser,
-		Passwd:  smpptest.DefaultPasswd,
+		User:    DefaultUser,
+		Passwd:  DefaultPasswd,
 		Handler: receiver,
 	}
 	defer tc.Close()

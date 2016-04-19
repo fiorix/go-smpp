@@ -11,13 +11,12 @@ import (
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
-	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestShortMessage(t *testing.T) {
 	port := 0 // any port
-	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, smpptest.NewLocalListener(port))
-	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	s.Handler = func(c Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
@@ -25,15 +24,15 @@ func TestShortMessage(t *testing.T) {
 			r.Fields().Set(pdufield.MessageID, "foobar")
 			c.Write(r)
 		default:
-			smpptest.EchoHandler(c, p)
+			EchoHandler(c, p)
 		}
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   smpptest.DefaultUser,
-		Passwd: smpptest.DefaultPasswd,
+		User:   DefaultUser,
+		Passwd: DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -63,8 +62,8 @@ func TestShortMessage(t *testing.T) {
 
 func TestLongMessage(t *testing.T) {
 	port := 0 // any port
-	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, smpptest.NewLocalListener(port))
-	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	s.Handler = func(c Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
@@ -72,15 +71,15 @@ func TestLongMessage(t *testing.T) {
 			r.Fields().Set(pdufield.MessageID, "foobar")
 			c.Write(r)
 		default:
-			smpptest.EchoHandler(c, p)
+			EchoHandler(c, p)
 		}
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   smpptest.DefaultUser,
-		Passwd: smpptest.DefaultPasswd,
+		User:   DefaultUser,
+		Passwd: DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -110,8 +109,8 @@ func TestLongMessage(t *testing.T) {
 
 func TestQuerySM(t *testing.T) {
 	port := 0 // any port
-	s := smpptest.NewUnstartedServer(smpptest.DefaultUser, smpptest.DefaultPasswd, smpptest.NewLocalListener(port))
-	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	s.Handler = func(c Conn, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
 		r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
@@ -122,8 +121,8 @@ func TestQuerySM(t *testing.T) {
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   smpptest.DefaultUser,
-		Passwd: smpptest.DefaultPasswd,
+		User:   DefaultUser,
+		Passwd: DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()

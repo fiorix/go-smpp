@@ -79,6 +79,14 @@ type conn struct {
 	w   *bufio.Writer
 }
 
+func newConn(c net.Conn) *conn {
+	return &conn{
+		rwc: c,
+		r:   bufio.NewReader(c),
+		w:   bufio.NewWriter(c),
+	}
+}
+
 // Read implements the Conn interface.
 func (c *conn) Read() (pdu.Body, error) {
 	return pdu.Decode(c.r)

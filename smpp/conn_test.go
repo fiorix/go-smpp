@@ -9,12 +9,11 @@ import (
 
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
-	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestConn(t *testing.T) {
 	port := 0 // any port
-	s := smpptest.NewServer(smpptest.DefaultUser, smpptest.DefaultPasswd, smpptest.NewLocalListener(port))
+	s := NewServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
 	defer s.Close()
 	c, err := Dial(s.Addr(), nil)
 	if err != nil {
@@ -23,8 +22,8 @@ func TestConn(t *testing.T) {
 	defer c.Close()
 	p := pdu.NewBindTransmitter()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, smpptest.DefaultUser)
-	f.Set(pdufield.Password, smpptest.DefaultPasswd)
+	f.Set(pdufield.SystemID, DefaultUser)
+	f.Set(pdufield.Password, DefaultPasswd)
 	f.Set(pdufield.InterfaceVersion, 0x34)
 	if err = c.Write(p); err != nil {
 		t.Fatal(err)
