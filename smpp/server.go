@@ -207,7 +207,7 @@ func EchoHandler(cli Conn, m pdu.Body) {
 // for testing clients
 func StubHandler(conn Conn, m pdu.Body) {
 	logger.Server.WithFields(log.Fields{
-		"pudId": m.Header().ID,
+		"pudId": m.Header().ID.String(),
 		"seq":   m.Header().Seq,
 	}).Info("Processing incoming PDU")
 
