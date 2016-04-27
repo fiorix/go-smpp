@@ -230,6 +230,7 @@ func StubHandler(conn Conn, m pdu.Body) {
 	default:
 		// falls back to echoing the response
 		EchoHandler(conn, m)
+		return
 	}
 
 	err := conn.Write(resp)
@@ -299,6 +300,6 @@ func processShortMessage(conn Conn, submitSmPdu pdu.Body) {
 
 	err := conn.Write(respPdu)
 	if err != nil {
-		logger.Server.Error("Failed sending delivery_sm:", err)
+		logger.Server.Error("Failed sending delivery_sm: ", err)
 	}
 }
