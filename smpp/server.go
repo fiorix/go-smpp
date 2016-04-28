@@ -26,14 +26,14 @@ import (
 var (
 	DefaultUser           = "client"
 	DefaultPasswd         = "secret"
-	DefaultSystemID       = "smpptest"
+	DefaultSystemID       = "sys_id"
 	DeliverDelay          = 1 * time.Second
-	msgIDcounter    int64 = 0
+	msgIdCounter    int64 = 0
 )
 
 // RequestHandlerFunc is the signature of a function passed to Server instances,
 // that is called when client PDU messages arrive.
-type RequestHandlerFunc func(c Conn, m pdu.Body)
+type RequestHandlerFunc func(s *session, m pdu.Body)
 
 // Server is an SMPP server for testing purposes. By default it authenticate
 // clients with the configured credentials, and echoes any other PDUs
@@ -49,7 +49,30 @@ type Server struct {
 }
 
 func nextMessageId() string {
-	return strconv.FormatInt(atomic.AddInt64(&msgIDcounter, 1), 10)
+	return strconv.FormatInt(atomic.AddInt64(&msgIdCounter, 1), 10)
+}
+
+// NOTE: should handler funcs be session methods?
+type session struct {
+	conn         *connSwitch
+	msgIDCounter int64
+}
+
+// TODO(cesar0094): Make sure Read(), Write() and Close() are working as expected
+
+// Read reads PDU binary data off the wire and returns it.
+func (s *session) Read() (pdu.Body, error) {
+	return s.conn.Read()
+}
+
+// Write serializes the given PDU and writes to the connection.
+func (s *session) Write(w pdu.Body) error {
+	return s.conn.Write(w)
+}
+
+// Close terminates the current connection and stop any further attempts.
+func (s *session) Close() error {
+	return s.conn.Close()
 }
 
 // NewServer creates and initializes a new Server. Callers are supposed
@@ -139,15 +162,19 @@ func (srv *Server) handle(c *conn) {
 		}
 		return
 	}
+	// Use connSwitch to have synced read/write
+	s := &session{conn: &connSwitch{}}
+	s.conn.Set(c)
+
 	for {
-		pdu, err := c.Read()
+		pdu, err := s.Read()
 		if err != nil {
 			if err != io.EOF {
 				logger.Server.Error("Read failed:", err)
 			}
 			break
 		}
-		srv.Handler(c, pdu)
+		srv.Handler(s, pdu)
 	}
 }
 
@@ -189,23 +216,23 @@ func (srv *Server) auth(c *conn) error {
 
 // EchoHandler is the default Server RequestHandlerFunc, and echoes back
 // any PDUs received.
-func EchoHandler(cli Conn, m pdu.Body) {
-	// logger.Server.Printf("smpptest: echo PDU from %s: %#v", cli.RemoteAddr(), m)
+func EchoHandler(s *session, m pdu.Body) {
+	// logger.Server.Printf("smpptest: echo PDU from %s: %#v", s.RemoteAddr(), m)
 	//
 	// Real servers will reply with at least the same sequence number
 	// from the request:
 	//     resp := pdu.NewSubmitSMResp()
 	//     resp.Header().Seq = m.Header().Seq
 	//     resp.Fields().Set(pdufield.MessageID, "1234")
-	//     cli.Write(resp)
+	//     s.Write(resp)
 	//
 	// We just echo m back:
-	cli.Write(m)
+	s.Write(m)
 }
 
 // StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
 // for testing clients
-func StubHandler(conn Conn, m pdu.Body) {
+func StubHandler(s *session, m pdu.Body) {
 	logger.Server.WithFields(log.Fields{
 		"pudId": m.Header().ID.String(),
 		"seq":   m.Header().Seq,
@@ -214,12 +241,12 @@ func StubHandler(conn Conn, m pdu.Body) {
 	var resp pdu.Body
 	switch m.Header().ID {
 	case pdu.EnquireLinkID:
-		resp = handleEnquireLink(conn, m)
+		resp = handleEnquireLink(s, m)
 	case pdu.EnquireLinkRespID:
 		// TODO(cesar0094): what should happen if this is not received after request
 		return
 	case pdu.SubmitSMID:
-		resp = handleSubmitSM(conn, m)
+		resp = handleSubmitSM(s, m)
 	case pdu.SubmitSMRespID:
 		resp = handleInvalidCommand()
 	case pdu.DeliverSMID:
@@ -229,17 +256,17 @@ func StubHandler(conn Conn, m pdu.Body) {
 		return
 	default:
 		// falls back to echoing the response
-		EchoHandler(conn, m)
+		EchoHandler(s, m)
 		return
 	}
 
-	err := conn.Write(resp)
+	err := s.Write(resp)
 	if err != nil {
 		logger.Server.Error("Failed sending response:", err)
 	}
 }
 
-func handleSubmitSM(conn Conn, m pdu.Body) pdu.Body {
+func handleSubmitSM(s *session, m pdu.Body) pdu.Body {
 	resp := pdu.NewSubmitSMResp()
 	resp.Header().Seq = m.Header().Seq
 
@@ -247,11 +274,11 @@ func handleSubmitSM(conn Conn, m pdu.Body) pdu.Body {
 	resp.Fields().Set(pdufield.MessageID, messageId)
 	m.Fields().Set(pdufield.MessageID, messageId)
 
-	go processShortMessage(conn, m)
+	go processShortMessage(s, m)
 	return resp
 }
 
-func handleEnquireLink(conn Conn, m pdu.Body) pdu.Body {
+func handleEnquireLink(s *session, m pdu.Body) pdu.Body {
 	resp := pdu.NewEnquireLinkResp()
 	resp.Header().Seq = m.Header().Seq
 	return resp
@@ -263,7 +290,7 @@ func handleInvalidCommand() pdu.Body {
 	return resp
 }
 
-func processShortMessage(conn Conn, submitSmPdu pdu.Body) {
+func processShortMessage(s *session, submitSmPdu pdu.Body) {
 	submitDate := time.Now()
 	// Pretend to be sending the SM
 	time.Sleep(DeliverDelay)
@@ -298,7 +325,7 @@ func processShortMessage(conn Conn, submitSmPdu pdu.Body) {
 	shortMessage := fmt.Sprintf("id:%s sub:%s dlvrd:%s submit date:%d done date:%d stat:%s err:%s Text:%s", id, sub, dlvrd, submitDate.Unix(), doneDate.Unix(), stat, errTxt, reqFields[pdufield.ShortMessage])
 	respFields.Set(pdufield.ShortMessage, shortMessage)
 
-	err := conn.Write(respPdu)
+	err := s.Write(respPdu)
 	if err != nil {
 		logger.Server.Error("Failed sending delivery_sm: ", err)
 	}
