@@ -42,8 +42,8 @@ func TestServer(t *testing.T) {
 	if !ok {
 		t.Fatalf("missing system_id field: %#v", resp)
 	}
-	if id.String() != "smpptest" {
-		t.Fatalf("unexpected system_id: want smpptest, have %q", id)
+	if id.String() != "sys_id" {
+		t.Fatalf("unexpected system_id: want sys_id, have %q", id)
 	}
 	// submit_sm
 	p = pdu.NewSubmitSM()
