@@ -17,13 +17,13 @@ import (
 func TestTransceiver(t *testing.T) {
 	port := 0 // any port
 	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(c Conn, p pdu.Body) {
+	s.Handler = func(s *session, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
 			r.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(r)
+			s.Write(r)
 			pf := p.Fields()
 			rd := pf[pdufield.RegisteredDelivery]
 			if rd.Bytes()[0] == 0 {
@@ -34,9 +34,9 @@ func TestTransceiver(t *testing.T) {
 			f.Set(pdufield.SourceAddr, pf[pdufield.SourceAddr])
 			f.Set(pdufield.DestinationAddr, pf[pdufield.DestinationAddr])
 			f.Set(pdufield.ShortMessage, pf[pdufield.ShortMessage])
-			c.Write(r)
+			s.Write(r)
 		default:
-			EchoHandler(c, p)
+			EchoHandler(s, p)
 		}
 	}
 	s.Start()
