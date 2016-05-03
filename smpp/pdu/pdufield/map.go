@@ -5,7 +5,10 @@
 package pdufield
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
@@ -49,5 +52,94 @@ func (m Map) Set(k Name, v interface{}) error {
 	return nil
 }
 
+func (m Map) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString("{")
+	length := len(m)
+	count := 0
+	for k, v := range m {
+		data := v.Raw()
+		switch data.(type) {
+		case []uint8:
+			jsonValue, _ := json.Marshal(v.String())
+			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k, jsonValue))
+		case uint8:
+			jsonValue, _ := json.Marshal(data.(uint8))
+			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k, string(jsonValue)))
+		default:
+			jsonValue, _ := json.Marshal(v)
+			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k, string(jsonValue)))
+		}
+
+		count++
+		if count < length {
+			buffer.WriteString(",")
+		}
+	}
+	buffer.WriteString("}")
+	return buffer.Bytes(), nil
+}
+
+func (m *Map) UnmarshalJSON(b []byte) error {
+	if *m == nil {
+		*m = Map{}
+	}
+	tmp := m
+	var d map[string]interface{}
+	err := json.Unmarshal(b, &d)
+	if err != nil {
+		return err
+	}
+	for k, v := range d {
+		var err error
+		switch v.(type) {
+		case string:
+			err = tmp.Set(Name(k), v)
+		case float64:
+			err = tmp.Set(Name(k), uint8(v.(float64)))
+		default:
+			return fmt.Errorf("unsupported field type: %#v", v)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // TLVMap is a collection of PDU TLV field data indexed by type.
 type TLVMap map[TLVType]*TLVBody
+
+func (m TLVMap) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString("{")
+	length := len(m)
+	count := 0
+	for k, v := range m {
+		jsonValue, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		buffer.WriteString(fmt.Sprintf("\"%d\":%s", k, string(jsonValue)))
+		count++
+		if count < length {
+			buffer.WriteString(",")
+		}
+	}
+	buffer.WriteString("}")
+	return buffer.Bytes(), nil
+}
+
+func (m TLVMap) UnmarshalJSON(b []byte) error {
+	var tmp map[string]*TLVBody
+	err := json.Unmarshal(b, &tmp)
+	if err != nil {
+		return err
+	}
+	for k, v := range tmp {
+		numericKey, err := strconv.Atoi(k)
+		if err != nil {
+			return err
+		}
+		m[TLVType(numericKey)] = v
+	}
+	return nil
+}

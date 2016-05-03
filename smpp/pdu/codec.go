@@ -6,6 +6,7 @@ package pdu
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync/atomic"
@@ -92,6 +93,41 @@ func (pdu *codec) SerializeTo(w io.Writer) error {
 	}
 	_, err = io.Copy(w, &b)
 	return err
+}
+
+type codecJSON struct {
+	Header    *Header         `json:"header"`
+	FieldList pdufield.List   `json:"fieldList"`
+	Fields    pdufield.Map    `json:"fields"`
+	TLVFields pdufield.TLVMap `json:"tlvFields"`
+}
+
+func (pdu *codec) MarshalJSON() ([]byte, error) {
+	j := codecJSON{
+		pdu.Header(),
+		pdu.FieldList(),
+		pdu.Fields(),
+		pdu.TLVFields(),
+	}
+	return json.Marshal(j)
+}
+
+// Since codec is a private struct, we expose the Unmarshal function
+// for other packages to use it
+func UnmarshalJSON(b []byte) (Body, error) {
+	j := codecJSON{}
+
+	err := json.Unmarshal(b, &j)
+	if err != nil {
+		return nil, err
+	}
+	c := &codec{
+		h: j.Header,
+		l: j.FieldList,
+		f: j.Fields,
+		t: j.TLVFields,
+	}
+	return c, nil
 }
 
 // decoder wraps a PDU (e.g. Bind) and the codec together and is

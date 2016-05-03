@@ -6,6 +6,7 @@ package pdufield
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"io"
 )
 
@@ -32,5 +33,32 @@ func (tlv *TLVBody) SerializeTo(w io.Writer) error {
 	binary.BigEndian.PutUint16(b[0:2], uint16(tlv.Tag))
 	binary.BigEndian.PutUint16(b[2:4], tlv.Len)
 	copy(b[4:], tlv.data)
+	return nil
+}
+
+type TLVBodyJSON struct {
+	Tag  TLVType `json:"tag"`
+	Len  uint16  `json:"len"`
+	Data []byte  `json:"data"`
+}
+
+func (tlv TLVBody) MarshalJSON() ([]byte, error) {
+	s := TLVBodyJSON{
+		Tag:  tlv.Tag,
+		Len:  tlv.Len,
+		Data: tlv.Bytes(),
+	}
+	return json.Marshal(s)
+}
+
+func (tlv TLVBody) UnmarshalJSON(b []byte) error {
+	s := TLVBodyJSON{}
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	tlv.Tag = s.Tag
+	tlv.Len = s.Len
+	tlv.data = s.Data
 	return nil
 }
