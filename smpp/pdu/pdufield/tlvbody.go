@@ -51,7 +51,7 @@ func (tlv TLVBody) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
-func (tlv TLVBody) UnmarshalJSON(b []byte) error {
+func (tlv *TLVBody) UnmarshalJSON(b []byte) error {
 	s := TLVBodyJSON{}
 	err := json.Unmarshal(b, &s)
 	if err != nil {
