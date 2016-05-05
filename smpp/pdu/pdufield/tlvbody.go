@@ -36,7 +36,7 @@ func (tlv *TLVBody) SerializeTo(w io.Writer) error {
 	return nil
 }
 
-type TLVBodyJSON struct {
+type tlvBodyJSON struct {
 	Tag  TLVType `json:"tag"`
 	Len  uint16  `json:"len"`
 	Data []byte  `json:"data"`
@@ -44,7 +44,7 @@ type TLVBodyJSON struct {
 }
 
 func (tlv TLVBody) MarshalJSON() ([]byte, error) {
-	s := TLVBodyJSON{
+	s := tlvBodyJSON{
 		Tag:  tlv.Tag,
 		Len:  tlv.Len,
 		Data: tlv.Bytes(),
@@ -54,7 +54,7 @@ func (tlv TLVBody) MarshalJSON() ([]byte, error) {
 }
 
 func (tlv *TLVBody) UnmarshalJSON(b []byte) error {
-	s := TLVBodyJSON{}
+	s := tlvBodyJSON{}
 	err := json.Unmarshal(b, &s)
 	if err != nil {
 		return err
