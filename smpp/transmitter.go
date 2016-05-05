@@ -262,7 +262,7 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 	maxLen := 134 // 140-6 (UDH)
 	rawMsg := sm.Text.Encode()
-	countParts := int(len(rawMsg)/maxLen) + 1
+	countParts := int((len(rawMsg)-1)/maxLen) + 1
 
 	ri := uint8(t.r.Intn(128))
 	UDHHeader := make([]byte, 6)
