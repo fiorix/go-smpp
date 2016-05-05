@@ -1,4 +1,4 @@
-package main
+package smpptest
 
 import (
 	"github.com/fiorix/go-smpp/smpp/pdu"
