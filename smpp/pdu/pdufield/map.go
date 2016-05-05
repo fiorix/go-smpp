@@ -6,9 +6,11 @@ package pdufield
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
@@ -60,7 +62,12 @@ func (m Map) MarshalJSON() ([]byte, error) {
 		data := v.Raw()
 		switch data.(type) {
 		case []uint8:
+			// Marshall the bytes as-is and also the string in two different
+			// fields for readability
 			jsonValue, _ := json.Marshal(v.String())
+			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k+"_text", jsonValue))
+			buffer.WriteString(",")
+			jsonValue, _ = json.Marshal(hex.EncodeToString(data.([]byte)))
 			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k, jsonValue))
 		case uint8:
 			jsonValue, _ := json.Marshal(data.(uint8))
@@ -90,10 +97,20 @@ func (m *Map) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	for k, v := range d {
+		// These were only put for readability
+		if strings.Contains(k, "_text") {
+			continue
+		}
 		var err error
 		switch v.(type) {
 		case string:
-			err = tmp.Set(Name(k), v)
+			s := v.(string)
+			// Decode the string from hex
+			bytes, err := hex.DecodeString(s)
+			if err != nil {
+				return err
+			}
+			err = tmp.Set(Name(k), bytes)
 		case float64:
 			err = tmp.Set(Name(k), uint8(v.(float64)))
 		default:
