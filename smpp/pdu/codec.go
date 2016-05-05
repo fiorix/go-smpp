@@ -114,7 +114,7 @@ func (pdu *codec) MarshalJSON() ([]byte, error) {
 
 // Since codec is a private struct, we expose the Unmarshal function
 // for other packages to use it
-func UnmarshalJSON(b []byte) (Body, error) {
+func UnmarshalPDU(b []byte) (Body, error) {
 	j := codecJSON{}
 
 	err := json.Unmarshal(b, &j)

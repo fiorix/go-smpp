@@ -40,6 +40,7 @@ type TLVBodyJSON struct {
 	Tag  TLVType `json:"tag"`
 	Len  uint16  `json:"len"`
 	Data []byte  `json:"data"`
+	Text string  `json:"text"`
 }
 
 func (tlv TLVBody) MarshalJSON() ([]byte, error) {
@@ -47,6 +48,7 @@ func (tlv TLVBody) MarshalJSON() ([]byte, error) {
 		Tag:  tlv.Tag,
 		Len:  tlv.Len,
 		Data: tlv.Bytes(),
+		Text: string(tlv.Bytes()),
 	}
 	return json.Marshal(s)
 }
