@@ -7,10 +7,11 @@ package smpp
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"math/rand"
 	"time"
+
+	"github.com/fiorix/go-smpp/smpp/pdu"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 )
 
 // Transceiver implements an SMPP transceiver.
@@ -24,6 +25,7 @@ type Transceiver struct {
 	EnquireLink time.Duration
 	RespTimeout time.Duration
 	TLS         *tls.Config
+	WindowSize  uint
 	Handler     HandlerFunc
 
 	Transmitter
@@ -47,6 +49,7 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
+		WindowSize:  t.WindowSize,
 	}
 	t.conn.client = c
 	c.init()

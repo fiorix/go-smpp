@@ -10,12 +10,17 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 )
+
+// ErrMaxWindowSize is returned when an operation (such as Submit) violates
+// the maximum window size configured for the Transmitter or Transceiver.
+var ErrMaxWindowSize = errors.New("reached max window size")
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
@@ -26,6 +31,7 @@ type Transmitter struct {
 	EnquireLink time.Duration
 	RespTimeout time.Duration
 	TLS         *tls.Config
+	WindowSize  uint
 	r           *rand.Rand
 
 	conn struct {
@@ -33,6 +39,7 @@ type Transmitter struct {
 		*client
 	}
 	tx struct {
+		count int32
 		sync.Mutex
 		inflight map[uint32]chan *tx
 	}
@@ -64,6 +71,7 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
+		WindowSize:  t.WindowSize,
 	}
 	t.conn.client = c
 	c.init()
@@ -192,6 +200,13 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	t.conn.Unlock()
 	if notbound {
 		return nil, ErrNotBound
+	}
+	if t.conn.WindowSize > 0 {
+		inflight := uint(atomic.AddInt32(&t.tx.count, 1))
+		defer func(t *Transmitter) { atomic.AddInt32(&t.tx.count, -1) }(t)
+		if inflight > t.conn.WindowSize {
+			return nil, ErrMaxWindowSize
+		}
 	}
 	rc := make(chan *tx, 1)
 	seq := p.Header().Seq
