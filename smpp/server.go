@@ -6,6 +6,7 @@ package smpp
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -241,9 +242,11 @@ func EchoHandler(s *session, m pdu.Body) {
 // StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
 // for testing clients
 func StubHandler(s *session, m pdu.Body) {
+	bodyBytes, _ := json.Marshal(m)
 	logger.Server.WithFields(log.Fields{
 		"pudId": m.Header().ID.String(),
 		"seq":   m.Header().Seq,
+		"json":  string(bodyBytes),
 	}).Info("Processing incoming PDU")
 
 	var resp pdu.Body
@@ -263,6 +266,12 @@ func StubHandler(s *session, m pdu.Body) {
 	if err != nil {
 		logger.Server.Error("Failed sending response:", err)
 	}
+	bodyBytes, _ = json.Marshal(resp)
+	logger.Server.WithFields(log.Fields{
+		"pudId": resp.Header().ID.String(),
+		"seq":   resp.Header().Seq,
+		"json":  string(bodyBytes),
+	}).Info("Sent response PDU")
 }
 
 func handleSubmitSM(m pdu.Body) pdu.Body {
