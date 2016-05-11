@@ -42,7 +42,7 @@ var ServerStubHandlers = map[pdu.ID]func(pdu.Body) pdu.Body{
 
 // RequestHandlerFunc is the signature of a function passed to Server instances,
 // that is called when client PDU messages arrive.
-type RequestHandlerFunc func(s *session, m pdu.Body)
+type RequestHandlerFunc func(Session, pdu.Body)
 
 // Server is an SMPP server for testing purposes. By default it authenticate
 // clients with the configured credentials, and echoes any other PDUs
@@ -59,6 +59,12 @@ type Server struct {
 
 func NextMessageId() string {
 	return strconv.FormatInt(atomic.AddInt64(&msgIdCounter, 1), 10)
+}
+
+type Session interface {
+	Reader
+	Writer
+	Closer
 }
 
 // NOTE: should handler funcs be session methods?
@@ -225,7 +231,7 @@ func (srv *Server) auth(c *conn) error {
 
 // EchoHandler is the default Server RequestHandlerFunc, and echoes back
 // any PDUs received.
-func EchoHandler(s *session, m pdu.Body) {
+func EchoHandler(s Session, m pdu.Body) {
 	// logger.Server.Printf("smpptest: echo PDU from %s: %#v", s.RemoteAddr(), m)
 	//
 	// Real servers will reply with at least the same sequence number
@@ -239,9 +245,9 @@ func EchoHandler(s *session, m pdu.Body) {
 	s.Write(m)
 }
 
-// StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
-// for testing clients
-func StubHandler(s *session, m pdu.Body) {
+// StubHandler delegates the handling of PDUs to the ServerStubHandlers and uses EchoHandler
+// as a fall-back
+func StubHandler(s Session, m pdu.Body) {
 	bodyBytes, _ := json.Marshal(m)
 	logger.Server.WithFields(log.Fields{
 		"pudId": m.Header().ID.String(),
@@ -308,7 +314,7 @@ func handleInvalidCommand(m pdu.Body) pdu.Body {
 	return resp
 }
 
-func processShortMessage(s *session, submitSmPdu pdu.Body) {
+func processShortMessage(s Session, submitSmPdu pdu.Body) {
 	submitDate := time.Now()
 	// Pretend to be sending the SM
 	time.Sleep(DeliverDelay)
