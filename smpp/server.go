@@ -32,7 +32,7 @@ var (
 	msgIdCounter    int64 = 0
 )
 
-var ServerStubHandlers = map[pdu.ID]func(pdu.Body) pdu.Body{
+var HandlerRoutings = map[pdu.ID]func(pdu.Body) pdu.Body{
 	pdu.EnquireLinkID:     handleEnquireLink,
 	pdu.EnquireLinkRespID: handleEnquireLinkResp,
 	pdu.SubmitSMID:        handleSubmitSM,
@@ -245,8 +245,8 @@ func EchoHandler(s Session, m pdu.Body) {
 	s.Write(m)
 }
 
-// StubHandler delegates the handling of PDUs to the ServerStubHandlers and uses EchoHandler
-// as a fall-back
+// StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
+// for testing clients
 func StubHandler(s Session, m pdu.Body) {
 	bodyBytes, _ := json.Marshal(m)
 	logger.Server.WithFields(log.Fields{
@@ -256,7 +256,56 @@ func StubHandler(s Session, m pdu.Body) {
 	}).Info("Processing incoming PDU")
 
 	var resp pdu.Body
-	if handler, ok := ServerStubHandlers[m.Header().ID]; ok {
+	switch m.Header().ID {
+	case pdu.EnquireLinkID:
+		resp = handleEnquireLink(m)
+	case pdu.EnquireLinkRespID:
+		// TODO(cesar0094): what should happen if this is not received after request
+		return
+	case pdu.SubmitSMID:
+		resp = handleSubmitSM(m)
+		go processShortMessage(s, m)
+	case pdu.SubmitSMRespID:
+		resp = handleInvalidCommand(m)
+	case pdu.DeliverSMID:
+		resp = handleInvalidCommand(m)
+	case pdu.DeliverSMRespID:
+		// TODO(cesar0094): Good to go?
+		return
+	default:
+		logger.Server.Info(
+			"Could not find proper handler. Falling back to EchoHandler.")
+		EchoHandler(s, m)
+		return
+	}
+
+	if resp == nil {
+		return
+	}
+	err := s.Write(resp)
+	if err != nil {
+		logger.Server.Error("Failed sending response:", err)
+	}
+	bodyBytes, _ = json.Marshal(resp)
+	logger.Server.WithFields(log.Fields{
+		"pudId": resp.Header().ID.String(),
+		"seq":   resp.Header().Seq,
+		"json":  string(bodyBytes),
+	}).Info("Sent response PDU")
+}
+
+// RouterHandler delegates the handling of PDUs to the HandlerRoutings and uses EchoHandler
+// as a fall-back
+func RouterHandler(s Session, m pdu.Body) {
+	bodyBytes, _ := json.Marshal(m)
+	logger.Server.WithFields(log.Fields{
+		"pudId": m.Header().ID.String(),
+		"seq":   m.Header().Seq,
+		"json":  string(bodyBytes),
+	}).Info("Processing incoming PDU")
+
+	var resp pdu.Body
+	if handler, ok := HandlerRoutings[m.Header().ID]; ok {
 		resp = handler(m)
 	} else {
 		logger.Server.Info(
