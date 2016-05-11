@@ -17,7 +17,7 @@ import (
 func TestTransceiver(t *testing.T) {
 	port := 0 // any port
 	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s *session, p pdu.Body) {
+	s.Handler = func(s Session, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()

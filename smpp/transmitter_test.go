@@ -16,7 +16,7 @@ import (
 func TestShortMessage(t *testing.T) {
 	port := 0 // any port
 	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s *session, p pdu.Body) {
+	s.Handler = func(s Session, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
@@ -63,7 +63,7 @@ func TestShortMessage(t *testing.T) {
 func TestLongMessage(t *testing.T) {
 	port := 0 // any port
 	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s *session, p pdu.Body) {
+	s.Handler = func(s Session, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
@@ -110,7 +110,7 @@ func TestLongMessage(t *testing.T) {
 func TestQuerySM(t *testing.T) {
 	port := 0 // any port
 	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s *session, p pdu.Body) {
+	s.Handler = func(s Session, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
 		r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
