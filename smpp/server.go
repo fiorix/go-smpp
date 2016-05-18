@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"strconv"
 	"sync"
@@ -29,8 +30,11 @@ var (
 	DefaultPasswd         = "secret"
 	DefaultSystemID       = "sys_id"
 	DeliverDelay          = 1 * time.Second
+	IDLen                 = 16
 	msgIdCounter    int64 = 0
 )
+
+const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 var HandlerRoutings = map[pdu.ID]func(pdu.Body) pdu.Body{
 	pdu.EnquireLinkID:     handleEnquireLink,
@@ -61,16 +65,27 @@ func NextMessageId() string {
 	return strconv.FormatInt(atomic.AddInt64(&msgIdCounter, 1), 10)
 }
 
+func randomString(strlen int) string {
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	result := make([]byte, strlen)
+	for i := 0; i < strlen; i++ {
+		result[i] = chars[rand.Intn(len(chars))]
+	}
+	return string(result)
+}
+
 type Session interface {
 	Reader
 	Writer
 	Closer
+	ID() string
 }
 
 // NOTE: should handler funcs be session methods?
 type session struct {
-	conn         *connSwitch
-	msgIDCounter int64
+	conn *connSwitch
+	id   string
 }
 
 // TODO(cesar0094): Make sure Read(), Write() and Close() are working as expected
@@ -88,6 +103,10 @@ func (s *session) Write(w pdu.Body) error {
 // Close terminates the current connection and stop any further attempts.
 func (s *session) Close() error {
 	return s.conn.Close()
+}
+
+func (s *session) ID() string {
+	return s.id
 }
 
 // NewServer creates and initializes a new Server. Callers are supposed
@@ -180,6 +199,7 @@ func (srv *Server) handle(c *conn) {
 	// Use connSwitch to have synced read/write
 	s := &session{conn: &connSwitch{}}
 	s.conn.Set(c)
+	s.id = randomString(IDLen)
 
 	for {
 		pdu, err := s.Read()
