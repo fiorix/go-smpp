@@ -74,6 +74,7 @@ type client struct {
 	BindFunc    func(c Conn) error
 	EnquireLink time.Duration
 	RespTimeout time.Duration
+	WindowSize  uint
 
 	// internal stuff.
 	inbox chan pdu.Body

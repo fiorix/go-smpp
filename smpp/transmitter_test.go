@@ -60,6 +60,62 @@ func TestShortMessage(t *testing.T) {
 	}
 }
 
+func TestShortMessageWindowSize(t *testing.T) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		time.Sleep(200 * time.Millisecond)
+		r := pdu.NewSubmitSMResp()
+		r.Header().Seq = p.Header().Seq
+		r.Fields().Set(pdufield.MessageID, "foobar")
+		c.Write(r)
+	}
+	s.Start()
+	defer s.Close()
+	tx := &Transmitter{
+		Addr:        s.Addr(),
+		User:        smpptest.DefaultUser,
+		Passwd:      smpptest.DefaultPasswd,
+		WindowSize:  2,
+		RespTimeout: time.Second,
+	}
+	defer tx.Close()
+	conn := <-tx.Bind()
+	switch conn.Status() {
+	case Connected:
+	default:
+		t.Fatal(conn.Error())
+	}
+	msgc := make(chan *ShortMessage, 3)
+	defer close(msgc)
+	errc := make(chan error, 3)
+	for i := 0; i < 3; i++ {
+		go func(msgc chan *ShortMessage, errc chan error) {
+			m := <-msgc
+			if m == nil {
+				return
+			}
+			_, err := tx.Submit(m)
+			errc <- err
+		}(msgc, errc)
+		msgc <- &ShortMessage{
+			Src:      "root",
+			Dst:      "foobar",
+			Text:     pdutext.Raw("Lorem ipsum"),
+			Validity: 10 * time.Minute,
+			Register: NoDeliveryReceipt,
+		}
+	}
+	nerr := 0
+	for i := 0; i < 3; i++ {
+		if <-errc == ErrMaxWindowSize {
+			nerr++
+		}
+	}
+	if nerr != 1 {
+		t.Fatalf("unexpected # of errors. want 1, have %d", nerr)
+	}
+}
+
 func TestLongMessage(t *testing.T) {
 	port := 0 // any port
 	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))

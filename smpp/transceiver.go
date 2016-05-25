@@ -7,6 +7,7 @@ package smpp
 import (
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/veoo/go-smpp/smpp/pdu"
@@ -24,6 +25,7 @@ type Transceiver struct {
 	EnquireLink time.Duration
 	RespTimeout time.Duration
 	TLS         *tls.Config
+	WindowSize  uint
 	Handler     HandlerFunc
 
 	Transmitter
@@ -31,6 +33,7 @@ type Transceiver struct {
 
 // Bind implements the ClientConn interface.
 func (t *Transceiver) Bind() <-chan ConnStatus {
+	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	t.conn.Lock()
 	defer t.conn.Unlock()
 	if t.conn.client != nil {
@@ -46,6 +49,7 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
+		WindowSize:  t.WindowSize,
 	}
 	t.conn.client = c
 	c.init()
