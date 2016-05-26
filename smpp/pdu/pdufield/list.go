@@ -9,8 +9,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-
-	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
 
 // List is a list of PDU fields.
