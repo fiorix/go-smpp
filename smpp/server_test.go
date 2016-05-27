@@ -15,8 +15,10 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	port := 0 // any port
-	s := NewServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	pass	:= "secret"
+	user    := "client"
+	port 	:= 0 // any port
+	s := NewServer(user,pass,NewLocalListener(port))
 	defer s.Close()
 	c, err := net.Dial("tcp", s.Addr())
 	if err != nil {
@@ -27,8 +29,8 @@ func TestServer(t *testing.T) {
 	// bind
 	p := pdu.NewBindTransmitter()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, DefaultUser)
-	f.Set(pdufield.Password, DefaultPasswd)
+	f.Set(pdufield.SystemID, user)
+	f.Set(pdufield.Password, pass)
 	f.Set(pdufield.InterfaceVersion, 0x34)
 	if err = rw.Write(p); err != nil {
 		t.Fatal(err)

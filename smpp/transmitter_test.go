@@ -14,8 +14,10 @@ import (
 )
 
 func TestShortMessage(t *testing.T) {
+	pass	:= "secret"
+	user    := "client"
 	port := 0 // any port
-	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	s := NewUnstartedServer(user, pass, NewLocalListener(port))
 	s.Handler = func(s Session, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
@@ -31,8 +33,8 @@ func TestShortMessage(t *testing.T) {
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   DefaultUser,
-		Passwd: DefaultPasswd,
+		User:   user,
+		Passwd: pass,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -61,8 +63,10 @@ func TestShortMessage(t *testing.T) {
 }
 
 func TestLongMessage(t *testing.T) {
-	port := 0 // any port
-	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	pass	:= "secret"
+	user    := "client"
+	port 	:= 0 // any port
+	s := NewUnstartedServer(user, pass, NewLocalListener(port))
 	s.Handler = func(s Session, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
@@ -78,8 +82,8 @@ func TestLongMessage(t *testing.T) {
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   DefaultUser,
-		Passwd: DefaultPasswd,
+		User:  	user,
+		Passwd: pass,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -108,8 +112,10 @@ func TestLongMessage(t *testing.T) {
 }
 
 func TestQuerySM(t *testing.T) {
-	port := 0 // any port
-	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
+	pass	:= "secret"
+	user    := "client"
+	port 	:= 0 // any port
+	s := NewUnstartedServer(user, pass, NewLocalListener(port))
 	s.Handler = func(s Session, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
@@ -121,8 +127,8 @@ func TestQuerySM(t *testing.T) {
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   DefaultUser,
-		Passwd: DefaultPasswd,
+		User:   user,
+		Passwd: pass,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
