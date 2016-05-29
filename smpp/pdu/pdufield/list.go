@@ -9,8 +9,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-
-	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
 
 // List is a list of PDU fields.
@@ -86,16 +84,6 @@ loop:
 					l, r.Len())
 			}
 			f[ShortMessage] = &SM{Data: r.Next(l)}
-		case ShortMessage:
-			sm, exists := f[ShortMessage].(*SM)
-			if !exists {
-				continue
-			}
-			c, exists := f[DataCoding].(*Fixed)
-			if !exists {
-				continue
-			}
-			sm.Data = pdutext.Decode(pdutext.DataCoding(c.Data), sm.Data)
 		}
 	}
 	return f, nil

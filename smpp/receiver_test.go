@@ -9,20 +9,17 @@ import (
 	"time"
 
 	"github.com/veoo/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
-
 func TestReceiver(t *testing.T) {
-	pass	:= "secret"
-	user    := "client"
-	port 	:= 0 // any port
-	s := NewServer(user, pass, NewLocalListener(port))
+	s := smpptest.NewServer()
 	defer s.Close()
 	rc := make(chan pdu.Body)
 	r := &Receiver{
 		Addr:    s.Addr(),
-		User:    user,
-		Passwd:  pass,
+		User:    smpptest.DefaultUser,
+		Passwd:  smpptest.DefaultPasswd,
 		Handler: func(p pdu.Body) { rc <- p },
 	}
 	defer r.Close()

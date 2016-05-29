@@ -181,7 +181,7 @@ var cmdShortMessage = cli.Command{
 			SMDefaultMsgID:       uint8(c.Int("sm-default-msg-id")),
 		})
 		if err != nil {
-			log.Println("Failed:", err)
+			log.Fatalln("Failed:", err)
 		}
 		log.Printf("Message ID: %q", sm.RespID())
 	},

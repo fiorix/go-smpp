@@ -11,30 +11,28 @@ import (
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
+	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestShortMessage(t *testing.T) {
-	pass	:= "secret"
-	user    := "client"
-	port := 0 // any port
-	s := NewUnstartedServer(user, pass, NewLocalListener(port))
-	s.Handler = func(s Session, p pdu.Body) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
 			r.Fields().Set(pdufield.MessageID, "foobar")
-			s.Write(r)
+			c.Write(r)
 		default:
-			EchoHandler(s, p)
+			smpptest.EchoHandler(c, p)
 		}
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   user,
-		Passwd: pass,
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -62,28 +60,81 @@ func TestShortMessage(t *testing.T) {
 	}
 }
 
+func TestShortMessageWindowSize(t *testing.T) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		time.Sleep(200 * time.Millisecond)
+		r := pdu.NewSubmitSMResp()
+		r.Header().Seq = p.Header().Seq
+		r.Fields().Set(pdufield.MessageID, "foobar")
+		c.Write(r)
+	}
+	s.Start()
+	defer s.Close()
+	tx := &Transmitter{
+		Addr:        s.Addr(),
+		User:        smpptest.DefaultUser,
+		Passwd:      smpptest.DefaultPasswd,
+		WindowSize:  2,
+		RespTimeout: time.Second,
+	}
+	defer tx.Close()
+	conn := <-tx.Bind()
+	switch conn.Status() {
+	case Connected:
+	default:
+		t.Fatal(conn.Error())
+	}
+	msgc := make(chan *ShortMessage, 3)
+	defer close(msgc)
+	errc := make(chan error, 3)
+	for i := 0; i < 3; i++ {
+		go func(msgc chan *ShortMessage, errc chan error) {
+			m := <-msgc
+			if m == nil {
+				return
+			}
+			_, err := tx.Submit(m)
+			errc <- err
+		}(msgc, errc)
+		msgc <- &ShortMessage{
+			Src:      "root",
+			Dst:      "foobar",
+			Text:     pdutext.Raw("Lorem ipsum"),
+			Validity: 10 * time.Minute,
+			Register: NoDeliveryReceipt,
+		}
+	}
+	nerr := 0
+	for i := 0; i < 3; i++ {
+		if <-errc == ErrMaxWindowSize {
+			nerr++
+		}
+	}
+	if nerr != 1 {
+		t.Fatalf("unexpected # of errors. want 1, have %d", nerr)
+	}
+}
+
 func TestLongMessage(t *testing.T) {
-	pass	:= "secret"
-	user    := "client"
-	port 	:= 0 // any port
-	s := NewUnstartedServer(user, pass, NewLocalListener(port))
-	s.Handler = func(s Session, p pdu.Body) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
 			r.Fields().Set(pdufield.MessageID, "foobar")
-			s.Write(r)
+			c.Write(r)
 		default:
-			EchoHandler(s, p)
+			smpptest.EchoHandler(c, p)
 		}
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:  	user,
-		Passwd: pass,
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -112,23 +163,20 @@ func TestLongMessage(t *testing.T) {
 }
 
 func TestQuerySM(t *testing.T) {
-	pass	:= "secret"
-	user    := "client"
-	port 	:= 0 // any port
-	s := NewUnstartedServer(user, pass, NewLocalListener(port))
-	s.Handler = func(s Session, p pdu.Body) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
 		r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
 		r.Fields().Set(pdufield.MessageState, 2)
-		s.Write(r)
+		c.Write(r)
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   user,
-		Passwd: pass,
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
