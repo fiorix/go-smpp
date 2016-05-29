@@ -28,6 +28,7 @@ var (
 	DeliverDelay          = 1 * time.Second
 	IDLen                 = 16
 	msgIdCounter    int64 = 0
+	defaultLogger         = log.WithFields(log.Fields{"source": "server"})
 )
 
 const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -54,10 +55,9 @@ type Server struct {
 	TLS      *tls.Config
 	Handler  RequestHandlerFunc
 
-	mu 	 sync.Mutex
-	l  	 net.Listener
-	logger   *log.Entry
-
+	mu     sync.Mutex
+	l      net.Listener
+	logger *log.Entry
 }
 
 func NextMessageId() string {
@@ -265,11 +265,17 @@ func EchoHandler(s Session, m pdu.Body) {
 // StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
 // for testing clients
 func StubHandler(s Session, m pdu.Body) {
+	// NOTE: we want to avoid logging these requests, maybe it can be improved
+	if m.Header().ID == pdu.EnquireLinkID {
+		err := s.Write(handleEnquireLink(m))
+		if err != nil {
+			defaultLogger.Error("Failed sending response:", err)
+		}
+		return
+	}
+
 	bodyBytes, _ := json.Marshal(m)
-	l := log.WithFields(log.Fields{
-		"source": "server",
-	})
-	l.WithFields(log.Fields{
+	defaultLogger.WithFields(log.Fields{
 		"pudId": m.Header().ID.String(),
 		"seq":   m.Header().Seq,
 		"json":  string(bodyBytes),
@@ -277,8 +283,6 @@ func StubHandler(s Session, m pdu.Body) {
 
 	var resp pdu.Body
 	switch m.Header().ID {
-	case pdu.EnquireLinkID:
-		resp = handleEnquireLink(m)
 	case pdu.EnquireLinkRespID:
 		// TODO(cesar0094): what should happen if this is not received after request
 		return
@@ -293,8 +297,7 @@ func StubHandler(s Session, m pdu.Body) {
 		// TODO(cesar0094): Good to go?
 		return
 	default:
-		l.Info(
-			"Could not find proper handler. Falling back to EchoHandler.")
+		defaultLogger.Info("Could not find proper handler. Falling back to EchoHandler.")
 		EchoHandler(s, m)
 		return
 	}
@@ -304,10 +307,10 @@ func StubHandler(s Session, m pdu.Body) {
 	}
 	err := s.Write(resp)
 	if err != nil {
-		l.Error("Failed sending response:", err)
+		defaultLogger.Error("Failed sending response:", err)
 	}
 	bodyBytes, _ = json.Marshal(resp)
-	l.WithFields(log.Fields{
+	defaultLogger.WithFields(log.Fields{
 		"pudId": resp.Header().ID.String(),
 		"seq":   resp.Header().Seq,
 		"json":  string(bodyBytes),
@@ -318,10 +321,7 @@ func StubHandler(s Session, m pdu.Body) {
 // as a fall-back
 func RouterHandler(s Session, m pdu.Body) {
 	bodyBytes, _ := json.Marshal(m)
-	l := log.WithFields(log.Fields{
-		"source": "server",
-	})
-	l.WithFields(log.Fields{
+	defaultLogger.WithFields(log.Fields{
 		"pudId": m.Header().ID.String(),
 		"seq":   m.Header().Seq,
 		"json":  string(bodyBytes),
@@ -331,8 +331,7 @@ func RouterHandler(s Session, m pdu.Body) {
 	if handler, ok := HandlerRoutings[m.Header().ID]; ok {
 		resp = handler(m)
 	} else {
-		l.Info(
-			"Could not find handler matching PDU ID. Falling back to EchoHandler.")
+		defaultLogger.Info("Could not find handler matching PDU ID. Falling back to EchoHandler.")
 		EchoHandler(s, m)
 		return
 	}
@@ -342,10 +341,10 @@ func RouterHandler(s Session, m pdu.Body) {
 	}
 	err := s.Write(resp)
 	if err != nil {
-		l.Error("Failed sending response:", err)
+		defaultLogger.Error("Failed sending response:", err)
 	}
 	bodyBytes, _ = json.Marshal(resp)
-	l.WithFields(log.Fields{
+	defaultLogger.WithFields(log.Fields{
 		"pudId": resp.Header().ID.String(),
 		"seq":   resp.Header().Seq,
 		"json":  string(bodyBytes),
@@ -423,9 +422,6 @@ func processShortMessage(s Session, submitSmPdu pdu.Body) {
 
 	err := s.Write(respPdu)
 	if err != nil {
-		l := log.WithFields(log.Fields{
-			"source": "spice_esme",
-		})
-		l.Error("Failed sending delivery_sm: ", err)
+		defaultLogger.Error("Failed sending delivery_sm: ", err)
 	}
 }
