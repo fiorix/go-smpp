@@ -11,28 +11,28 @@ import (
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
+	"github.com/veoo/go-smpp/smpp/smpptest"
 )
 
 func TestShortMessage(t *testing.T) {
-	port := 0 // any port
-	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s Session, p pdu.Body) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
 			r.Fields().Set(pdufield.MessageID, "foobar")
-			s.Write(r)
+			c.Write(r)
 		default:
-			EchoHandler(s, p)
+			smpptest.EchoHandler(c, p)
 		}
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   DefaultUser,
-		Passwd: DefaultPasswd,
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -117,25 +117,24 @@ func TestShortMessageWindowSize(t *testing.T) {
 }
 
 func TestLongMessage(t *testing.T) {
-	port := 0 // any port
-	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s Session, p pdu.Body) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
 			r.Fields().Set(pdufield.MessageID, "foobar")
-			s.Write(r)
+			c.Write(r)
 		default:
-			EchoHandler(s, p)
+			smpptest.EchoHandler(c, p)
 		}
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   DefaultUser,
-		Passwd: DefaultPasswd,
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -164,21 +163,20 @@ func TestLongMessage(t *testing.T) {
 }
 
 func TestQuerySM(t *testing.T) {
-	port := 0 // any port
-	s := NewUnstartedServer(DefaultUser, DefaultPasswd, NewLocalListener(port))
-	s.Handler = func(s Session, p pdu.Body) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
 		r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
 		r.Fields().Set(pdufield.MessageState, 2)
-		s.Write(r)
+		c.Write(r)
 	}
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
 		Addr:   s.Addr(),
-		User:   DefaultUser,
-		Passwd: DefaultPasswd,
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
