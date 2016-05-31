@@ -39,8 +39,8 @@ type Server struct {
 	Passwd   string
 	systemId string
 	TLS      *tls.Config
-	Handler  RequestHandlerFunc
 
+	m  map[pdu.ID]RequestHandlerFunc
 	mu sync.Mutex
 	l  net.Listener
 }
@@ -101,10 +101,10 @@ func NewServer(user, password string, listener net.Listener) *Server {
 // does not start it. Callers are supposed to call Start and Close later.
 func NewUnstartedServer(user, password string, listener net.Listener) *Server {
 	return &Server{
-		User:    user,
-		Passwd:  password,
-		Handler: EchoHandler,
-		l:       listener,
+		User:   user,
+		Passwd: password,
+		m:      map[pdu.ID]RequestHandlerFunc{},
+		l:      listener,
 	}
 }
 
@@ -174,15 +174,24 @@ func (srv *Server) handle(c *conn) {
 	s.id = randomString(IDLen)
 
 	for {
-		pdu, err := s.Read()
+		p, err := s.Read()
 		if err != nil {
 			if err != io.EOF {
 				log.Println("Read failed:", err)
 			}
 			break
 		}
-		srv.Handler(s, pdu)
+		h, ok := srv.m[p.Header().ID]
+		if ok {
+			h(s, p)
+		} else {
+			log.Println("Handler not found for:", p.Header().ID)
+		}
 	}
+}
+
+func (srv *Server) Handle(id pdu.ID, h RequestHandlerFunc) {
+	srv.m[id] = h
 }
 
 // auth authenticate new clients.
