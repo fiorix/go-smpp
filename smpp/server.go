@@ -6,40 +6,26 @@ package smpp
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net"
-	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 )
 
 // Default settings.
 var (
-	DefaultSystemID       = "sys_id"
-	DeliverDelay          = 1 * time.Second
-	IDLen                 = 16
-	msgIdCounter    int64 = 0
-	defaultLogger         = log.WithFields(log.Fields{"source": "server"})
+	DefaultSystemID = "sys_id"
+	IDLen           = 16
 )
 
 const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-
-var HandlerRoutings = map[pdu.ID]func(pdu.Body) pdu.Body{
-	pdu.EnquireLinkID:     handleEnquireLink,
-	pdu.EnquireLinkRespID: handleEnquireLinkResp,
-	pdu.SubmitSMID:        handleSubmitSM,
-	pdu.SubmitSMRespID:    handleInvalidCommand,
-	pdu.DeliverSMRespID:   handleDeliverSMResp,
-}
 
 // RequestHandlerFunc is the signature of a function passed to Server instances,
 // that is called when client PDU messages arrive.
@@ -55,13 +41,8 @@ type Server struct {
 	TLS      *tls.Config
 	Handler  RequestHandlerFunc
 
-	mu     sync.Mutex
-	l      net.Listener
-	logger *log.Entry
-}
-
-func NextMessageId() string {
-	return strconv.FormatInt(atomic.AddInt64(&msgIdCounter, 1), 10)
+	mu sync.Mutex
+	l  net.Listener
 }
 
 func randomString(strlen int) string {
@@ -119,15 +100,11 @@ func NewServer(user, password string, listener net.Listener) *Server {
 // NewUnstartedServer creates a new Server with default settings, and
 // does not start it. Callers are supposed to call Start and Close later.
 func NewUnstartedServer(user, password string, listener net.Listener) *Server {
-	l := log.WithFields(log.Fields{
-		"source": "server",
-	})
 	return &Server{
 		User:    user,
 		Passwd:  password,
 		Handler: EchoHandler,
 		l:       listener,
-		logger:  l,
 	}
 }
 
@@ -174,12 +151,10 @@ func (srv *Server) Serve() {
 	for {
 		cli, err := srv.l.Accept()
 		if err != nil {
-			srv.logger.Error("Closing server:", err)
+			log.Println("Closing server:", err)
 			break // on srv.l.Close
 		}
-		srv.logger.WithFields(log.Fields{
-			"address": cli.RemoteAddr(),
-		}).Info("New client")
+		log.Println("New client", cli.RemoteAddr())
 		go srv.handle(newConn(cli))
 	}
 }
@@ -189,7 +164,7 @@ func (srv *Server) handle(c *conn) {
 	defer c.Close()
 	if err := srv.auth(c); err != nil {
 		if err != io.EOF {
-			srv.logger.Error("Server auth failed:", err)
+			log.Println("Server auth failed:", err)
 		}
 		return
 	}
@@ -202,7 +177,7 @@ func (srv *Server) handle(c *conn) {
 		pdu, err := s.Read()
 		if err != nil {
 			if err != io.EOF {
-				srv.logger.Error("Read failed:", err)
+				log.Println("Read failed:", err)
 			}
 			break
 		}
@@ -260,168 +235,4 @@ func EchoHandler(s Session, m pdu.Body) {
 	//
 	// We just echo m back:
 	s.Write(m)
-}
-
-// StubHandler is a RequestHandlerFunc that returns compliant but dummy PDUs that are useful
-// for testing clients
-func StubHandler(s Session, m pdu.Body) {
-	// NOTE: we want to avoid logging these requests, maybe it can be improved
-	if m.Header().ID == pdu.EnquireLinkID {
-		err := s.Write(handleEnquireLink(m))
-		if err != nil {
-			defaultLogger.Error("Failed sending response:", err)
-		}
-		return
-	}
-
-	bodyBytes, _ := json.Marshal(m)
-	defaultLogger.WithFields(log.Fields{
-		"pudId": m.Header().ID.String(),
-		"seq":   m.Header().Seq,
-		"json":  string(bodyBytes),
-	}).Info("Processing incoming PDU")
-
-	var resp pdu.Body
-	switch m.Header().ID {
-	case pdu.EnquireLinkRespID:
-		// TODO(cesar0094): what should happen if this is not received after request
-		return
-	case pdu.SubmitSMID:
-		resp = handleSubmitSM(m)
-		go processShortMessage(s, m)
-	case pdu.SubmitSMRespID:
-		resp = handleInvalidCommand(m)
-	case pdu.DeliverSMID:
-		resp = handleInvalidCommand(m)
-	case pdu.DeliverSMRespID:
-		// TODO(cesar0094): Good to go?
-		return
-	default:
-		defaultLogger.Info("Could not find proper handler. Falling back to EchoHandler.")
-		EchoHandler(s, m)
-		return
-	}
-
-	if resp == nil {
-		return
-	}
-	err := s.Write(resp)
-	if err != nil {
-		defaultLogger.Error("Failed sending response:", err)
-	}
-	bodyBytes, _ = json.Marshal(resp)
-	defaultLogger.WithFields(log.Fields{
-		"pudId": resp.Header().ID.String(),
-		"seq":   resp.Header().Seq,
-		"json":  string(bodyBytes),
-	}).Info("Sent response PDU")
-}
-
-// RouterHandler delegates the handling of PDUs to the HandlerRoutings and uses EchoHandler
-// as a fall-back
-func RouterHandler(s Session, m pdu.Body) {
-	bodyBytes, _ := json.Marshal(m)
-	defaultLogger.WithFields(log.Fields{
-		"pudId": m.Header().ID.String(),
-		"seq":   m.Header().Seq,
-		"json":  string(bodyBytes),
-	}).Info("Processing incoming PDU")
-
-	var resp pdu.Body
-	if handler, ok := HandlerRoutings[m.Header().ID]; ok {
-		resp = handler(m)
-	} else {
-		defaultLogger.Info("Could not find handler matching PDU ID. Falling back to EchoHandler.")
-		EchoHandler(s, m)
-		return
-	}
-
-	if resp == nil {
-		return
-	}
-	err := s.Write(resp)
-	if err != nil {
-		defaultLogger.Error("Failed sending response:", err)
-	}
-	bodyBytes, _ = json.Marshal(resp)
-	defaultLogger.WithFields(log.Fields{
-		"pudId": resp.Header().ID.String(),
-		"seq":   resp.Header().Seq,
-		"json":  string(bodyBytes),
-	}).Info("Sent response PDU")
-}
-
-func handleSubmitSM(m pdu.Body) pdu.Body {
-	resp := pdu.NewSubmitSMResp()
-	resp.Header().Seq = m.Header().Seq
-
-	messageId := NextMessageId()
-	resp.Fields().Set(pdufield.MessageID, messageId)
-	m.Fields().Set(pdufield.MessageID, messageId)
-
-	// TODO(cesar0094): "send" message and return deliverySM
-	return resp
-}
-
-func handleEnquireLink(m pdu.Body) pdu.Body {
-	resp := pdu.NewEnquireLinkResp()
-	resp.Header().Seq = m.Header().Seq
-	return resp
-}
-
-func handleEnquireLinkResp(m pdu.Body) pdu.Body {
-	// TODO(cesar0094): what should happen if this is not received after request
-	return nil
-}
-
-func handleDeliverSMResp(m pdu.Body) pdu.Body {
-	// TODO(cesar0094): what should happen if this is not received after request
-	return nil
-}
-
-func handleInvalidCommand(m pdu.Body) pdu.Body {
-	resp := pdu.NewGenericNACK()
-	resp.Header().Status = pdu.InvalidCommandID
-	return resp
-}
-
-func processShortMessage(s Session, submitSmPdu pdu.Body) {
-	submitDate := time.Now()
-	// Pretend to be sending the SM
-	time.Sleep(DeliverDelay)
-	doneDate := time.Now()
-
-	reqFields := submitSmPdu.Fields()
-	respPdu := pdu.NewDeliverSM()
-	respFields := respPdu.Fields()
-
-	// Source and Destination info are reversed
-	respFields.Set(pdufield.SourceAddrTON, reqFields[pdufield.DestAddrTON])
-	respFields.Set(pdufield.SourceAddrNPI, reqFields[pdufield.DestAddrNPI])
-	respFields.Set(pdufield.SourceAddr, reqFields[pdufield.DestinationAddr])
-
-	respFields.Set(pdufield.DestAddrTON, reqFields[pdufield.SourceAddrTON])
-	respFields.Set(pdufield.DestAddrNPI, reqFields[pdufield.SourceAddrNPI])
-	respFields.Set(pdufield.DestinationAddr, reqFields[pdufield.SourceAddr])
-
-	respFields.Set(pdufield.ServiceType, DefaultSystemID)
-	respFields.Set(pdufield.ESMClass, reqFields[pdufield.ESMClass])
-	respFields.Set(pdufield.ProtocolID, reqFields[pdufield.ProtocolID])
-	respFields.Set(pdufield.PriorityFlag, reqFields[pdufield.PriorityFlag])
-	respFields.Set(pdufield.RegisteredDelivery, FinalDeliveryReceipt)
-	respFields.Set(pdufield.DataCoding, reqFields[pdufield.DataCoding])
-
-	id := reqFields[pdufield.MessageID].String()
-	// TODO(cesar0094): handle submitted and delivered ID.
-	sub := "001"
-	dlvrd := "001"
-	stat := "DELIVRD"
-	errTxt := "000"
-	shortMessage := fmt.Sprintf("id:%s sub:%s dlvrd:%s submit date:%d done date:%d stat:%s err:%s Text:%s", id, sub, dlvrd, submitDate.Unix(), doneDate.Unix(), stat, errTxt, reqFields[pdufield.ShortMessage])
-	respFields.Set(pdufield.ShortMessage, shortMessage)
-
-	err := s.Write(respPdu)
-	if err != nil {
-		defaultLogger.Error("Failed sending delivery_sm: ", err)
-	}
 }
