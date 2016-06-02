@@ -14,13 +14,24 @@ import (
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
 
+var (
+	server *Server
+	pass   = "secret"
+	user   = "client"
+	port   = 0 // any port
+)
+
+func TestMain(m *testing.M) {
+	server = NewServer(user, pass, NewLocalListener(port))
+	server.Handle(pdu.BindTransmitterID, EchoHandler)
+	server.Handle(pdu.SubmitSMID, EchoHandler)
+
+	defer server.Close()
+	m.Run()
+}
+
 func TestServer(t *testing.T) {
-	pass	:= "secret"
-	user    := "client"
-	port 	:= 0 // any port
-	s := NewServer(user,pass,NewLocalListener(port))
-	defer s.Close()
-	c, err := net.Dial("tcp", s.Addr())
+	c, err := net.Dial("tcp", server.Addr())
 	if err != nil {
 		t.Fatal(err)
 	}
