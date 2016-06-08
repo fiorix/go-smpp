@@ -41,6 +41,7 @@ type Server struct {
 	TLS      *tls.Config
 
 	m  map[pdu.ID]RequestHandlerFunc
+	s  map[string]Session
 	mu sync.Mutex
 	l  net.Listener
 }
@@ -104,6 +105,7 @@ func NewUnstartedServer(user, password string, listener net.Listener) *Server {
 		User:   user,
 		Passwd: password,
 		m:      map[pdu.ID]RequestHandlerFunc{},
+		s:      map[string]Session{},
 		l:      listener,
 	}
 }
@@ -145,6 +147,11 @@ func (srv *Server) Close() {
 	srv.l.Close()
 }
 
+// Session returns the session provided the id from the map of sessions
+func (srv *Server) Session(id string) Session {
+	return srv.s[id]
+}
+
 // Serve accepts new clients and handle them by authenticating the
 // first PDU, expected to be a Bind PDU, then echoing all other PDUs.
 func (srv *Server) Serve() {
@@ -172,7 +179,9 @@ func (srv *Server) handle(c *conn) {
 	s := &session{conn: &connSwitch{}}
 	s.conn.Set(c)
 	s.id = randomString(IDLen)
-
+	srv.mu.Lock()
+	srv.s[s.id] = s
+	srv.mu.Unlock()
 	for {
 		p, err := s.Read()
 		if err != nil {
@@ -188,6 +197,9 @@ func (srv *Server) handle(c *conn) {
 			log.Println("Handler not found for:", p.Header().ID)
 		}
 	}
+	srv.mu.Lock()
+	delete(srv.s, s.id)
+	srv.mu.Unlock()
 }
 
 func (srv *Server) Handle(id pdu.ID, h RequestHandlerFunc) {
