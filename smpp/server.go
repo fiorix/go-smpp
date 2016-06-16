@@ -31,8 +31,6 @@ const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
 // that is called when client PDU messages arrive.
 type RequestHandlerFunc func(Session, pdu.Body)
 
-
-
 func randomString(strlen int) string {
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -77,7 +75,6 @@ func (s *session) ID() string {
 	return s.id
 }
 
-
 func NewLocalListener(port int) net.Listener {
 	// Try the default port first
 	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
@@ -101,6 +98,7 @@ type Server interface {
 	Serve()
 	Session(id string) Session
 }
+
 // Server is an SMPP server for testing purposes. By default it authenticate
 // clients with the configured credentials, and echoes any other PDUs
 // back to the client.
@@ -136,7 +134,6 @@ func NewUnstartedServer(user, password string, listener net.Listener) Server {
 	}
 	return s
 }
-
 
 // Start starts the server.
 func (srv *server) Start() {
