@@ -101,10 +101,10 @@ func (s *session) ID() string {
 
 // NewServer creates and initializes a new Server. Callers are supposed
 // to call Close on that server later.
-func NewServer(user, password string, listener net.Listener) *Server {
+func NewServer(user, password string, listener net.Listener) Server {
 	s := NewUnstartedServer(user, password, listener)
 	s.Start()
-	return &s
+	return s
 }
 
 // NewUnstartedServer creates a new Server with default settings, and

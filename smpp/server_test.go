@@ -15,23 +15,23 @@ import (
 )
 
 var (
-	server *Server
-	pass   = "secret"
-	user   = "client"
-	port   = 0 // any port
+	s    Server
+	pass = "secret"
+	user = "client"
+	port = 0 // any port
 )
 
 func TestMain(m *testing.M) {
-	server = NewServer(user, pass, NewLocalListener(port))
-	server.Handle(pdu.BindTransmitterID, EchoHandler)
-	server.Handle(pdu.SubmitSMID, EchoHandler)
+	s = NewServer(user, pass, NewLocalListener(port))
+	s.Handle(pdu.BindTransmitterID, EchoHandler)
+	s.Handle(pdu.SubmitSMID, EchoHandler)
 
-	defer server.Close()
+	defer s.Close()
 	m.Run()
 }
 
 func TestServer(t *testing.T) {
-	c, err := net.Dial("tcp", server.Addr())
+	c, err := net.Dial("tcp", s.Addr())
 	if err != nil {
 		t.Fatal(err)
 	}
