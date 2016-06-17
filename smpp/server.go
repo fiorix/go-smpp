@@ -31,10 +31,19 @@ const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
 // that is called when client PDU messages arrive.
 type RequestHandlerFunc func(Session, pdu.Body)
 
+type Server interface {
+	Addr() string
+	Close()
+	Handle(id pdu.ID, h RequestHandlerFunc)
+	Start()
+	Serve()
+	Session(id string) Session
+}
+
 // Server is an SMPP server for testing purposes. By default it authenticate
 // clients with the configured credentials, and echoes any other PDUs
 // back to the client.
-type Server struct {
+type server struct {
 	User     string
 	Passwd   string
 	systemId string
@@ -92,7 +101,7 @@ func (s *session) ID() string {
 
 // NewServer creates and initializes a new Server. Callers are supposed
 // to call Close on that server later.
-func NewServer(user, password string, listener net.Listener) *Server {
+func NewServer(user, password string, listener net.Listener) Server {
 	s := NewUnstartedServer(user, password, listener)
 	s.Start()
 	return s
@@ -100,14 +109,15 @@ func NewServer(user, password string, listener net.Listener) *Server {
 
 // NewUnstartedServer creates a new Server with default settings, and
 // does not start it. Callers are supposed to call Start and Close later.
-func NewUnstartedServer(user, password string, listener net.Listener) *Server {
-	return &Server{
+func NewUnstartedServer(user, password string, listener net.Listener) Server {
+	s := &server{
 		User:   user,
 		Passwd: password,
 		m:      map[pdu.ID]RequestHandlerFunc{},
 		s:      map[string]Session{},
 		l:      listener,
 	}
+	return s
 }
 
 func NewLocalListener(port int) net.Listener {
@@ -126,13 +136,13 @@ func NewLocalListener(port int) net.Listener {
 }
 
 // Start starts the server.
-func (srv *Server) Start() {
+func (srv *server) Start() {
 	go srv.Serve()
 }
 
 // Addr returns the local address of the server, or an empty string
 // if the server hasn't been started yet.
-func (srv *Server) Addr() string {
+func (srv *server) Addr() string {
 	if srv.l == nil {
 		return ""
 	}
@@ -140,7 +150,7 @@ func (srv *Server) Addr() string {
 }
 
 // Close stops the server, causing the accept loop to break out.
-func (srv *Server) Close() {
+func (srv *server) Close() {
 	if srv.l == nil {
 		panic("smpptest: server is not started")
 	}
@@ -148,13 +158,13 @@ func (srv *Server) Close() {
 }
 
 // Session returns the session provided the id from the map of sessions
-func (srv *Server) Session(id string) Session {
+func (srv *server) Session(id string) Session {
 	return srv.s[id]
 }
 
 // Serve accepts new clients and handle them by authenticating the
 // first PDU, expected to be a Bind PDU, then echoing all other PDUs.
-func (srv *Server) Serve() {
+func (srv *server) Serve() {
 	for {
 		cli, err := srv.l.Accept()
 		if err != nil {
@@ -167,7 +177,7 @@ func (srv *Server) Serve() {
 }
 
 // handle new clients.
-func (srv *Server) handle(c *conn) {
+func (srv *server) handle(c *conn) {
 	defer c.Close()
 	if err := srv.auth(c); err != nil {
 		if err != io.EOF {
@@ -202,12 +212,12 @@ func (srv *Server) handle(c *conn) {
 	srv.mu.Unlock()
 }
 
-func (srv *Server) Handle(id pdu.ID, h RequestHandlerFunc) {
+func (srv *server) Handle(id pdu.ID, h RequestHandlerFunc) {
 	srv.m[id] = h
 }
 
 // auth authenticate new clients.
-func (srv *Server) auth(c *conn) error {
+func (srv *server) auth(c *conn) error {
 	p, err := c.Read()
 	if err != nil {
 		return err
