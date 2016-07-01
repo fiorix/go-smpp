@@ -64,7 +64,7 @@ func (m Map) MarshalJSON() ([]byte, error) {
 			// Marshall the bytes as-is and also the string in two different
 			// fields for readability
 			jsonValue, _ := json.Marshal(v.String())
-			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k+"_text", jsonValue))
+			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k + "_text", jsonValue))
 			buffer.WriteString(",")
 			jsonValue, _ = json.Marshal(hex.EncodeToString(data.([]byte)))
 			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k, jsonValue))
@@ -150,13 +150,9 @@ func (m TLVMap) Set(k TLVType, v interface{}) error {
 	default:
 		return fmt.Errorf("Unsupported field data: %#v", v)
 	}
-	len := uint16(byteSliceLen(data))
+	len := uint16(len(data))
 	m[k] = &TLVBody{Tag: k, data: data, Len: len}
 	return nil
-}
-
-func byteSliceLen(b []byte) int {
-	return len(b)
 }
 
 func (m TLVMap) MarshalJSON() ([]byte, error) {
