@@ -126,6 +126,10 @@ func (m *Map) UnmarshalJSON(b []byte) error {
 // TLVMap is a collection of PDU TLV field data indexed by type.
 type TLVMap map[TLVType]*TLVBody
 
+func (m TLVMap) Set(k TLVType, v *TLVBody) {
+	m[k] = v
+}
+
 func (m TLVMap) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString("{")
 	length := len(m)
