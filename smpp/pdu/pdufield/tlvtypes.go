@@ -1,218 +1,422 @@
 package pdufield
 
-//BindTransmitterTLVParameter defines the TLV fields names
-//realted with BindTransmitter PDU
+// BindTransmitterTLVParameter defines the TLV fields names
+// realted with BindTransmitter PDU
 type bindTransmiterTLVParameter struct {
-	//ScInterfaceVersion ...
+	// ScInterfaceVersion SMPP version supported by SMSC
 	ScInterfaceVersion TLVType
 }
 
 //submitSMTLVParameter defines the TLV fileds names related with SubmitSM PDU
 type submitSMTLVParameter struct {
-	//UserMessageReference ESME assigned message reference number.
+	// UserMessageReference ESME assigned message reference number.
 	UserMessageReference TLVType
 
-	//SourcePort Indicates the application port number associated with the source address
+	// SourcePort Indicates the application port number associated with the source address
 	// of the message. This parameter should be present for WAP applications.
 	SourcePort TLVType
 
-	//SourceAddrSubmit The subcomponent in the destination device which created the user data.
+	// SourceAddrSubmit The subcomponent in the destination device which created the user data.
 	SourceAddrSubUnit TLVType
 
-	//DestionationPort Indicates the application port number associated with the destination address
-	//of the message. This parameter should be present for WAP applications.
+	// DestinationPort Indicates the application port number associated with the destination address
+	// of the message. This parameter should be present for WAP applications.
 	DestinationPort TLVType
 
-	//DestAddrSubmit The subcomponent in the destination device for which the user data is intended.
+	// DestAddrSubmit The subcomponent in the destination device for which the user data is intended.
 	DestAddrSubUnit TLVType
 
-	//SarMsgRefNum The reference number for a particular concatenated short message
+	// SarMsgRefNum The reference number for a particular concatenated short message
 	SarMsgRefNum TLVType
 
-	//SarTotalSegments Indicates the total number of short messages within the
-	//concatenated short message.
+	// SarTotalSegments Indicates the total number of short messages within the
+	// concatenated short message.
 	SarTotalSegments TLVType
 
-	//SarSegmentSeqNum Indicates the sequence number of a particular short message
-	//fragment within the concatenated short message.
+	// SarSegmentSeqNum Indicates the sequence number of a particular short message
+	// fragment within the concatenated short message.
 	SarSegmentSeqNum TLVType
 
-	//MoreMessagesToSend MoreMessagesToSend Indicates that there are more
-	//messages to follow for the destination SME.
+	// MoreMessagesToSend MoreMessagesToSend Indicates that there are more
+	// messages to follow for the destination SME.
 	MoreMessagesToSend TLVType
 
-	//PayloadType defines the type of payload (e.g. WDP WCMP etc.).
+	// PayloadType defines the type of payload (e.g. WDP WCMP etc.).
 	PayloadType TLVType
 
-	//MessagePayload Contains the extended short message user data. Up to 64K octets can be
-	//transmitted.
-	//Note: The short message data should be inserted in either the short_message
-	//or message_payload fields. Both fields should not be used simultaneously.
-	//The sm_length field should be set to zero if using the message_payload parameter.
+	// MessagePayload Contains the extended short message user data. Up to 64K octets can be
+	// transmitted.
+	// Note: The short message data should be inserted in either the short_message
+	// or message_payload fields. Both fields should not be used simultaneously.
+	// The sm_length field should be set to zero if using the message_payload parameter.
+	MessagePayload TLVType
+
+	// PrivacyIndicator Indicates the level of privacy associated with the message
+	PrivacyIndicator TLVType
+
+	// CallbackNum ,A callback number associated with the short message
+	// This parameter can be included a number of times for multiple callback
+	// addresses.
+	CallbackNum TLVType
+
+	// CallbackNumPresInd Defines the callback number presentation and screening
+	// If this parameter is present and there are multiple instances of the
+	// callback_num parameter then this parameter must occur an equal number of
+	// instances and the order of occurrence determines the particular
+	// callback_num_pres_ind which corresponds to a particular callback_num.
+	CallbackNumPresInd TLVType
+
+	// CallbackNumAtag Associates a displayable alphanumeric tag with the callback number
+	// If this parameter is present and there are multiple instances of the
+	// callback_num parameter then this parameter must occur an equal number
+	// of instances and the order of occurrence determines the particular
+	// callback_num_atag which corresponds to a particular callback_num.
+	CallbackNumAtag TLVType
+
+	// SourceSubAddress The subaddress of the message originator.
+	SourceSubAddress TLVType
+
+	// DestSubAddress The subaddress of the message destination.
+	DestSubAddress TLVType
+
+	// UserResponseCode A user response code. The actual response codes are implementation specific.
+	UserResponseCode TLVType
+
+	// DisplayTime Provides the receiving MS with a display time associated with the message.
+	DisplayTime TLVType
+
+	// SMSSingal Indicates the alerting mechanism when the message is received by an MS.
+	SMSSignal TLVType
+
+	// MSValidity Indicates validity information for this message to the recipient MS.
+	MSValidity TLVType
+
+	// MSMsgWaitFacilities This parameter controls the indication and specifies the message
+	// type (of the message associated with the MWI) at the mobile station.
+	MSMsgWaitFacilities TLVType
+
+	// NumberOfMessages  Indicates the number of messages stored in a mail box
+	NumberOfMessages TLVType
+
+	// AlertOnMsgDelivery  Request an MS alert signal be invoked on message delivery
+	AlertOnMsgDelivery TLVType
+
+	// LanguageIndicator  Indicates the language of an alphanumeric text message
+	LanguageIndicator TLVType
+
+	// ItsReplyType  The MS user’s reply method to an SMS delivery message received from
+	// the network is indicated and controlled by this parameter.
+	ItsReplyType TLVType
+
+	// ItsSessionInfo  Session control information for Interactive Teleservice
+	ItsSessionInfo TLVType
+
+	// UsedServiceOp  This parameter is used to identify the required USSD Service
+	// type when interfacing to a USSD system.
+	UsedServiceOp TLVType
+}
+
+// SubmitSMMultiTVLParameter defines the TLV fields names for
+// submit sm multipart PDU.
+type submitSMMultiTLVParameter struct {
+	// UserMessageReference ,ESME assigned message reference number
+	UserMessageReference TLVType
+
+	// SourcePort  Indicates the application port number associated with the source
+	// address of the message. This parameter should be present for WAP applications.
+	SourcePort TLVType
+
+	// SourceAddrSubUnit The subcomponent in the destination device which created the user data
+	SourceAddrSubUnit TLVType
+
+	// DestinationPort Indicates the application port number associated with the destination address of the message
+	// This parameter should be present for WAP applications
+	DestinationPort TLVType
+
+	// DestAddrSubUnit  The subcomponent in the destination device for which the user data is intended
+	DestAddrSubUnit TLVType
+
+	// SarMsgRefNum   The reference number for a particular concatenated short message
+	SarMsgRefNum TLVType
+
+	// SarTotalSegments  Indicates the total number of short messages within the concatenated short message
+	SarTotalSegments TLVType
+
+	// SarSegmentSeqNum Indicates the sequence number of a particular short message fragment within
+	// the concatenated short message.
+	SarSegmentSeqNum TLVType
+
+	// PayloadType Defines the type of payload (e.g. WDP, WCMP, etc.)
+	PayloadType TLVType
+
+	// MessagePayload  Contains the extended short message user data. Up to 64K octets can be transmitted
+	// Note: The short message data should be inserted in either the short_message or message_payload fields
+	// Both fields should not be used simultaneously The sm_length field should be set to zero
+	// if using the message_payload parameter.
 	MessagePayload TLVType
 
 	//PrivacyIndicator Indicates the level of privacy associated with the message
 	PrivacyIndicator TLVType
 
-	//CallbackNum ),A callback number associated with the short message
-	//This parameter can be included a number of times for multiple callback
-	//addresses.
+	// CallbackNum  A callback number associated with the short message
+	// This parameter can be included a number of times for multiple callback addresses.
 	CallbackNum TLVType
 
-	//CallbackNumPresInd Defines the callback number presentation and screening
-	//If this parameter is present and there are multiple instances of the
-	//callback_num parameter then this parameter must occur an equal number of
-	//instances and the order of occurrence determines the particular
-	//callback_num_pres_ind which corresponds to a particular callback_num.
+	// CallbackNumPresInd Identifies the presentation and screening associated with the callback number
+	// If this parameter is present and there are multiple instances of the callback_num parameter
+	// then this parameter must occur an equal number of instances and the order of occurrence determines
+	// the particular callback_num_pres_ind which corresponds to a particular callback_num.
 	CallbackNumPresInd TLVType
 
-	//CallbackNumAtag Associates a displayable alphanumeric tag with the callback number
-	//If this parameter is present and there are multiple instances of the
-	// callback_num parameter then this parameter must occur an equal number
-	//of instances and the order of occurrence determines the particular
-	//callback_num_atag which corresponds to a particular callback_num.
+	// CallbackNumAtag Associates a displayable alphanumeric tag with the callback number.
+	// If this parameter is present and there are multiple instances of the callback_num parameter
+	// then this parameter must occur an equal number of instances and the order of occurrence determines
+	// the particular callback_num_atag which corresponds to a particular callback_num
 	CallbackNumAtag TLVType
 
-	//SourceSubAddress The subaddress of the message originator.
+	// SourceSubAddress  The subaddress of the message originator
 	SourceSubAddress TLVType
 
-	//DestSubAddress The subaddress of the message destination.
+	// DestSubAddress The subaddress of the message destination
 	DestSubAddress TLVType
 
-	//UserResponseCode A user response code. The actual response codes are implementation specific.
-	UserResponseCode TLVType
-
-	//DisplayTime Provides the receiving MS with a display time associated with the message.
+	// DisplayTime Provides the receiving MS based SME with a display time associated with the message
 	DisplayTime TLVType
 
-	//SMSSingal Indicates the alerting mechanism when the message is received by an MS.
+	// SMSSignal  Indicates the alerting mechanism when the message is received by an MS
 	SMSSignal TLVType
 
-	//MSValidity Indicates validity information for this message to the recipient MS.
+	// MSValidity Indicates validity information for this message to the recipient MS
 	MSValidity TLVType
 
-	//MSMsgWaitFacilities This parameter controls the indication and specifies the message
-	// type (of the message associated with the MWI) at the mobile station.
+	// MSMsgWaitFacilities This parameter controls the indication and specifies the message type
+	// (of the message associated with the MWI) at the mobile station.
 	MSMsgWaitFacilities TLVType
 
-	//NumberOfMessages  Indicates the number of messages stored in a mail box
-	NumberOfMessages TLVType
-
-	//AlertOnMsgDelivery  Request an MS alert signal be invoked on message delivery
+	// AlertOnMsgDelivery Requests an MS alert signal be invoked on message delivery
 	AlertOnMsgDelivery TLVType
 
-	//LanguageIndicator  Indicates the language of an alphanumeric text message
+	// LanguageIndicator Indicates the language of an alphanumeric text message.
 	LanguageIndicator TLVType
 
-	//ItsReplyType  The MS user’s reply method to an SMS delivery message received from
-	//the network is indicated and controlled by this parameter.
-	ItsReplyType TLVType
+	// DestFlag  Flag which will identify whether destination address is a Distribution List name or SME address
+	DestFlag TLVType
 
-	//ItsSessionInfo  Session control information for Interactive Teleservice
-	ItsSessionInfo TLVType
+	// SMEAddress  Depending on dest_flag this could be an SME Address or a Distribution List Name
+	SMEAddress TLVType
 
-	//UsedServiceOp  This parameter is used to identify the required USSD Service
-	//type when interfacing to a USSD system.
-	UsedServiceOp TLVType
-}
-
-//SubmitSMMultiTVLParameter defines the TLV fields names for
-// submit sm multipart PDU.
-type submitSMMultiTLVParameter struct {
-	UserMessageReference TLVType
-	SourcePort           TLVType
-	SourceAddrSubUnit    TLVType
-	DestinationPort      TLVType
-	DestAddrSubUnit      TLVType
-	SarMsgRefNum         TLVType
-	SarTotalSegments     TLVType
-	SarSegmentSeqNum     TLVType
-	PayloadType          TLVType
-	MessagePayload       TLVType
-	PrivacyIndicator     TLVType
-	CallbackNum          TLVType
-	CallbackNumPresInd   TLVType
-	CallbackNumAtag      TLVType
-	SourceSubAddress     TLVType
-	DestSubAddress       TLVType
-	DisplayTime          TLVType
-	SMSSignal            TLVType
-	MSValidity           TLVType
-	MSMsgWaitFacilities  TLVType
-	AlertOnMsgDelivery   TLVType
-	LanguageIndicator    TLVType
-	DestFlag             TLVType
-	SMEAddress           TLVType
+	// DistributionListName  Depending on dest_flag this could be an SME Address or a Distribution List Name
 	DistributionListName TLVType
 }
 
 type deliverSMTLVParameter struct {
+	// UserMessageReference A reference assigned by the originating SME to the message.
+	// In the case that the deliver_sm is carrying an SMSC delivery receipt, an SME delivery acknowledgement
+	// or an SME user acknowledgement (as indicated in the esm_class field), the user_message_reference parameter
+	// is set to the message reference of the original message
 	UserMessageReference TLVType
-	SourcePort           TLVType
-	DestinationPort      TLVType
-	SarMsgRefNum         TLVType
-	SarTotalSegments     TLVType
-	SarSegmentSeqNum     TLVType
-	UserResponseCode     TLVType
-	PrivacyIndicator     TLVType
-	PayloadType          TLVType
-	MessagePayload       TLVType
-	CallbackNum          TLVType
-	SourceSubAddress     TLVType
-	DestSubAddress       TLVType
-	LanguageIndicator    TLVType
-	ItsSessionInfo       TLVType
-	NetworErrorCode      TLVType
-	MessageState         TLVType
-	ReceiptedMessageID   TLVType
+
+	// SourcePort Indicates the application port number associated with the source address of the message
+	// The parameter should be present for WAP applications.
+	SourcePort TLVType
+
+	// DestinationPort Indicates the application port number associated with the destination address of the message
+	// The parameter should be present for WAP applications
+	DestinationPort TLVType
+
+	// SarMsgRefNum  The reference number for a particular concatenated short message
+	SarMsgRefNum TLVType
+
+	// SarTotalSegments Indicates the total number of short messages within the concatenated short message
+	SarTotalSegments TLVType
+
+	// SarSegmentSeqNum  Indicates the sequence number of a particular short message fragment within the
+	// concatenated short message
+	SarSegmentSeqNum TLVType
+
+	// UserResponseCode A user response code. The actual response codes are SMS application specific
+	UserResponseCode TLVType
+
+	// PrivacyIndicator Indicates a level of privacy associated with the message
+	PrivacyIndicator TLVType
+
+	// PayloadType  Defines the type of payload (e.g. WDP, WCMP, etc.)
+	PayloadType TLVType
+
+	// MessagePayload  Contains the extended short message user data. Up to 64K octets can be transmitted
+	// Note: The short message data should be inserted in either the short_message or message_payload fields.
+	// Both fields should not be used simultaneously.
+	// The sm_length field should be set to zero if using the message_payload parameter.
+	MessagePayload TLVType
+
+	// CallbackNum A callback number associated with the short message. This parameter can be included a
+	// number of times for multiple call back addresses.
+	CallbackNum TLVType
+
+	// SourceSubAddress  The subaddress of the message originator.
+	SourceSubAddress TLVType
+
+	// DestSubAddress The subaddress of the message destination.
+	DestSubAddress TLVType
+
+	// LanguageIndicator  Indicates the language of an alphanumeric text message
+	LanguageIndicator TLVType
+
+	// ItsSessionInfo Session control information for Interactive Teleservice
+	ItsSessionInfo TLVType
+
+	// NetworErrorCode  May be present for Intermediate Notifications and SMSC Delivery Receipts
+	NetworErrorCode TLVType
+
+	// MessageState Should be present for SMSC Delivery Receipts and Intermediate Notifications
+	MessageState TLVType
+
+	// ReceiptedMessageID  SMSC message ID of receipted message Should be present for SMSC Delivery Receipts
+	// and Intermediate Notifications
+	ReceiptedMessageID TLVType
 }
 
 type dataSMTLVParameter struct {
-	SourcePort           TLVType
-	SourceAddrUnit       TLVType
-	SourceNetworkType    TLVType
-	SourceBearerType     TLVType
-	SourceTelematicID    TLVType
-	DestinationPort      TLVType
-	DestAddrSubUnit      TLVType
-	DestNetworkType      TLVType
-	DestBearerType       TLVType
-	DestTelematicsID     TLVType
-	SarMsgRefNum         TLVType
-	SarTotalSegments     TLVType
-	SarSegmentSeqNum     TLVType
-	MoreMessagesToSend   TLVType
-	QosTimeToLive        TLVType
-	PayloadType          TLVType
-	MessagePayload       TLVType
-	SetDPF               TLVType
-	ReceiptedMessageID   TLVType
-	MessageState         TLVType
-	NetworkErrorCode     TLVType
+	// SourcePort Indicates the application port number associated with the source address of the message
+	// This parameter should be present for WAP applications
+	SourcePort TLVType
+
+	//SourceAddrSubUnit  The subcomponent in the destination device which created the user data
+	SourceAddrSubUnit TLVType
+
+	// SourceNetworkType The correct network associated with the originating device
+	SourceNetworkType TLVType
+
+	// SourceBearerType The correct bearer type for the delivering the user data to the destination
+	SourceBearerType TLVType
+
+	// SourceTelematicID  The telematics identifier associated with the source
+	SourceTelematicID TLVType
+
+	// DestinationPort  Indicates the application port number associated with the destination address of the message
+	// This parameter should be present for WAP applications
+	DestinationPort TLVType
+
+	// DestAddrSubUnit  The subcomponent in the destination device for which the user data is intended
+	DestAddrSubUnit TLVType
+
+	// DestNetworkType The correct network for the destination device
+	DestNetworkType TLVType
+
+	// DestBearerType The correct bearer type for the delivering the user data to the destination
+	DestBearerType TLVType
+
+	// DestTelematicsID  The telematics identifier associated with the destination
+	DestTelematicsID TLVType
+
+	// SarMsgRefNum The reference number for a particular concatenated short message
+	SarMsgRefNum TLVType
+
+	// SarTotalSegments Indicates the total number of short messages within the concatenated short message
+	SarTotalSegments TLVType
+
+	// SarSegmentSeqNum  Indicates the sequence number of a particular short message fragment
+	// within the concatenated short message
+	SarSegmentSeqNum TLVType
+
+	// MoreMessagesToSend Indicates that there are more messages to follow for the destination SME
+	MoreMessagesToSend TLVType
+
+	// QosTimeToLive Time to live as a relative time in seconds from submission
+	QosTimeToLive TLVType
+
+	// PayloadType  Defines the type of payload (e.g. WDP, WCMP, etc.)
+	PayloadType TLVType
+
+	// MessagePayload Contains the message user data. Up to 64K octets can be transmitted
+	MessagePayload TLVType
+
+	// SetDPF  Indicator for setting Delivery Pending Flag on delivery failure.
+	SetDPF TLVType
+
+	// ReceiptedMessageID SMSC message ID of message being receipted. Should be present for SMSC Delivery
+	// Receipts and Intermediate Notifications
+	ReceiptedMessageID TLVType
+
+	// MessageState Should be present for SMSC Delivery Receipts and Intermediate Notifications
+	MessageState TLVType
+
+	// NetworkErrorCode May be present for SMSC Delivery Receipts and Intermediate Notifications
+	NetworkErrorCode TLVType
+
+	// UserMessageReference ESME assigned message reference number
 	UserMessageReference TLVType
-	PrivacyInicator      TLVType
-	CallbackNum          TLVType
-	CallbackNumPresInd   TLVType
-	CallbackNumAtag      TLVType
-	SourceSubAddress     TLVType
-	DestSubAddress       TLVType
-	UserResponseCode     TLVType
-	DisplayTime          TLVType
-	SMSSignal            TLVType
-	MSValidity           TLVType
-	MsMsgWaitFacilities  TLVType
-	NumberOfMessages     TLVType
-	AlertOnMsgDelivery   TLVType
-	LanguageIndicator    TLVType
-	ItsReplyType         TLVType
-	ItsSessionInfo       TLVType
+
+	// PrivacyInicator  Indicates a level of privacy associated with the message.
+	PrivacyInicator TLVType
+
+	// CallbackNum  A callback number associated with the short message. This parameter can be included a number
+	// of times for multiple call back addresses
+	CallbackNum TLVType
+
+	// CallbackNumPresInd This parameter identifies the presentation and screening associated with the callback number
+	// If this parameter is present and there are multiple instances of the callback_num parameter then
+	// this parameter must occur an equal number of instances and the order of occurrence determines
+	// the particular callback_num_pres_ind which corresponds to a particular callback_num
+	CallbackNumPresInd TLVType
+
+	// CallbackNumAtag  This parameter associates a displayable alphanumeric tag with the callback number.
+	// If this parameter is present and there are multiple instances of the callback_num parameter then this
+	// parameter must occur an equal number of instances and the order of occurrence determines the particular
+	// callback_num_atag which corresponds to a particular callback_num
+	CallbackNumAtag TLVType
+
+	// SourceSubAddress The subaddress of the message originator.
+	SourceSubAddress TLVType
+
+	// DestSubAddress The subaddress of the message destination
+	DestSubAddress TLVType
+
+	// UserResponseCode A user response code. The actual response codes are implementation specific
+	UserResponseCode TLVType
+
+	// DisplayTime  Provides the receiving MS based SME with a display time associated with the message
+	DisplayTime TLVType
+
+	// SMSSignal  Indicates the alerting mechanism when the message is received by an MS
+	SMSSignal TLVType
+
+	// MSValidity  Indicates validity information for this message to the recipient MS
+	MSValidity TLVType
+
+	// MsMsgWaitFacilities  This parameter controls the indication and specifies the message
+	// type (of the message associated with the MWI) at the mobile station.
+	MsMsgWaitFacilities TLVType
+
+	// NumberOfMessages  Indicates the number of messages stored in a mail box (e.g. voice mail box)
+	NumberOfMessages TLVType
+
+	// AlertOnMsgDelivery Requests an MS alert signal be invoked on message delivery
+	AlertOnMsgDelivery TLVType
+
+	// LanguageIndicator  Indicates the language of an alphanumeric text message.
+	LanguageIndicator TLVType
+
+	// ItsReplyType  The MS user’s reply method to an SMS delivery message received from the network
+	// is indicated and controlled by this parameter
+	ItsReplyType TLVType
+
+	// ItsSessionInf Session control information for Interactive Teleservice
+	ItsSessionInfo TLVType
 }
 
 type dataSMRespTLVParameter struct {
-	DeliveryFaiureReason     TLVType
-	NetWorkErrorCode         TLVType
+	// DeliveryFailureReason  Include to indicate reason for delivery failure
+	DeliveryFailureReason TLVType
+
+	// NetWorkErrorCode  Error code specific to a wireless network
+	NetWorkErrorCode TLVType
+
+	// AdditionalStatusInfoText ASCII text giving a description of the meaning of the response
 	AdditionalStatusInfoText TLVType
-	DPFResult                TLVType
+
+	// DPFResult Indicates whether the Delivery Pending Flag was set
+	DPFResult TLVType
 }
 
 // BindTransmiterTLVParameter defines the TLV parameters available  for BindTrasmiter PDU
@@ -316,7 +520,7 @@ func init() {
 	}
 	DataSMTLVParameter = &dataSMTLVParameter{
 		SourcePort:           TLVType(1),
-		SourceAddrUnit:       TLVType(2),
+		SourceAddrSubUnit:    TLVType(2),
 		SourceNetworkType:    TLVType(3),
 		SourceBearerType:     TLVType(4),
 		SourceTelematicID:    TLVType(5),
@@ -356,7 +560,7 @@ func init() {
 	}
 
 	DataSMRespTLVParameter = &dataSMRespTLVParameter{
-		DeliveryFaiureReason:     TLVType(1),
+		DeliveryFailureReason:    TLVType(1),
 		NetWorkErrorCode:         TLVType(2),
 		AdditionalStatusInfoText: TLVType(3),
 		DPFResult:                TLVType(4),
