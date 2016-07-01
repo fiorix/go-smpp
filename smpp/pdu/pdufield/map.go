@@ -9,9 +9,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 	"strconv"
 	"strings"
+
+	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
 )
 
 // Map is a collection of PDU field data indexed by name.
@@ -64,7 +65,7 @@ func (m Map) MarshalJSON() ([]byte, error) {
 			// Marshall the bytes as-is and also the string in two different
 			// fields for readability
 			jsonValue, _ := json.Marshal(v.String())
-			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k + "_text", jsonValue))
+			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k+"_text", jsonValue))
 			buffer.WriteString(",")
 			jsonValue, _ = json.Marshal(hex.EncodeToString(data.([]byte)))
 			buffer.WriteString(fmt.Sprintf("\"%v\":%s", k, jsonValue))
