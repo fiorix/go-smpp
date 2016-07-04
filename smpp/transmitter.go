@@ -146,11 +146,12 @@ const (
 // the Transmitter. When returned from Submit, the ShortMessage
 // provides Resp and RespID.
 type ShortMessage struct {
-	Src      string
-	Dst      string
-	Text     pdutext.Codec
-	Validity time.Duration
-	Register DeliverySetting
+	Src        string
+	Dst        string
+	Text       pdutext.Codec
+	Validity   time.Duration
+	Register   DeliverySetting
+	OptsParams pdufield.TLVMap
 
 	// Other fields, normally optional.
 	ServiceType          string
@@ -203,7 +204,9 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	}
 	if t.conn.WindowSize > 0 {
 		inflight := uint(atomic.AddInt32(&t.tx.count, 1))
-		defer func(t *Transmitter) { atomic.AddInt32(&t.tx.count, -1) }(t)
+		defer func(t *Transmitter) {
+			atomic.AddInt32(&t.tx.count, -1)
+		}(t)
 		if inflight > t.conn.WindowSize {
 			return nil, ErrMaxWindowSize
 		}
@@ -236,6 +239,7 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 	p := pdu.NewSubmitSM()
 	f := p.Fields()
+
 	f.Set(pdufield.SourceAddr, sm.Src)
 	f.Set(pdufield.DestinationAddr, sm.Dst)
 	f.Set(pdufield.ShortMessage, sm.Text)
@@ -255,6 +259,12 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 	f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
 	f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
 	f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
+
+	//set the optional parameters in the submit pdu from sm
+	optsParams := p.TLVFields()
+	for param, value := range sm.OptsParams {
+		optsParams[param] = value
+	}
 	resp, err := t.do(p)
 	if err != nil {
 		return nil, err
