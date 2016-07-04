@@ -35,6 +35,9 @@ type Body interface {
 	// TLVFields return a decoded map of PDU TLV fields.
 	TLVFields() pdufield.TLVMap
 
+	// Set the optional parameters of PDU.
+	SetTLVFields(pdufield.TLVMap) error
+
 	// SerializeTo encodes the PDU to its binary form, including
 	// the header and all fields.
 	SerializeTo(w io.Writer) error

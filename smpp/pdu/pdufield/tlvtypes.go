@@ -1,14 +1,37 @@
 package pdufield
 
+import (
+	"reflect"
+)
+
+type TLVParameter struct {
+}
+
+func (p *TLVParameter) GetParameters() map[TLVType]string {
+	m := make(map[TLVType]string)
+	val := reflect.ValueOf(p).Elem()
+
+	for i := 0; i < val.NumField(); i++ {
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
+		key := valueField.Interface().(TLVType)
+		value := typeField.Name
+		m[key] = value
+	}
+	return m
+}
+
 // BindTransmitterTLVParameter defines the TLV fields names
 // realted with BindTransmitter PDU
 type bindTransmiterTLVParameter struct {
+	TLVParameter
 	// ScInterfaceVersion SMPP version supported by SMSC
 	ScInterfaceVersion TLVType
 }
 
 //submitSMTLVParameter defines the TLV fileds names related with SubmitSM PDU
 type submitSMTLVParameter struct {
+	TLVParameter
 	// UserMessageReference ESME assigned message reference number.
 	UserMessageReference TLVType
 
@@ -119,6 +142,7 @@ type submitSMTLVParameter struct {
 // SubmitSMMultiTVLParameter defines the TLV fields names for
 // submit sm multipart PDU.
 type submitSMMultiTLVParameter struct {
+	TLVParameter
 	// UserMessageReference ,ESME assigned message reference number
 	UserMessageReference TLVType
 
@@ -210,6 +234,7 @@ type submitSMMultiTLVParameter struct {
 }
 
 type deliverSMTLVParameter struct {
+	TLVParameter
 	// UserMessageReference A reference assigned by the originating SME to the message.
 	// In the case that the deliver_sm is carrying an SMSC delivery receipt, an SME delivery acknowledgement
 	// or an SME user acknowledgement (as indicated in the esm_class field), the user_message_reference parameter
@@ -277,6 +302,7 @@ type deliverSMTLVParameter struct {
 }
 
 type dataSMTLVParameter struct {
+	TLVParameter
 	// SourcePort Indicates the application port number associated with the source address of the message
 	// This parameter should be present for WAP applications
 	SourcePort TLVType
@@ -406,6 +432,7 @@ type dataSMTLVParameter struct {
 }
 
 type dataSMRespTLVParameter struct {
+	TLVParameter
 	// DeliveryFailureReason  Include to indicate reason for delivery failure
 	DeliveryFailureReason TLVType
 
@@ -565,4 +592,5 @@ func init() {
 		AdditionalStatusInfoText: TLVType(3),
 		DPFResult:                TLVType(4),
 	}
+
 }

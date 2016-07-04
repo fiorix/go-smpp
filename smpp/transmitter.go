@@ -261,10 +261,11 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 	f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
 
 	//set the optional parameters in the submit pdu from sm
-	optsParams := p.TLVFields()
-	for param, value := range sm.OptsParams {
-		optsParams[param] = value
+	err := p.SetTLVFields(sm.OptsParams)
+	if err != nil {
+		return sm, err
 	}
+
 	resp, err := t.do(p)
 	if err != nil {
 		return nil, err
