@@ -146,7 +146,6 @@ func (m TLVMap) Set(k TLVType, v interface{}) error {
 			b = 1
 		}
 		data = []byte{uint8(b)}
-	case pdutext.Codec:
 
 	default:
 		return fmt.Errorf("Unsupported field data: %#v", v)
