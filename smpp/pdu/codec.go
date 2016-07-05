@@ -73,35 +73,6 @@ func (pdu *Codec) TLVFields() pdufield.TLVMap {
 	return pdu.t
 }
 
-// Setup the optional parameters and checks the parameters list
-// contains the validad parameter according with pdu type.
-func (pdu *Codec) SetTLVFields(m pdufield.TLVMap) error {
-	var o map[pdufield.TLVType]string
-	switch pdu.Header().ID {
-	case BindTransmitterID:
-		o = pdufield.GetParameters(pdufield.BindTransmiterTLVParameter)
-	case SubmitSMID:
-		o = pdufield.GetParameters(pdufield.SubmitSMTLVParameter)
-	case SubmitMultiID:
-		o = pdufield.GetParameters(pdufield.SubmitSMMultiTLVParameter)
-	case DeliverSMID:
-		o = pdufield.GetParameters(pdufield.DeliverSMTLVParameter)
-	case DataSMID:
-		o = pdufield.GetParameters(pdufield.DataSMTLVParameter)
-	case DataSMRespID:
-		o = pdufield.GetParameters(pdufield.DataSMRespTLVParameter)
-	default:
-		return fmt.Errorf("Unknown PDU type: %s", pdu.Header().ID.String())
-	}
-	for k, _ := range m {
-		if _, ok := o[k]; !ok {
-			return fmt.Errorf("Parameter not allowed for PDU %s:", pdu.Header().ID.String())
-		}
-	}
-	pdu.t = m
-	return nil
-}
-
 // SerializeTo implements the PDU interface.
 func (pdu *Codec) SerializeTo(w io.Writer) error {
 	var b bytes.Buffer
