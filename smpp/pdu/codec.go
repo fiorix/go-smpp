@@ -79,17 +79,17 @@ func (pdu *Codec) SetTLVFields(m pdufield.TLVMap) error {
 	var o map[pdufield.TLVType]string
 	switch pdu.Header().ID {
 	case BindTransmitterID:
-		o = pdufield.BindTransmiterTLVParameter.GetParameters()
+		o = pdufield.GetParameters(pdufield.BindTransmiterTLVParameter)
 	case SubmitSMID:
-		o = pdufield.SubmitSMTLVParameter.GetParameters()
+		o = pdufield.GetParameters(pdufield.SubmitSMTLVParameter)
 	case SubmitMultiID:
-		o = pdufield.SubmitSMMultiTLVParameter.GetParameters()
+		o = pdufield.GetParameters(pdufield.SubmitSMMultiTLVParameter)
 	case DeliverSMID:
-		o = pdufield.DeliverSMTLVParameter.GetParameters()
+		o = pdufield.GetParameters(pdufield.DeliverSMTLVParameter)
 	case DataSMID:
-		o = pdufield.DataSMTLVParameter.GetParameters()
+		o = pdufield.GetParameters(pdufield.DataSMTLVParameter)
 	case DataSMRespID:
-		o = pdufield.DataSMRespTLVParameter.GetParameters()
+		o = pdufield.GetParameters(pdufield.DataSMRespTLVParameter)
 	default:
 		return fmt.Errorf("Unknown PDU type: %s", pdu.Header().ID.String())
 	}
@@ -98,6 +98,7 @@ func (pdu *Codec) SetTLVFields(m pdufield.TLVMap) error {
 			return fmt.Errorf("Parameter not allowed for PDU %s:", pdu.Header().ID.String())
 		}
 	}
+	pdu.t = m
 	return nil
 }
 
