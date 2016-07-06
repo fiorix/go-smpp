@@ -264,7 +264,7 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 	optParams := p.TLVFields()
 
 	for param, value := range sm.OptsParams {
-		optParams[param] = value
+		optParams.Set(param, value)
 	}
 
 	resp, err := t.do(p)
