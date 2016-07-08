@@ -274,6 +274,13 @@ func NewDeliverSMResp() Body {
 	return b
 }
 
+// NewDeliverSMRespSeq creates and initializes a new DeliverSMResp PDU for a specific seq.
+func NewDeliverSMRespSeq(seq uint32) Body {
+	b := newDeliverSMResp(&Header{ID: DeliverSMRespID, Seq: seq})
+	b.init()
+	return b
+}
+
 // Unbind PDU.
 type Unbind struct{ *codec }
 
@@ -326,6 +333,13 @@ func newEnquireLinkResp(hdr *Header) *codec {
 // NewEnquireLinkResp creates and initializes a EnquireLinkResp PDU.
 func NewEnquireLinkResp() Body {
 	b := newEnquireLinkResp(&Header{ID: EnquireLinkRespID})
+	b.init()
+	return b
+}
+
+// NewEnquireLinkRespSeq creates and initializes a EnquireLinkResp PDU for a specific seq.
+func NewEnquireLinkRespSeq(seq uint32) Body {
+	b := newEnquireLinkResp(&Header{ID: EnquireLinkRespID, Seq: seq})
 	b.init()
 	return b
 }
