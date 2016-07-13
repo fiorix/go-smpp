@@ -208,9 +208,7 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	}
 	if t.conn.WindowSize > 0 {
 		inflight := uint(atomic.AddInt32(&t.tx.count, 1))
-		defer func(t *Transmitter) {
-			atomic.AddInt32(&t.tx.count, -1)
-		}(t)
+		defer func(t *Transmitter) { atomic.AddInt32(&t.tx.count, -1) }(t)
 		if inflight > t.conn.WindowSize {
 			return nil, ErrMaxWindowSize
 		}
