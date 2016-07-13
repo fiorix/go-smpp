@@ -172,19 +172,19 @@ func Decode(r io.Reader) (Body, error) {
 	}
 	switch hdr.ID {
 	case AlertNotificationID:
-	// TODO(fiorix): Implement AlertNotification.
+		// TODO(fiorix): Implement AlertNotification.
 	case BindReceiverID, BindTransceiverID, BindTransmitterID:
 		return decodeFields(newBind(hdr), b)
 	case BindReceiverRespID, BindTransceiverRespID, BindTransmitterRespID:
 		return decodeFields(newBindResp(hdr), b)
 	case CancelSMID:
-	// TODO(fiorix): Implement CancelSM.
+		// TODO(fiorix): Implement CancelSM.
 	case CancelSMRespID:
-	// TODO(fiorix): Implement CancelSMResp.
+		// TODO(fiorix): Implement CancelSMResp.
 	case DataSMID:
-	// TODO(fiorix): Implement DataSM.
+		// TODO(fiorix): Implement DataSM.
 	case DataSMRespID:
-	// TODO(fiorix): Implement DataSMResp.
+		// TODO(fiorix): Implement DataSMResp.
 	case DeliverSMID:
 		return decodeFields(newDeliverSM(hdr), b)
 	case DeliverSMRespID:
@@ -196,19 +196,19 @@ func Decode(r io.Reader) (Body, error) {
 	case GenericNACKID:
 		return decodeFields(newGenericNACK(hdr), b)
 	case OutbindID:
-	// TODO(fiorix): Implement Outbind.
+		// TODO(fiorix): Implement Outbind.
 	case QuerySMID:
 		return decodeFields(newQuerySM(hdr), b)
 	case QuerySMRespID:
 		return decodeFields(newQuerySMResp(hdr), b)
 	case ReplaceSMID:
-	// TODO(fiorix): Implement ReplaceSM.
+		// TODO(fiorix): Implement ReplaceSM.
 	case ReplaceSMRespID:
-	// TODO(fiorix): Implement ReplaceSMResp.
+		// TODO(fiorix): Implement ReplaceSMResp.
 	case SubmitMultiID:
-	// TODO(fiorix): Implement SubmitMulti.
+		// TODO(fiorix): Implement SubmitMulti.
 	case SubmitMultiRespID:
-	// TODO(fiorix): Implement SubmitMultiResp.
+		// TODO(fiorix): Implement SubmitMultiResp.
 	case SubmitSMID:
 		return decodeFields(newSubmitSM(hdr), b)
 	case SubmitSMRespID:
