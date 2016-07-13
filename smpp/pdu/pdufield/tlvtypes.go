@@ -1,6 +1,6 @@
 package pdufield
 
-type MessageStateType int
+type MessageStateType uint8
 
 const (
 	Enroute       MessageStateType = 1 // The message is in enroute
