@@ -88,7 +88,7 @@ func (pdu *Codec) SerializeTo(w io.Writer) error {
 			return err
 		}
 	}
-	for k, v := range pdu.TLVFields() {
+	for _, v := range pdu.TLVFields() {
 		if err := v.SerializeTo(&b); err != nil {
 			return err
 		}

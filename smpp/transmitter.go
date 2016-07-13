@@ -150,12 +150,12 @@ const (
 // the Transmitter. When returned from Submit, the ShortMessage
 // provides Resp and RespID.
 type ShortMessage struct {
-	Src        string
-	Dst        string
-	Text       pdutext.Codec
-	Validity   time.Duration
-	Register   DeliverySetting
-	OptsParams pdufield.TLVMap
+	Src       string
+	Dst       string
+	Text      pdutext.Codec
+	Validity  time.Duration
+	Register  DeliverySetting
+	OptParams pdufield.TLVMap
 
 	// Other fields, normally optional.
 	ServiceType          string
@@ -329,8 +329,7 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 	f.Set(pdufield.DataCoding, dataCoding)
 	//set the optional parameters in the submit pdu from sm
 	optParams := p.TLVFields()
-
-	for param, value := range sm.OptsParams {
+	for param, value := range sm.OptParams {
 		optParams.Set(param, value)
 	}
 
