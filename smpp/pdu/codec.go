@@ -92,7 +92,6 @@ func (pdu *Codec) SerializeTo(w io.Writer) error {
 		if err := v.SerializeTo(&b); err != nil {
 			return err
 		}
-		pdu.t.Set(k, nil)
 	}
 
 	pdu.h.Len = uint32(pdu.Len())
