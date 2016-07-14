@@ -171,7 +171,6 @@ func (srv *server) Serve() {
 			log.Println("Closing server:", err)
 			break // on srv.l.Close
 		}
-		log.Println("New client", cli.RemoteAddr())
 		go srv.handle(newConn(cli))
 	}
 }
