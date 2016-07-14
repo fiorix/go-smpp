@@ -55,7 +55,8 @@ func (pdu *Codec) Len() int {
 		l += f.Len()
 	}
 	for _, t := range pdu.t {
-		l += int(t.Len)
+		// +2 bytes for tag, +2 bytes for length (see spec, p.42)
+		l += int(t.Len + 4)
 	}
 	return l
 }
