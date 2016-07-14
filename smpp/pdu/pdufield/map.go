@@ -32,6 +32,8 @@ func (m Map) Set(k Name, v interface{}) error {
 		m[k] = New(k, []byte(v.(string)))
 	case []byte:
 		m[k] = New(k, []byte(v.([]byte)))
+	case DeliverySetting:
+		m[k] = New(k, []byte{uint8(v.(DeliverySetting))})
 	case Body:
 		m[k] = v.(Body)
 	case pdutext.Codec:

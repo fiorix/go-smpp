@@ -46,7 +46,7 @@ func TestShortMessage(t *testing.T) {
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +102,7 @@ func TestShortMessageWindowSize(t *testing.T) {
 			Dst:      "foobar",
 			Text:     pdutext.Raw("Lorem ipsum"),
 			Validity: 10 * time.Minute,
-			Register: NoDeliveryReceipt,
+			Register: pdufield.NoDeliveryReceipt,
 		}
 	}
 	nerr := 0
@@ -148,7 +148,7 @@ func TestLongMessage(t *testing.T) {
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus."),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)

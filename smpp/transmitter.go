@@ -135,17 +135,6 @@ func (t *Transmitter) Close() error {
 	return t.conn.Close()
 }
 
-// DeliverySetting is used to configure registered delivery
-// for short messages.
-type DeliverySetting uint8
-
-// Supported delivery settings.
-const (
-	NoDeliveryReceipt      DeliverySetting = 0x00
-	FinalDeliveryReceipt   DeliverySetting = 0x01
-	FailureDeliveryReceipt DeliverySetting = 0x02
-)
-
 // ShortMessage configures a short message that can be submitted via
 // the Transmitter. When returned from Submit, the ShortMessage
 // provides Resp and RespID.
@@ -154,7 +143,7 @@ type ShortMessage struct {
 	Dst      string
 	Text     pdutext.Codec
 	Validity time.Duration
-	Register DeliverySetting
+	Register pdufield.DeliverySetting
 
 	// Other fields, normally optional.
 	ServiceType          string

@@ -65,7 +65,7 @@ func TestTransceiver(t *testing.T) {
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
-		Register: FinalDeliveryReceipt,
+		Register: pdufield.FinalDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)
