@@ -146,12 +146,13 @@ func (m TLVMap) Set(k TLVType, v interface{}) error {
 			b = 1
 		}
 		data = []byte{uint8(b)}
-
+	case MessageStateType:
+		data = []byte{uint8(v.(MessageStateType))}
 	default:
 		return fmt.Errorf("Unsupported field data: %#v", v)
 	}
-	len := uint16(len(data))
-	m[k] = &TLVBody{Tag: k, data: data, Len: len}
+	l := uint16(len(data))
+	m[k] = &TLVBody{Tag: k, data: data, Len: l}
 	return nil
 }
 
