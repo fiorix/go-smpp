@@ -126,6 +126,36 @@ func (m *Map) UnmarshalJSON(b []byte) error {
 // TLVMap is a collection of PDU TLV field data indexed by type.
 type TLVMap map[TLVType]*TLVBody
 
+func (m TLVMap) Set(k TLVType, v interface{}) error {
+	var data []byte
+	switch v.(type) {
+	case nil:
+
+	case uint8:
+		data = []byte{v.(uint8)}
+	case int:
+		data = []byte{uint8(v.(int))}
+	case string:
+		data = []byte(v.(string))
+	case []byte:
+		data = []byte(v.([]byte))
+	case bool:
+		vb := v.(bool)
+		var b = 0
+		if vb {
+			b = 1
+		}
+		data = []byte{uint8(b)}
+	case MessageStateType:
+		data = []byte{uint8(v.(MessageStateType))}
+	default:
+		return fmt.Errorf("Unsupported field data: %#v", v)
+	}
+	l := uint16(len(data))
+	m[k] = &TLVBody{Tag: k, data: data, Len: l}
+	return nil
+}
+
 func (m TLVMap) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString("{")
 	length := len(m)

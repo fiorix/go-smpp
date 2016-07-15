@@ -55,7 +55,8 @@ func (pdu *Codec) Len() int {
 		l += f.Len()
 	}
 	for _, t := range pdu.t {
-		l += int(t.Len)
+		// +2 bytes for tag, +2 bytes for length (see spec, p.42)
+		l += int(t.Len + 4)
 	}
 	return l
 }
@@ -88,6 +89,12 @@ func (pdu *Codec) SerializeTo(w io.Writer) error {
 			return err
 		}
 	}
+	for _, v := range pdu.TLVFields() {
+		if err := v.SerializeTo(&b); err != nil {
+			return err
+		}
+	}
+
 	pdu.h.Len = uint32(pdu.Len())
 	err := pdu.h.SerializeTo(w)
 	if err != nil {
