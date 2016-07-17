@@ -175,18 +175,23 @@ func (m TLVMap) MarshalJSON() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (m TLVMap) UnmarshalJSON(b []byte) error {
+func (m *TLVMap) UnmarshalJSON(b []byte) error {
+	if *m == nil {
+		*m = TLVMap{}
+	}
 	var tmp map[string]*TLVBody
 	err := json.Unmarshal(b, &tmp)
 	if err != nil {
 		return err
 	}
+	mtmp := map[TLVType]*TLVBody{}
 	for k, v := range tmp {
 		numericKey, err := strconv.Atoi(k)
 		if err != nil {
 			return err
 		}
-		m[TLVType(numericKey)] = v
+		mtmp[TLVType(numericKey)] = v
 	}
+	*m = mtmp
 	return nil
 }

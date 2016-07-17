@@ -129,7 +129,7 @@ func TestTLVMapSet(t *testing.T) {
 	}
 }
 
-func TestTLVMapJSON(t *testing.T) {
+func TestTLVMarshalJSON(t *testing.T) {
 	m := make(TLVMap)
 	tlvTypeA := TLVType(1)
 	tlvTypeB := TLVType(2)
@@ -171,7 +171,41 @@ func TestTLVMapJSON(t *testing.T) {
 				t.Fatalf("in key %v, expected to contain len: %v, got %v instead", k, v.Len, val.Len)
 			}
 		} else {
-			t.Fatalf("unexpected key: %v", k)
+			t.Fatalf("did not find key: %v", k)
 		}
+	}
+}
+
+func TestTLVUnmarshalJSON(t *testing.T) {
+	jsonBytes := []byte(`{"TLVMap" :{
+		  "1": {
+		    "tag": 1,
+		    "len": 8,
+		    "data": "dGx2Qm9keUE=",
+		    "text": "tlvBodyA"
+		  },
+		  "2": {
+		    "tag": 2,
+		    "len": 8,
+		    "data": "dGx2Qm9keUI=",
+		    "text": "tlvBodyB"
+		  }
+		}}`)
+
+	s := struct {
+		TLVMap TLVMap
+	}{
+		TLVMap: nil,
+	}
+
+	err := json.Unmarshal(jsonBytes, &s)
+	if err != nil {
+		t.Fatal("error unmarshaling:", err)
+	}
+	if _, ok := s.TLVMap[TLVType(1)]; !ok {
+		t.Fatalf("did not find key: %v", 1)
+	}
+	if _, ok := s.TLVMap[TLVType(2)]; !ok {
+		t.Fatalf("did not find key: %v", 2)
 	}
 }
