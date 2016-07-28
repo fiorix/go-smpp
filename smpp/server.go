@@ -258,17 +258,26 @@ func (srv *server) defaultAuth(s Session, p pdu.Body) error {
 	f := p.Fields()
 	user := f[pdufield.SystemID]
 	passwd := f[pdufield.Password]
+	var err error
 	if user == nil || passwd == nil {
-		return errors.New("malformed pdu, missing system_id/password")
+		resp.Header().Status = pdu.InvalidSystemID
+		err = errors.New("malformed pdu, missing system_id/password")
 	}
 	if user.String() != srv.User {
-		return errors.New("invalid user")
+		resp.Header().Status = pdu.InvalidSystemID
+		err = errors.New("invalid user")
 	}
 	if passwd.String() != srv.Passwd {
-		return errors.New("invalid passwd")
+		resp.Header().Status = pdu.InvalidPassword
+		err = errors.New("invalid passwd")
 	}
 	resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
-	return s.Write(resp)
+
+	writeErr := s.Write(resp)
+	if err != nil {
+		return err
+	}
+	return writeErr
 }
 
 // EchoHandler is the default Server RequestHandlerFunc, and echoes back
