@@ -31,10 +31,15 @@ const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
 // that is called when client PDU messages arrive.
 type RequestHandlerFunc func(Session, pdu.Body)
 
+// AuthRequestHandlerFunc is the signature of a function passed to Server instances,
+// that is called when a client is trying to bind to the server.
+type AuthRequestHandlerFunc func(Session, pdu.Body) error
+
 type Server interface {
 	Addr() string
 	Close()
 	Handle(id pdu.ID, h RequestHandlerFunc)
+	HandleAuth(id pdu.ID, h AuthRequestHandlerFunc)
 	Start()
 	Serve()
 	Session(id string) Session
@@ -50,6 +55,7 @@ type server struct {
 	TLS      *tls.Config
 
 	m  map[pdu.ID]RequestHandlerFunc
+	a  map[pdu.ID]AuthRequestHandlerFunc
 	s  map[string]Session
 	mu sync.Mutex
 	l  net.Listener
@@ -114,6 +120,7 @@ func NewUnstartedServer(user, password string, listener net.Listener) Server {
 		User:   user,
 		Passwd: password,
 		m:      map[pdu.ID]RequestHandlerFunc{},
+		a:      map[pdu.ID]AuthRequestHandlerFunc{},
 		s:      map[string]Session{},
 		l:      listener,
 	}
@@ -178,12 +185,7 @@ func (srv *server) Serve() {
 // handle new clients.
 func (srv *server) handle(c *conn) {
 	defer c.Close()
-	if err := srv.auth(c); err != nil {
-		if err != io.EOF {
-			log.Println("Server auth failed:", err)
-		}
-		return
-	}
+
 	// Use connSwitch to have synced read/write
 	s := &session{conn: &connSwitch{}}
 	s.conn.Set(c)
@@ -191,6 +193,12 @@ func (srv *server) handle(c *conn) {
 	srv.mu.Lock()
 	srv.s[s.id] = s
 	srv.mu.Unlock()
+
+	if err := srv.auth(c, s); err != nil {
+		log.Println("Server auth failed:", err)
+		return
+	}
+
 	for {
 		p, err := s.Read()
 		if err != nil {
@@ -215,12 +223,27 @@ func (srv *server) Handle(id pdu.ID, h RequestHandlerFunc) {
 	srv.m[id] = h
 }
 
-// auth authenticate new clients.
-func (srv *server) auth(c *conn) error {
+func (srv *server) HandleAuth(id pdu.ID, h AuthRequestHandlerFunc) {
+	srv.a[id] = h
+}
+
+func (srv *server) auth(c *conn, s Session) error {
 	p, err := c.Read()
 	if err != nil {
 		return err
 	}
+
+	// Read the bind PDU and if there are any handlers set, use them,
+	// if not perform the default auth
+	if h, ok := srv.a[p.Header().ID]; ok {
+		return h(s, p)
+	}
+
+	return srv.defaultAuth(s, p)
+}
+
+// auth authenticate new clients.
+func (srv *server) defaultAuth(s Session, p pdu.Body) error {
 	var resp pdu.Body
 	switch p.Header().ID {
 	case pdu.BindTransmitterID:
@@ -235,20 +258,26 @@ func (srv *server) auth(c *conn) error {
 	f := p.Fields()
 	user := f[pdufield.SystemID]
 	passwd := f[pdufield.Password]
+	var err error
 	if user == nil || passwd == nil {
-		return errors.New("malformed pdu, missing system_id/password")
+		resp.Header().Status = pdu.InvalidSystemID
+		err = errors.New("malformed pdu, missing system_id/password")
 	}
 	if user.String() != srv.User {
-		return errors.New("invalid user")
+		resp.Header().Status = pdu.InvalidSystemID
+		err = errors.New("invalid user")
 	}
 	if passwd.String() != srv.Passwd {
-		return errors.New("invalid passwd")
+		resp.Header().Status = pdu.InvalidPassword
+		err = errors.New("invalid passwd")
 	}
 	resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
-	if err = c.Write(resp); err != nil {
+
+	writeErr := s.Write(resp)
+	if err != nil {
 		return err
 	}
-	return nil
+	return writeErr
 }
 
 // EchoHandler is the default Server RequestHandlerFunc, and echoes back
