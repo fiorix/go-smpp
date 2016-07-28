@@ -239,15 +239,11 @@ func (srv *server) auth(c *conn, s Session) error {
 		return h(s, p)
 	}
 
-	resp, err := srv.defaultAuth(p)
-	if err != nil {
-		return err
-	}
-	return c.Write(resp)
+	return srv.defaultAuth(s, p)
 }
 
 // auth authenticate new clients.
-func (srv *server) defaultAuth(p pdu.Body) (pdu.Body, error) {
+func (srv *server) defaultAuth(s Session, p pdu.Body) error {
 	var resp pdu.Body
 	switch p.Header().ID {
 	case pdu.BindTransmitterID:
@@ -257,22 +253,22 @@ func (srv *server) defaultAuth(p pdu.Body) (pdu.Body, error) {
 	case pdu.BindTransceiverID:
 		resp = pdu.NewBindTransceiverResp()
 	default:
-		return nil, errors.New("unexpected pdu, want bind")
+		return errors.New("unexpected pdu, want bind")
 	}
 	f := p.Fields()
 	user := f[pdufield.SystemID]
 	passwd := f[pdufield.Password]
 	if user == nil || passwd == nil {
-		return nil, errors.New("malformed pdu, missing system_id/password")
+		return errors.New("malformed pdu, missing system_id/password")
 	}
 	if user.String() != srv.User {
-		return nil, errors.New("invalid user")
+		return errors.New("invalid user")
 	}
 	if passwd.String() != srv.Passwd {
-		return nil, errors.New("invalid passwd")
+		return errors.New("invalid passwd")
 	}
 	resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
-	return resp, nil
+	return s.Write(resp)
 }
 
 // EchoHandler is the default Server RequestHandlerFunc, and echoes back
