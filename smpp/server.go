@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/veoo/go-smpp/smpp/pdu"
-	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
+	"github.com/fiorix/go-smpp/smpp/pdu"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 )
 
 // Default settings.
