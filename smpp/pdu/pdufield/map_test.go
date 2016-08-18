@@ -6,6 +6,7 @@ package pdufield
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
@@ -62,5 +63,149 @@ func TestMapSetTextCodec(t *testing.T) {
 	nt := pdutext.Latin1(pt.Bytes()).Decode()
 	if !bytes.Equal(text, nt) {
 		t.Fatalf("unexpected text: want %q, have %q", text, nt)
+	}
+}
+
+func TestMapJSON(t *testing.T) {
+	m := make(Map)
+	m.Set(ShortMessage, "ShortMessage")
+	m.Set(SourceAddrTON, "DestAddrTON")
+	m.Set(SourceAddrNPI, "DestAddrNPI")
+	m.Set(SourceAddr, "DestinationAddr")
+	m.Set(DestAddrTON, "SourceAddrTON")
+	m.Set(DestAddrNPI, "SourceAddrNPI")
+	m.Set(DestinationAddr, "SourceAddr")
+
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal("error marshaling:", err)
+	}
+
+	other := make(Map)
+	err = json.Unmarshal(bytes, &other)
+	if err != nil {
+		t.Fatal("error unmarshaling:", err)
+	}
+
+	for k, v := range m {
+		if val, ok := other[k]; ok {
+			if val.String() != v.String() {
+				t.Fatalf("expected field to contain: %v, got %v instead", v, val)
+			}
+		} else {
+			t.Fatalf("unexpected field: %v", k)
+		}
+	}
+}
+
+func TestTLVMapSet(t *testing.T) {
+	m := make(TLVMap)
+
+	var testCases = []struct {
+		//data len expected
+		lenExpected uint16
+
+		// identifier TLV parameter
+		parameter TLVType
+
+		// Data to send in the TLV parameter
+		data interface{}
+	}{
+		{5, SourcePort, "12345"},
+		{1, MsValidity, true},
+		{1, MoreMessagesToSend, 2},
+		{2, LanguageIndicator, "es"},
+	}
+
+	for _, test := range testCases {
+		err := m.Set(test.parameter, test.data)
+		if err != nil {
+			t.Errorf("Expected nil but get: %v", err)
+		}
+		tlvb := m[test.parameter]
+		if tlvb.Len != test.lenExpected {
+			t.Errorf("The size calculation is wrong, expeted %d, but get: %d", 5, tlvb.Len)
+		}
+	}
+}
+
+func TestTLVMarshalJSON(t *testing.T) {
+	m := make(TLVMap)
+	tlvTypeA := TLVType(1)
+	tlvTypeB := TLVType(2)
+	dataA := []byte("tlvBodyA")
+	dataB := []byte("tlvBodyB")
+	tlvBodyA := TLVBody{
+		Tag:  tlvTypeA,
+		Len:  8,
+		data: dataA,
+	}
+	tlvBodyB := TLVBody{
+		Tag:  tlvTypeB,
+		Len:  8,
+		data: dataB,
+	}
+
+	m[tlvTypeA] = &tlvBodyA
+	m[tlvTypeB] = &tlvBodyB
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal("error marshaling:", err)
+	}
+
+	other := make(TLVMap)
+	err = json.Unmarshal(bytes, &other)
+	if err != nil {
+		t.Fatal("error unmarshaling:", err)
+	}
+
+	for k, v := range m {
+		if val, ok := other[k]; ok {
+			valStr := string(val.Bytes())
+			vStr := string(v.Bytes())
+			if valStr != vStr {
+				t.Fatalf("in key %v, expected to contain: %v, got %v instead", k, vStr, valStr)
+			} else if val.Tag != v.Tag {
+				t.Fatalf("in key %v, expected to contain tag: %v, got %v instead", k, v.Tag, val.Tag)
+			} else if val.Len != v.Len {
+				t.Fatalf("in key %v, expected to contain len: %v, got %v instead", k, v.Len, val.Len)
+			}
+		} else {
+			t.Fatalf("did not find key: %v", k)
+		}
+	}
+}
+
+func TestTLVUnmarshalJSON(t *testing.T) {
+	jsonBytes := []byte(`{"TLVMap" :{
+		  "1": {
+		    "tag": 1,
+		    "len": 8,
+		    "data": "dGx2Qm9keUE=",
+		    "text": "tlvBodyA"
+		  },
+		  "2": {
+		    "tag": 2,
+		    "len": 8,
+		    "data": "dGx2Qm9keUI=",
+		    "text": "tlvBodyB"
+		  }
+		}}`)
+
+	s := struct {
+		TLVMap TLVMap
+	}{
+		TLVMap: nil,
+	}
+
+	err := json.Unmarshal(jsonBytes, &s)
+	if err != nil {
+		t.Fatal("error unmarshaling:", err)
+	}
+	if _, ok := s.TLVMap[TLVType(1)]; !ok {
+		t.Fatalf("did not find key: %v", 1)
+	}
+	if _, ok := s.TLVMap[TLVType(2)]; !ok {
+		t.Fatalf("did not find key: %v", 2)
 	}
 }
