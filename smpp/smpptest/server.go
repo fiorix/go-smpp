@@ -37,6 +37,7 @@ type Server struct {
 	TLS     *tls.Config
 	Handler HandlerFunc
 
+	conns   []Conn
 	mu sync.Mutex
 	l  net.Listener
 }
@@ -101,7 +102,17 @@ func (srv *Server) Serve() {
 		if err != nil {
 			break // on srv.l.Close
 		}
-		go srv.handle(newConn(cli))
+
+		c := newConn(cli)
+		srv.conns = append(srv.conns, c)
+		go srv.handle(c)
+	}
+}
+
+// broadcasts a test PDU to all clients bind to this server
+func (srv *Server) BroadcastMessage(p pdu.Body) {
+	for i := range srv.conns {
+		srv.conns[i].Write(p)
 	}
 }
 
@@ -115,14 +126,14 @@ func (srv *Server) handle(c *conn) {
 		return
 	}
 	for {
-		pdu, err := c.Read()
+		p, err := c.Read()
 		if err != nil {
 			if err != io.EOF {
 				log.Println("smpptest: read failed:", err)
 			}
 			break
 		}
-		srv.Handler(c, pdu)
+		srv.Handler(c, p)
 	}
 }
 
