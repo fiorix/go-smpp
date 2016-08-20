@@ -44,8 +44,3 @@ func TestReceiver(t *testing.T) {
 		t.Fatal("timeout waiting for server to echo")
 	}
 }
-
-func TestReceiver_Broadcast(t *testing.T) {
-
-
-}
