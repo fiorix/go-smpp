@@ -31,9 +31,7 @@ func TestReceiver(t *testing.T) {
 	}
 	// cheat: inject GenericNACK PDU for the server to echo back.
 	p := pdu.NewGenericNACK()
-	r.conn.Lock()
-	r.conn.Write(p)
-	r.conn.Unlock()
+	s.BroadcastMessage(p)
 	// check response.
 	select {
 	case m := <-rc:
@@ -45,4 +43,9 @@ func TestReceiver(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("timeout waiting for server to echo")
 	}
+}
+
+func TestReceiver_Broadcast(t *testing.T) {
+
+
 }
