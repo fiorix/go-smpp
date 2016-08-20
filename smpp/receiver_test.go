@@ -29,7 +29,7 @@ func TestReceiver(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	// cheat: inject GenericNACK PDU for the server to echo back.
+	// trigger inbound message from server
 	p := pdu.NewGenericNACK()
 	s.BroadcastMessage(p)
 	// check response.
