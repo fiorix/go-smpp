@@ -219,6 +219,62 @@ func NewSubmitSMResp() Body {
 	return b
 }
 
+// SubmitMulti PDU.
+type SubmitMulti struct{ *codec }
+
+func newSubmitMulti(hdr *Header) *codec {
+	return &codec{
+		h: hdr,
+		l: pdufield.List{
+			pdufield.ServiceType,
+			pdufield.SourceAddrTON,
+			pdufield.SourceAddrNPI,
+			pdufield.SourceAddr,
+			pdufield.NumberDests,
+			pdufield.DestinationList, // contains DestFlag, DestAddrTON and DestAddrNPI for each address
+			pdufield.ESMClass,
+			pdufield.ProtocolID,
+			pdufield.PriorityFlag,
+			pdufield.ScheduleDeliveryTime,
+			pdufield.ValidityPeriod,
+			pdufield.RegisteredDelivery,
+			pdufield.ReplaceIfPresentFlag,
+			pdufield.DataCoding,
+			pdufield.SMDefaultMsgID,
+			pdufield.SMLength,
+			pdufield.ShortMessage,
+		},
+	}
+}
+
+// NewSubmitMulti creates and initializes a new SubmitMulti PDU.
+func NewSubmitMulti() Body {
+	b := newSubmitMulti(&Header{ID: SubmitMultiID})
+	b.init()
+	return b
+}
+
+// SubmitMultiResp PDU.
+type SubmitMultiResp struct{ *codec }
+
+func newSubmitMultiResp(hdr *Header) *codec {
+	return &codec{
+		h: hdr,
+		l: pdufield.List{
+			pdufield.MessageID,
+			pdufield.NoUnsuccess,
+			pdufield.UnsuccessSme,
+		},
+	}
+}
+
+// NewSubmitMultiResp creates and initializes a new SubmitMultiResp PDU.
+func NewSubmitMultiResp() Body {
+	b := newSubmitMultiResp(&Header{ID: SubmitMultiRespID})
+	b.init()
+	return b
+}
+
 // DeliverSM PDU.
 type DeliverSM struct{ *codec }
 

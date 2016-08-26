@@ -6,9 +6,11 @@ package smpp
 
 import (
 	"crypto/tls"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,6 +23,10 @@ import (
 // ErrMaxWindowSize is returned when an operation (such as Submit) violates
 // the maximum window size configured for the Transmitter or Transceiver.
 var ErrMaxWindowSize = errors.New("reached max window size")
+
+// MaxDestinationAddress is the maximum number of destination addresses allowed
+// in the submit_multi operation.
+const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
@@ -135,6 +141,25 @@ func (t *Transmitter) Close() error {
 	return t.conn.Close()
 }
 
+// UnsucessDest contains information about unsuccessful delivery to an address
+// when submit multi is used
+type UnsucessDest struct {
+	AddrTON uint8
+	AddrNPI uint8
+	Address string
+	Error   pdu.Status
+}
+
+// newUnsucessDest returns a new UnsucessDest constructed from a UnSme struct
+func newUnsucessDest(p pdufield.UnSme) UnsucessDest {
+	unDest := UnsucessDest{}
+	unDest.AddrTON, _ = p.Ton.Raw().(uint8) // if there is an error default value will be set
+	unDest.AddrNPI, _ = p.Npi.Raw().(uint8)
+	unDest.Address = string(p.DestAddr.Bytes())
+	unDest.Error = pdu.Status(binary.BigEndian.Uint32(p.ErrCode.Bytes()))
+	return unDest
+}
+
 // DeliverySetting is used to configure registered delivery
 // for short messages.
 type DeliverySetting uint8
@@ -152,6 +177,8 @@ const (
 type ShortMessage struct {
 	Src      string
 	Dst      string
+	DstList  []string // List of destination addreses for submit multi
+	DLs      []string //List if destribution list for submit multi
 	Text     pdutext.Codec
 	Validity time.Duration
 	Register DeliverySetting
@@ -168,6 +195,7 @@ type ShortMessage struct {
 	ScheduleDeliveryTime string
 	ReplaceIfPresentFlag uint8
 	SMDefaultMsgID       uint8
+	NumberDests          uint8
 
 	resp struct {
 		sync.Mutex
@@ -196,6 +224,51 @@ func (sm *ShortMessage) RespID() string {
 		return ""
 	}
 	return f.String()
+}
+
+// NumbUnsuccess is a shortcut to Resp().Fields()[pdufield.NoUnsuccess].
+// Returns zero and an error if the response PDU is not available, or does
+// not contain the NoUnsuccess field.
+func (sm *ShortMessage) NumbUnsuccess() (int, error) {
+	sm.resp.Lock()
+	defer sm.resp.Unlock()
+	if sm.resp.p == nil {
+		return 0, errors.New("Response PDU not available")
+	}
+	f := sm.resp.p.Fields()[pdufield.NoUnsuccess]
+	if f == nil {
+		return 0, errors.New("Response PDU does not contain NoUnsuccess field")
+	}
+	i, err := strconv.Atoi(f.String())
+	if err != nil {
+		return 0, fmt.Errorf("Failed to convert PDU value to string, error: %s", err.Error())
+	}
+	return i, nil
+}
+
+// UnsuccessSmes returns a list with the SME address(es) or/and Distribution List names to
+// which submission was unsuccessful and the respective errors, when submit multi is used.
+// Returns nil and an error if the response PDU is not available, or does
+// not contain the unsuccess_sme field.
+func (sm *ShortMessage) UnsuccessSmes() ([]UnsucessDest, error) {
+	sm.resp.Lock()
+	defer sm.resp.Unlock()
+	if sm.resp.p == nil {
+		return nil, errors.New("Response PDU not available")
+	}
+	f := sm.resp.p.Fields()[pdufield.UnsuccessSme]
+	if f == nil {
+		return nil, errors.New("Response PDU does not contain UnsuccessSme field")
+	}
+	usl, ok := f.(*pdufield.UnSmeList)
+	if ok {
+		var udl []UnsucessDest
+		for i := range usl.Data {
+			udl = append(udl, newUnsucessDest(usl.Data[i]))
+		}
+		return udl, nil
+	}
+	return nil, errors.New("Cannot convert PDU field to UnSmeList")
 }
 
 func (t *Transmitter) do(p pdu.Body) (*tx, error) {
@@ -238,6 +311,14 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 // Submit sends a short message and returns and updates the given
 // sm with the response status. It returns the same sm object.
 func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
+	if len(sm.DstList) > 0 || len(sm.DLs) > 0 {
+		// if we have a single destination address add it to the list
+		if sm.Dst != "" {
+			sm.DstList = append(sm.DstList, sm.Dst)
+		}
+		p := pdu.NewSubmitMulti()
+		return t.submitMsgMulti(sm, p, uint8(sm.Text.Type()))
+	}
 	p := pdu.NewSubmitSM()
 	return t.submitMsg(sm, p, uint8(sm.Text.Type()))
 }
@@ -334,6 +415,70 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 	sm.resp.p = resp.PDU
 	sm.resp.Unlock()
 	if id := resp.PDU.Header().ID; id != pdu.SubmitSMRespID {
+		return sm, fmt.Errorf("unexpected PDU ID: %s", id)
+	}
+	if s := resp.PDU.Header().Status; s != 0 {
+		return sm, s
+	}
+	return sm, resp.Err
+}
+
+func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding uint8) (*ShortMessage, error) {
+	numberOfDest := len(sm.DstList) + len(sm.DLs) // TODO: Validate numbers and lists according to size
+	if numberOfDest > MaxDestinationAddress {
+		return nil, fmt.Errorf("Error: Max number of destination addresses allowed is %d, trying to send to %d",
+			MaxDestinationAddress, numberOfDest)
+	}
+	// Put destination addresses and lists inside an byte array
+	var bArray []byte
+	// destination addresses
+	for _, destAddr := range sm.DstList {
+		// 1 - SME Address
+		bArray = append(bArray, byte(0x01))
+		bArray = append(bArray, byte(sm.DestAddrTON))
+		bArray = append(bArray, byte(sm.DestAddrNPI))
+		bArray = append(bArray, []byte(destAddr)...)
+		// null terminator
+		bArray = append(bArray, byte(0x00))
+	}
+
+	// distribution lists
+	for _, destList := range sm.DLs {
+		// 2 - Distribution List
+		bArray = append(bArray, byte(0x02))
+		bArray = append(bArray, []byte(destList)...)
+		// null terminator
+		bArray = append(bArray, byte(0x00))
+	}
+
+	f := p.Fields()
+	f.Set(pdufield.SourceAddr, sm.Src)
+	f.Set(pdufield.DestinationList, bArray)
+	f.Set(pdufield.ShortMessage, sm.Text)
+	f.Set(pdufield.NumberDests, uint8(numberOfDest))
+	f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
+	// Check if the message has validity set.
+	if sm.Validity != time.Duration(0) {
+		f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
+	}
+	f.Set(pdufield.ServiceType, sm.ServiceType)
+	f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
+	f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
+	f.Set(pdufield.ESMClass, sm.ESMClass)
+	f.Set(pdufield.ProtocolID, sm.ProtocolID)
+	f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
+	f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
+	f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
+	f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
+	f.Set(pdufield.DataCoding, dataCoding)
+	resp, err := t.do(p)
+	if err != nil {
+		return nil, err
+	}
+	sm.resp.Lock()
+	sm.resp.p = resp.PDU
+	sm.resp.Unlock()
+	if id := resp.PDU.Header().ID; id != pdu.SubmitMultiRespID {
 		return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 	}
 	if s := resp.PDU.Header().Status; s != 0 {

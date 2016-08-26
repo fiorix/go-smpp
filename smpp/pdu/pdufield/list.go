@@ -20,6 +20,8 @@ type List []Name
 // we attempt to decode text automatically. See pdutext package
 // for more information.
 func (l List) Decode(r *bytes.Buffer) (Map, error) {
+	var unsuccessCount int
+	var numDest int
 	f := make(Map)
 loop:
 	for _, k := range l {
@@ -54,6 +56,8 @@ loop:
 			DestAddrTON,
 			ESMClass,
 			InterfaceVersion,
+			NumberDests,
+			NoUnsuccess,
 			PriorityFlag,
 			ProtocolID,
 			RegisteredDelivery,
@@ -69,6 +73,91 @@ loop:
 				return nil, err
 			}
 			f[k] = &Fixed{Data: b}
+			if k == NoUnsuccess {
+				unsuccessCount = int(b)
+			} else if k == NumberDests {
+				numDest = int(b)
+			}
+		case DestinationList:
+			var destList []DestSme
+			for i := 0; i < numDest; i++ {
+				var dest DestSme
+				// Read DestFlag
+				b, err := r.ReadByte()
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				dest.Flag = Fixed{Data: b}
+				// Read Ton
+				b, err = r.ReadByte()
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				dest.Ton = Fixed{Data: b}
+				// Read npi
+				b, err = r.ReadByte()
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				dest.Npi = Fixed{Data: b}
+				// Read address
+				bt, err := r.ReadBytes(0x00)
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				dest.DestAddr = Variable{Data: bt}
+				destList = append(destList, dest)
+			}
+			f[k] = &DestSmeList{Data: destList}
+		case UnsuccessSme:
+			var unsList []UnSme
+			for i := 0; i < unsuccessCount; i++ {
+				var uns UnSme
+				// Read Ton
+				b, err := r.ReadByte()
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				uns.Ton = Fixed{Data: b}
+				// Read npi
+				b, err = r.ReadByte()
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				uns.Npi = Fixed{Data: b}
+				// Read address
+				bt, err := r.ReadBytes(0x00)
+				if err == io.EOF {
+					break loop
+				}
+				if err != nil {
+					return nil, err
+				}
+				uns.DestAddr = Variable{Data: bt}
+				// Read error code
+				uns.ErrCode = Variable{Data: r.Next(4)}
+				// Add unSme to the list
+				unsList = append(unsList, uns)
+			}
+			f[k] = &UnSmeList{Data: unsList}
 		case SMLength:
 			b, err := r.ReadByte()
 			if err == io.EOF {
