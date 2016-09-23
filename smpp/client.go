@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/veoo/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 )
 
 // ConnStatus is an abstract interface for a connection status change.
@@ -66,15 +66,21 @@ type ClientConn interface {
 	Closer
 }
 
+// ConnMiddleware is useful for intercepting the traffic in/out happening
+// for the SMPP server. It should be used in a read-only way since might
+// effect the internal work of the SMPP server itself.
+type ConnMiddleware func(conn Conn) Conn
+
 // client provides a persistent client connection.
 type client struct {
-	Addr        string
-	TLS         *tls.Config
-	Status      chan ConnStatus
-	BindFunc    func(c Conn) error
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	WindowSize  uint
+	Addr            string
+	TLS             *tls.Config
+	Status          chan ConnStatus
+	BindFunc        func(c Conn) error
+	EnquireLink     time.Duration
+	RespTimeout     time.Duration
+	WindowSize      uint
+	ConnInterceptor ConnMiddleware
 
 	// internal stuff.
 	inbox chan pdu.Body
@@ -107,6 +113,10 @@ func (c *client) Bind() {
 			})
 			goto retry
 		}
+		if c.ConnInterceptor != nil {
+			conn = c.ConnInterceptor(conn)
+		}
+
 		c.conn.Set(conn)
 		if err = c.BindFunc(c.conn); err != nil {
 			c.notify(&connStatus{s: BindFailed, err: err})

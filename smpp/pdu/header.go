@@ -18,6 +18,57 @@ type (
 	Status uint32
 )
 
+const (
+	OK                               Status = 0x00000000
+	InvalidMessageLength             Status = 0x00000001
+	InvalidCommandLength             Status = 0x00000002
+	InvalidCommandID                 Status = 0x00000003
+	IncorrectBindStatus              Status = 0x00000004
+	AlreadyInBoundState              Status = 0x00000005
+	InvalidPriorityFlag              Status = 0x00000006
+	InvalidRegisteredDeliveryFlag    Status = 0x00000007
+	SystemError                      Status = 0x00000008
+	InvalidSourceAddress             Status = 0x0000000a
+	InvalidDestinationAddress        Status = 0x0000000b
+	InvalidMessagID                  Status = 0x0000000c
+	BindFailed                       Status = 0x0000000d
+	InvalidPassword                  Status = 0x0000000e
+	InvalidSystemID                  Status = 0x0000000f
+	CancelSMFailed                   Status = 0x00000011
+	ReplaceSMFailed                  Status = 0x00000013
+	MessageQueueFull                 Status = 0x00000014
+	InvalidServiceType               Status = 0x00000015
+	InvalidNumberDestinations        Status = 0x00000033
+	InvalidDistributionListName      Status = 0x00000034
+	InvalidDestinationFlag           Status = 0x00000040
+	InvalidSubmitWithReplaceRequest  Status = 0x00000042
+	InvalidESMEClassFieldData        Status = 0x00000043
+	CannotSubmitToDistributionList   Status = 0x00000044
+	SubmitSMFailed                   Status = 0x00000045
+	InvalidSourceAddressTon          Status = 0x00000048
+	InvalidSourceAddressNpi          Status = 0x00000049
+	InvalidDestinationAddressTon     Status = 0x00000050
+	InvalidDestinationAddressNpi     Status = 0x00000051
+	InvalidSytsemTypeField           Status = 0x00000053
+	InvalidReplaceIFPresentFlag      Status = 0x00000054
+	InvalidNumberOfMessages          Status = 0x00000055
+	ThrottlingError                  Status = 0x00000058
+	InvalidScheduledDeliveryTime     Status = 0x00000061
+	InvalidMessageValidityPeriord    Status = 0x00000062
+	PredefinedMessageInvalid         Status = 0x00000063
+	ESMEReceiverTemporaryAppError    Status = 0x00000064
+	ESMEReceiverPermanetAPPError     Status = 0x00000065
+	ESMEReceiberRejectMessageError   Status = 0x00000066
+	QuerySMRequestFailed             Status = 0x00000067
+	ErrorOptionalPartPDUBody         Status = 0x000000c0
+	OptionalParameterNotAllowed      Status = 0x000000c1
+	InvalidParameterLength           Status = 0x000000c2
+	ExpectedOptionalParameterMissing Status = 0x000000c3
+	InvalidOptionalParameterValue    Status = 0x000000c4
+	DeliveryFailure                  Status = 0x000000fe
+	UnkownError                      Status = 0x000000ff
+)
+
 var idString = map[ID]string{
 	GenericNACKID:         "GenericNACK",
 	BindReceiverID:        "BindReceiver",
