@@ -5,6 +5,7 @@
 package pdufield
 
 import (
+	"encoding/binary"
 	"io"
 	"strconv"
 )
@@ -21,12 +22,15 @@ const (
 	DestAddrNPI          Name = "dest_addr_npi"
 	DestAddrTON          Name = "dest_addr_ton"
 	DestinationAddr      Name = "destination_addr"
+	DestinationList      Name = "dest_addresses"
 	ESMClass             Name = "esm_class"
 	ErrorCode            Name = "error_code"
 	FinalDate            Name = "final_date"
 	InterfaceVersion     Name = "interface_version"
 	MessageID            Name = "message_id"
 	MessageState         Name = "message_state"
+	NumberDests          Name = "number_of_dests"
+	NoUnsuccess          Name = "no_unsuccess"
 	Password             Name = "password"
 	PriorityFlag         Name = "priority_flag"
 	ProtocolID           Name = "protocol_id"
@@ -42,6 +46,7 @@ const (
 	SourceAddrTON        Name = "source_addr_ton"
 	SystemID             Name = "system_id"
 	SystemType           Name = "system_type"
+	UnsuccessSme         Name = "unsuccess_sme"
 	ValidityPeriod       Name = "validity_period"
 )
 
@@ -141,5 +146,169 @@ func (sm *SM) Bytes() []byte {
 // SerializeTo implements the Data interface.
 func (sm *SM) SerializeTo(w io.Writer) error {
 	_, err := w.Write(sm.Bytes())
+	return err
+}
+
+// DestSme is a PDU field used for an sme addreses.
+type DestSme struct {
+	Flag     Fixed
+	Ton      Fixed
+	Npi      Fixed
+	DestAddr Variable
+}
+
+// Len implements the Data interface.
+func (ds *DestSme) Len() int {
+	return ds.Flag.Len() + ds.Ton.Len() + ds.Npi.Len() + ds.DestAddr.Len()
+}
+
+// Raw implements the Data interface.
+func (ds *DestSme) Raw() interface{} {
+	return ds.Bytes()
+}
+
+// String implements the Data interface.
+func (ds *DestSme) String() string {
+	return ds.Flag.String() + "," + ds.Ton.String() + "," + ds.Npi.String() + "," + ds.DestAddr.String()
+}
+
+// Bytes implements the Data interface.
+func (ds *DestSme) Bytes() []byte {
+	var ret []byte
+	ret = append(ret, ds.Flag.Bytes()...)
+	ret = append(ret, ds.Ton.Bytes()...)
+	ret = append(ret, ds.Npi.Bytes()...)
+	ret = append(ret, ds.DestAddr.Bytes()...)
+	return ret
+}
+
+// SerializeTo implements the Data interface.
+func (ds *DestSme) SerializeTo(w io.Writer) error {
+	_, err := w.Write(ds.Bytes())
+	return err
+}
+
+// DestSmeList contains a list of DestSme
+type DestSmeList struct {
+	Data []DestSme
+}
+
+// Len implements the Data interface.
+func (dsl *DestSmeList) Len() int {
+	var ret int
+	for i := range dsl.Data {
+		ret = ret + dsl.Data[i].Len()
+	}
+	return ret
+}
+
+// Raw implements the Data interface.
+func (dsl *DestSmeList) Raw() interface{} {
+	return dsl.Bytes()
+}
+
+// String implements the Data interface.
+func (dsl *DestSmeList) String() string {
+	var ret string
+	for i := range dsl.Data {
+		ret = ret + dsl.Data[i].String() + ";"
+	}
+	return ret
+}
+
+// Bytes implements the Data interface.
+func (dsl *DestSmeList) Bytes() []byte {
+	var ret []byte
+	for i := range dsl.Data {
+		ret = append(ret, dsl.Data[i].Bytes()...)
+	}
+	return ret
+}
+
+// SerializeTo implements the Data interface.
+func (dsl *DestSmeList) SerializeTo(w io.Writer) error {
+	_, err := w.Write(dsl.Bytes())
+	return err
+}
+
+// UnSme is a PDU field used for unsuccess sme addreses.
+type UnSme struct {
+	Ton      Fixed
+	Npi      Fixed
+	DestAddr Variable
+	ErrCode  Variable
+}
+
+// Len implements the Data interface.
+func (us *UnSme) Len() int {
+	return us.Ton.Len() + us.Npi.Len() + us.DestAddr.Len() + us.ErrCode.Len()
+}
+
+// Raw implements the Data interface.
+func (us *UnSme) Raw() interface{} {
+	return us.Bytes()
+}
+
+// String implements the Data interface.
+func (us *UnSme) String() string {
+	return us.Ton.String() + "," + us.Npi.String() + "," + us.DestAddr.String() + "," + strconv.Itoa(int(binary.BigEndian.Uint32(us.ErrCode.Data)))
+}
+
+// Bytes implements the Data interface.
+func (us *UnSme) Bytes() []byte {
+	var ret []byte
+	ret = append(ret, us.Ton.Bytes()...)
+	ret = append(ret, us.Npi.Bytes()...)
+	ret = append(ret, us.DestAddr.Bytes()...)
+	ret = append(ret, us.ErrCode.Bytes()...)
+	return ret
+}
+
+// SerializeTo implements the Data interface.
+func (us *UnSme) SerializeTo(w io.Writer) error {
+	_, err := w.Write(us.Bytes())
+	return err
+}
+
+// UnSmeList contains a list of UnSme
+type UnSmeList struct {
+	Data []UnSme
+}
+
+// Len implements the Data interface.
+func (usl *UnSmeList) Len() int {
+	var ret int
+	for i := range usl.Data {
+		ret = ret + usl.Data[i].Len()
+	}
+	return ret
+}
+
+// Raw implements the Data interface.
+func (usl *UnSmeList) Raw() interface{} {
+	return usl.Bytes()
+}
+
+// String implements the Data interface.
+func (usl *UnSmeList) String() string {
+	var ret string
+	for i := range usl.Data {
+		ret = ret + usl.Data[i].String() + ";"
+	}
+	return ret
+}
+
+// Bytes implements the Data interface.
+func (usl *UnSmeList) Bytes() []byte {
+	var ret []byte
+	for i := range usl.Data {
+		ret = append(ret, usl.Data[i].Bytes()...)
+	}
+	return ret
+}
+
+// SerializeTo implements the Data interface.
+func (usl *UnSmeList) SerializeTo(w io.Writer) error {
+	_, err := w.Write(usl.Bytes())
 	return err
 }
