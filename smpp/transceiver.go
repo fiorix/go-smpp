@@ -18,15 +18,16 @@ import (
 //
 // The API is a combination of the Transmitter and Receiver.
 type Transceiver struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	TLS         *tls.Config
-	WindowSize  uint
-	Handler     HandlerFunc
+	Addr            string
+	User            string
+	Passwd          string
+	SystemType      string
+	EnquireLink     time.Duration
+	RespTimeout     time.Duration
+	TLS             *tls.Config
+	WindowSize      uint
+	Handler         HandlerFunc
+	ConnInterceptor ConnMiddleware
 
 	Transmitter
 }
@@ -43,13 +44,14 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 	t.tx.inflight = make(map[uint32]chan *tx)
 	t.tx.Unlock()
 	c := &client{
-		Addr:        t.Addr,
-		TLS:         t.TLS,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
-		Status:      make(chan ConnStatus, 1),
-		BindFunc:    t.bindFunc,
-		WindowSize:  t.WindowSize,
+		Addr:            t.Addr,
+		TLS:             t.TLS,
+		EnquireLink:     t.EnquireLink,
+		RespTimeout:     t.RespTimeout,
+		Status:          make(chan ConnStatus, 1),
+		BindFunc:        t.bindFunc,
+		WindowSize:      t.WindowSize,
+		ConnInterceptor: t.ConnInterceptor,
 	}
 	t.conn.client = c
 	c.init()
