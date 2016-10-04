@@ -196,3 +196,71 @@ func TestQuerySM(t *testing.T) {
 		t.Fatalf("unexpected state: want DELIVERED, have %q", qr.MsgState)
 	}
 }
+
+func TestSubmitMulti(t *testing.T) {
+	//construct a byte array with the UnsuccessSme
+	var bArray []byte
+	bArray = append(bArray, byte(0x00))       // TON
+	bArray = append(bArray, byte(0x00))       // NPI
+	bArray = append(bArray, []byte("123")...) // Address
+	bArray = append(bArray, byte(0x00))       // Error
+	bArray = append(bArray, byte(0x00))       // Error
+	bArray = append(bArray, byte(0x00))       // Error
+	bArray = append(bArray, byte(0x11))       // Error
+	bArray = append(bArray, byte(0x00))       // null terminator
+
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		switch p.Header().ID {
+		case pdu.SubmitMultiID:
+			r := pdu.NewSubmitMultiResp()
+			r.Header().Seq = p.Header().Seq
+			r.Fields().Set(pdufield.MessageID, "foobar")
+			r.Fields().Set(pdufield.NoUnsuccess, uint8(1))
+			r.Fields().Set(pdufield.UnsuccessSme, bArray)
+			c.Write(r)
+		default:
+			smpptest.EchoHandler(c, p)
+		}
+	}
+	s.Start()
+	defer s.Close()
+	tx := &Transmitter{
+		Addr:   s.Addr(),
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
+	}
+	defer tx.Close()
+	conn := <-tx.Bind()
+	switch conn.Status() {
+	case Connected:
+	default:
+		t.Fatal(conn.Error())
+	}
+	sm, err := tx.Submit(&ShortMessage{
+		Src:      "root",
+		DstList:  []string{"123", "2233", "32322", "4234234"},
+		DLs:      []string{"DistributionList1"},
+		Text:     pdutext.Raw("Lorem ipsum"),
+		Validity: 10 * time.Minute,
+		Register: NoDeliveryReceipt,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgid := sm.RespID()
+	if msgid == "" {
+		t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+	}
+	if msgid != "foobar" {
+		t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+	}
+	noUncess, _ := sm.NumbUnsuccess()
+	if noUncess != 1 {
+		t.Fatalf("unexpected number of unsuccess %d", noUncess)
+	}
+	uncessSmes, _ := sm.UnsuccessSmes()
+	if len(uncessSmes) != 1 {
+		t.Fatalf("unsucess sme list should have a size of 1, has %d", len(uncessSmes))
+	}
+}
