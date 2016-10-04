@@ -220,10 +220,10 @@ func NewSubmitSMResp() Body {
 }
 
 // SubmitMulti PDU.
-type SubmitMulti struct{ *codec }
+type SubmitMulti struct{ *Codec }
 
-func newSubmitMulti(hdr *Header) *codec {
-	return &codec{
+func newSubmitMulti(hdr *Header) *Codec {
+	return &Codec{
 		h: hdr,
 		l: pdufield.List{
 			pdufield.ServiceType,
@@ -255,10 +255,10 @@ func NewSubmitMulti() Body {
 }
 
 // SubmitMultiResp PDU.
-type SubmitMultiResp struct{ *codec }
+type SubmitMultiResp struct{ *Codec }
 
-func newSubmitMultiResp(hdr *Header) *codec {
-	return &codec{
+func newSubmitMultiResp(hdr *Header) *Codec {
+	return &Codec{
 		h: hdr,
 		l: pdufield.List{
 			pdufield.MessageID,
