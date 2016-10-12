@@ -264,3 +264,44 @@ func TestSubmitMulti(t *testing.T) {
 		t.Fatalf("unsucess sme list should have a size of 1, has %d", len(uncessSmes))
 	}
 }
+
+func TestNotConnected(t *testing.T) {
+	s := smpptest.NewUnstartedServer()
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		switch p.Header().ID {
+		case pdu.SubmitSMID:
+			r := pdu.NewSubmitSMResp()
+			r.Header().Seq = p.Header().Seq
+			r.Fields().Set(pdufield.MessageID, "foobar")
+			c.Write(r)
+		default:
+			smpptest.EchoHandler(c, p)
+		}
+	}
+	s.Start()
+	defer s.Close()
+	tx := &Transmitter{
+		Addr:   s.Addr(),
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
+	}
+	// Open connection and then close it
+	conn := <-tx.Bind()
+	switch conn.Status() {
+	case Connected:
+	default:
+		t.Fatal(conn.Error())
+	}
+	tx.Close()
+	_, err := tx.Submit(&ShortMessage{
+		Src:      "root",
+		Dst:      "foobar",
+		Text:     pdutext.Raw("Lorem ipsum"),
+		Validity: 10 * time.Minute,
+		Register: NoDeliveryReceipt,
+	})
+	if err != ErrNotConnected {
+		t.Fatalf("Error should be not connect, got %s", err.Error())
+	}
+
+}

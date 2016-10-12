@@ -302,6 +302,9 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	}
 	select {
 	case resp := <-rc:
+		if resp.Err != nil {
+			return nil, resp.Err
+		}
 		return resp, nil
 	case <-t.conn.respTimeout():
 		return nil, errors.New("timeout waiting for response")
