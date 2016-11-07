@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package smpp_test
+package smpp
 
 import (
 	"io"
@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/veoo/go-smpp/smpp"
 	"github.com/veoo/go-smpp/smpp/pdu"
 	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
 	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
@@ -28,7 +27,7 @@ func ExampleReceiver() {
 				src, dst, txt)
 		}
 	}
-	r := &smpp.Receiver{
+	r := &Receiver{
 		Addr:    "localhost:2775",
 		User:    "foobar",
 		Passwd:  "secret",
@@ -42,19 +41,19 @@ func ExampleReceiver() {
 }
 
 func ExampleTransmitter() {
-	tx := &smpp.Transmitter{
+	tx := &Transmitter{
 		Addr:   "localhost:2775",
 		User:   "foobar",
 		Passwd: "secret",
 	}
 	conn := <-tx.Bind() // make persistent connection.
 	switch conn.Status() {
-	case smpp.Connected:
-		sm, err := tx.Submit(&smpp.ShortMessage{
+	case Connected:
+		sm, err := tx.Submit(&ShortMessage{
 			Src:      "sender",
 			Dst:      "recipient",
 			Text:     pdutext.Latin1("Olá mundo"),
-			Register: smpp.NoDeliveryReceipt,
+			Register: NoDeliveryReceipt,
 		})
 		if err != nil {
 			log.Fatal(err)
@@ -77,7 +76,7 @@ func ExampleTransceiver() {
 				src, dst, txt)
 		}
 	}
-	tx := &smpp.Transceiver{
+	tx := &Transceiver{
 		Addr:    "localhost:2775",
 		User:    "foobar",
 		Passwd:  "secret",
@@ -90,13 +89,13 @@ func ExampleTransceiver() {
 		}
 	}()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		sm, err := tx.Submit(&smpp.ShortMessage{
+		sm, err := tx.Submit(&ShortMessage{
 			Src:      r.FormValue("src"),
 			Dst:      r.FormValue("dst"),
 			Text:     pdutext.Raw(r.FormValue("text")),
-			Register: smpp.FinalDeliveryReceipt,
+			Register: FinalDeliveryReceipt,
 		})
-		if err == smpp.ErrNotConnected {
+		if err == ErrNotConnected {
 			http.Error(w, "Oops.", http.StatusServiceUnavailable)
 			return
 		}
