@@ -166,6 +166,9 @@ func (srv *server) Close() {
 
 // Session returns the session provided the id from the map of sessions
 func (srv *server) Session(id string) Session {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+
 	return srv.s[id]
 }
 
