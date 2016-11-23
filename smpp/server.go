@@ -187,8 +187,6 @@ func (srv *server) Serve() {
 
 // handle new clients.
 func (srv *server) handle(c *conn) {
-	defer c.Close()
-
 	// Use connSwitch to have synced read/write
 	s := &session{conn: &connSwitch{}}
 	s.conn.Set(c)
@@ -196,6 +194,13 @@ func (srv *server) handle(c *conn) {
 	srv.mu.Lock()
 	srv.s[s.id] = s
 	srv.mu.Unlock()
+
+	defer func() {
+		c.Close()
+		srv.mu.Lock()
+		delete(srv.s, s.id)
+		srv.mu.Unlock()
+	}()
 
 	if err := srv.auth(c, s); err != nil {
 		log.Println("Server auth failed:", err)
@@ -217,9 +222,7 @@ func (srv *server) handle(c *conn) {
 			log.Println("Handler not found for:", p.Header().ID)
 		}
 	}
-	srv.mu.Lock()
-	delete(srv.s, s.id)
-	srv.mu.Unlock()
+
 }
 
 func (srv *server) Handle(id pdu.ID, h RequestHandlerFunc) {
