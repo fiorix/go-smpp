@@ -13,7 +13,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
+	"github.com/veoo/go-smpp/smpp/pdu"
 )
 
 var (
@@ -77,6 +77,14 @@ type conn struct {
 	rwc net.Conn
 	r   *bufio.Reader
 	w   *bufio.Writer
+}
+
+func newConn(c net.Conn) *conn {
+	return &conn{
+		rwc: c,
+		r:   bufio.NewReader(c),
+		w:   bufio.NewWriter(c),
+	}
 }
 
 // Read implements the Conn interface.
