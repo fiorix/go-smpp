@@ -12,3 +12,18 @@ const (
 	Unknown       MessageStateType = 7 // Message is in invalid state
 	Rejected      MessageStateType = 8 // Message is in a rejected state
 )
+
+var messageStateToString = map[MessageStateType]string{
+	Enroute:       "Enroute",
+	Delivered:     "Delivered",
+	Expired:       "Expired",
+	Deleted:       "Deleted",
+	Undeliverable: "Undeliverable",
+	Accepted:      "Accepted",
+	Unknown:       "Unknown",
+	Rejected:      "Rejected",
+}
+
+func (m MessageStateType) String() string {
+	return messageStateToString[m]
+}
