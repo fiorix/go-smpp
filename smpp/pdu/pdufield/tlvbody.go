@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
+	"strconv"
 )
 
 //TLV Tags
@@ -158,5 +159,9 @@ var tlvTypeMap = map[TLVType]string{
 }
 
 func (t TLVType) String() string {
-	return tlvTypeMap[t]
+	s := tlvTypeMap[t]
+	if s == "" {
+		s = strconv.Itoa(int(t))
+	}
+	return s
 }
