@@ -136,7 +136,11 @@ func (m TLVMap) Set(k TLVType, v interface{}) error {
 	case int:
 		data = []byte{uint8(v.(int))}
 	case string:
-		data = []byte(v.(string))
+		s := v.(string)
+		if !strings.HasSuffix(s, "\x00") {
+			s += "\x00"
+		}
+		data = []byte(s)
 	case []byte:
 		data = []byte(v.([]byte))
 	case bool:
