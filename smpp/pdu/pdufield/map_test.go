@@ -111,10 +111,10 @@ func TestTLVMapSet(t *testing.T) {
 		// Data to send in the TLV parameter
 		data interface{}
 	}{
-		{5, SourcePort, "12345"},
+		{6, SourcePort, "12345"},
 		{1, MsValidity, true},
 		{1, MoreMessagesToSend, 2},
-		{2, LanguageIndicator, "es"},
+		{3, LanguageIndicator, "es"},
 	}
 
 	for _, test := range testCases {
@@ -124,7 +124,7 @@ func TestTLVMapSet(t *testing.T) {
 		}
 		tlvb := m[test.parameter]
 		if tlvb.Len != test.lenExpected {
-			t.Errorf("The size calculation is wrong, expeted %d, but get: %d", 5, tlvb.Len)
+			t.Errorf("The size calculation is wrong, expeted %d, but get: %d", test.lenExpected, tlvb.Len)
 		}
 	}
 }
