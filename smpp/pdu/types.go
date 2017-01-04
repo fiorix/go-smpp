@@ -106,6 +106,13 @@ func NewBindReceiverResp() Body {
 	return b
 }
 
+// NewBindReceiverRespSeq creates and initializes a new BindResp PDU.
+func NewBindReceiverRespSeq(seq uint32) Body {
+	b := newBindResp(&Header{ID: BindReceiverRespID, Seq: seq})
+	b.init()
+	return b
+}
+
 // NewBindTransceiverResp creates and initializes a new BindResp PDU.
 func NewBindTransceiverResp() Body {
 	b := newBindResp(&Header{ID: BindTransceiverRespID})
@@ -113,9 +120,23 @@ func NewBindTransceiverResp() Body {
 	return b
 }
 
+// NewBindTransceiverRespSeq creates and initializes a new BindResp PDU.
+func NewBindTransceiverRespSeq(seq uint32) Body {
+	b := newBindResp(&Header{ID: BindTransceiverRespID, Seq: seq})
+	b.init()
+	return b
+}
+
 // NewBindTransmitterResp creates and initializes a new BindResp PDU.
 func NewBindTransmitterResp() Body {
 	b := newBindResp(&Header{ID: BindTransmitterRespID})
+	b.init()
+	return b
+}
+
+// NewBindTransmitterRespSeq creates and initializes a new BindResp PDU.
+func NewBindTransmitterRespSeq(seq uint32) Body {
+	b := newBindResp(&Header{ID: BindTransmitterRespID, Seq: seq})
 	b.init()
 	return b
 }
@@ -160,6 +181,13 @@ func newQuerySMResp(hdr *Header) *Codec {
 // NewQuerySMResp creates and initializes a new QuerySMResp PDU.
 func NewQuerySMResp() Body {
 	b := newQuerySMResp(&Header{ID: QuerySMRespID})
+	b.init()
+	return b
+}
+
+// NewQuerySMRespSeq creates and initializes a new QuerySMResp PDU.
+func NewQuerySMRespSeq(seq uint32) Body {
+	b := newQuerySMResp(&Header{ID: QuerySMRespID, Seq: seq})
 	b.init()
 	return b
 }
@@ -219,6 +247,13 @@ func NewSubmitSMResp() Body {
 	return b
 }
 
+// NewSubmitSMRespSeq creates and initializes a new SubmitSMResp PDU.
+func NewSubmitSMRespSeq(seq uint32) Body {
+	b := newSubmitSMResp(&Header{ID: SubmitSMRespID, Seq: seq})
+	b.init()
+	return b
+}
+
 // SubmitMulti PDU.
 type SubmitMulti struct{ *Codec }
 
@@ -271,6 +306,13 @@ func newSubmitMultiResp(hdr *Header) *Codec {
 // NewSubmitMultiResp creates and initializes a new SubmitMultiResp PDU.
 func NewSubmitMultiResp() Body {
 	b := newSubmitMultiResp(&Header{ID: SubmitMultiRespID})
+	b.init()
+	return b
+}
+
+// NewSubmitMultiRespSeq creates and initializes a new SubmitMultiResp PDU.
+func NewSubmitMultiRespSeq(seq uint32) Body {
+	b := newSubmitMultiResp(&Header{ID: SubmitMultiRespID, Seq: seq})
 	b.init()
 	return b
 }
@@ -361,6 +403,13 @@ func newUnbindResp(hdr *Header) *Codec {
 // NewUnbindResp creates and initializes a UnbindResp PDU.
 func NewUnbindResp() Body {
 	b := newUnbindResp(&Header{ID: UnbindRespID})
+	b.init()
+	return b
+}
+
+// NewUnbindRespSeq creates and initializes a UnbindResp PDU.
+func NewUnbindRespSeq(seq uint32) Body {
+	b := newUnbindResp(&Header{ID: UnbindRespID, Seq: seq})
 	b.init()
 	return b
 }
