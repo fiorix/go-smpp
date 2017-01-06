@@ -58,8 +58,11 @@ func (f *factory) CreatePDU(id ID) (Body, error) {
 	if c == nil {
 		return nil, fmt.Errorf("PDU not implemented: %#x", id)
 	}
+	if nextSeq >= 0x7FFFFFFF {
+		nextSeq = 0
+	}
 	c.h.Seq = atomic.AddUint32(&nextSeq, 1)
-
+	c.init()
 	return c, nil
 }
 
@@ -95,6 +98,6 @@ func (f *factory) CreatePDUResp(id ID, seq uint32) (Body, error) {
 		return nil, fmt.Errorf("PDU not implemented: %#x", id)
 	}
 	c.h.Seq = seq
-
+	c.init()
 	return c, nil
 }
