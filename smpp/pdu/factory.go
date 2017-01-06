@@ -40,8 +40,6 @@ func (f *factory) CreatePDU(id ID) (Body, error) {
 		c = newDeliverSM(&Header{ID: id})
 	case EnquireLinkID:
 		c = newEnquireLink(&Header{ID: id})
-	case GenericNACKID:
-		c = newGenericNACK(&Header{ID: id})
 	case OutbindID:
 		// TODO(cesar0094): Implement Outbind.
 	case QuerySMID:
@@ -78,6 +76,8 @@ func (f *factory) CreatePDUResp(id ID, seq uint32) (Body, error) {
 		c = newDeliverSMResp(&Header{ID: id})
 	case EnquireLinkRespID:
 		c = newEnquireLinkResp(&Header{ID: id})
+	case GenericNACKID:
+		c = newGenericNACK(&Header{ID: id})
 	case QuerySMRespID:
 		c = newQuerySMResp(&Header{ID: id})
 	case ReplaceSMRespID:
