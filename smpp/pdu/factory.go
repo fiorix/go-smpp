@@ -6,7 +6,7 @@ package pdu
 
 import (
 	"fmt"
-	"sync/atomic"
+	"sync"
 )
 
 // Factory is used to instantiate PDUs in a more controllable fashion. Its main purpose
@@ -19,6 +19,7 @@ type Factory interface {
 
 type factory struct {
 	nextSeq uint32
+	m       sync.Mutex
 }
 
 func NewFactory() Factory {
@@ -58,10 +59,13 @@ func (f *factory) CreatePDU(id ID) (Body, error) {
 	if c == nil {
 		return nil, fmt.Errorf("PDU not implemented: %#x", id)
 	}
+	f.m.Lock()
+	defer f.m.Unlock()
 	if f.nextSeq >= 0x7FFFFFFF {
 		f.nextSeq = 0
 	}
-	c.h.Seq = atomic.AddUint32(&f.nextSeq, 1)
+	f.nextSeq++
+	c.h.Seq = f.nextSeq
 	c.init()
 	return c, nil
 }
