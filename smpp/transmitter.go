@@ -490,12 +490,15 @@ type QueryResp struct {
 }
 
 // QuerySM queries the delivery status of a message. It requires the
-// source address (sender) and message ID.
-func (t *Transmitter) QuerySM(src, msgid string) (*QueryResp, error) {
+// source address (sender) with TON and NPI and message ID.
+func (t *Transmitter) QuerySM(src, msgid string, srcTON, srcNPI uint8) (*QueryResp, error) {
 	p := pdu.NewQuerySM()
 	f := p.Fields()
 	f.Set(pdufield.SourceAddr, src)
+	f.Set(pdufield.SourceAddrTON, srcTON)
+	f.Set(pdufield.SourceAddrNPI, srcNPI)
 	f.Set(pdufield.MessageID, msgid)
+
 	resp, err := t.do(p)
 	if err != nil {
 		return nil, err
