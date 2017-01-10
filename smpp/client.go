@@ -97,6 +97,8 @@ type client struct {
 	stop  chan struct{}
 	once  sync.Once
 	lmctx context.Context
+	// time of the last received EnquireLinkResp
+	eliTime time.Time
 }
 
 func (c *client) init() {
@@ -151,7 +153,7 @@ func (c *client) Bind() {
 					break
 				}
 			case pdu.EnquireLinkRespID:
-				// TODO: don't just ignore
+				c.eliTime = time.Now()
 			default:
 				c.inbox <- p
 			}
@@ -173,6 +175,17 @@ func (c *client) enquireLink(stop chan struct{}) {
 	for {
 		select {
 		case <-time.After(c.EnquireLink):
+			// for the first check time will be zero
+			if c.eliTime.IsZero() {
+				c.eliTime = time.Now()
+			}
+			// check the time of the last received EnquireLinkResp
+			if time.Since(c.eliTime) >= c.EnquireLink+c.RespTimeout {
+				c.conn.Write(pdu.NewUnbind())
+				c.conn.Close()
+				return
+			}
+			// send the EnquireLink
 			err := c.conn.Write(pdu.NewEnquireLink())
 			if err != nil {
 				return
