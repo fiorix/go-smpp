@@ -514,7 +514,7 @@ func (t *Transmitter) QuerySM(src, msgid string) (*QueryResp, error) {
 	qr := &QueryResp{MsgID: msgid}
 	switch ms.Bytes()[0] {
 	case 0:
-		qr.MsgState = "DELIVERED"
+		qr.MsgState = "SCHEDULED"
 	case 1:
 		qr.MsgState = "ENROUTE"
 	case 2:
