@@ -82,14 +82,16 @@ type RateLimiter interface {
 
 // client provides a persistent client connection.
 type client struct {
-	Addr        string
-	TLS         *tls.Config
-	Status      chan ConnStatus
-	BindFunc    func(c Conn) error
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	WindowSize  uint
-	RateLimiter RateLimiter
+	Addr               string
+	TLS                *tls.Config
+	Status             chan ConnStatus
+	BindFunc           func(c Conn) error
+	EnquireLink        time.Duration
+	EnquireLinkTimeout time.Duration
+	RespTimeout        time.Duration
+	BindInterval       time.Duration
+	WindowSize         uint
+	RateLimiter        RateLimiter
 
 	// internal stuff.
 	inbox chan pdu.Body
@@ -110,6 +112,9 @@ func (c *client) init() {
 	}
 	if c.EnquireLink < 10*time.Second {
 		c.EnquireLink = 10 * time.Second
+	}
+	if c.EnquireLinkTimeout == 0 {
+		c.EnquireLinkTimeout = 3 * c.EnquireLink
 	}
 }
 
@@ -172,15 +177,13 @@ func (c *client) Bind() {
 }
 
 func (c *client) enquireLink(stop chan struct{}) {
+	// for the first check set time as Now()
+	c.eliTime = time.Now()
 	for {
 		select {
 		case <-time.After(c.EnquireLink):
-			// for the first check time will be zero
-			if c.eliTime.IsZero() {
-				c.eliTime = time.Now()
-			}
 			// check the time of the last received EnquireLinkResp
-			if time.Since(c.eliTime) >= c.EnquireLink+c.RespTimeout {
+			if time.Since(c.eliTime) >= c.EnquireLinkTimeout {
 				c.conn.Write(pdu.NewUnbind())
 				c.conn.Close()
 				return

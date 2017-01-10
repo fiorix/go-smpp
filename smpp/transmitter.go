@@ -30,16 +30,17 @@ const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
-	Addr        string        // Server address in form of host:port.
-	User        string        // Username.
-	Passwd      string        // Password.
-	SystemType  string        // System type, default empty.
-	EnquireLink time.Duration // Enquire link interval, default 10s.
-	RespTimeout time.Duration // Response timeout, default 1s.
-	WindowSize  uint
-	RateLimiter RateLimiter // Rate limiter, optional.
-	TLS         *tls.Config // TLS client settings, optional.
-	r           *rand.Rand
+	Addr               string        // Server address in form of host:port.
+	User               string        // Username.
+	Passwd             string        // Password.
+	SystemType         string        // System type, default empty.
+	EnquireLink        time.Duration // Enquire link interval, default 10s.
+	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
+	RespTimeout        time.Duration // Response timeout, default 1s.
+	WindowSize         uint
+	RateLimiter        RateLimiter // Rate limiter, optional.
+	TLS                *tls.Config // TLS client settings, optional.
+	r                  *rand.Rand
 
 	conn struct {
 		sync.Mutex
@@ -72,14 +73,15 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 	t.tx.inflight = make(map[uint32]chan *tx)
 	t.tx.Unlock()
 	c := &client{
-		Addr:        t.Addr,
-		TLS:         t.TLS,
-		Status:      make(chan ConnStatus, 1),
-		BindFunc:    t.bindFunc,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
-		WindowSize:  t.WindowSize,
-		RateLimiter: t.RateLimiter,
+		Addr:               t.Addr,
+		TLS:                t.TLS,
+		Status:             make(chan ConnStatus, 1),
+		BindFunc:           t.bindFunc,
+		EnquireLink:        t.EnquireLink,
+		EnquireLinkTimeout: t.EnquireLinkTimeout,
+		RespTimeout:        t.RespTimeout,
+		WindowSize:         t.WindowSize,
+		RateLimiter:        t.RateLimiter,
 	}
 	t.conn.client = c
 	c.init()
