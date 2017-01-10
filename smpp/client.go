@@ -159,8 +159,12 @@ func (c *client) Bind() {
 	retry:
 		close(eli)
 		c.conn.Close()
-		delay = math.Min(delay*math.E, maxdelay)
-		c.trysleep(time.Duration(delay) * time.Second)
+		delayDuration := c.BindInterval
+		if delayDuration == 0 {
+			delay = math.Min(delay*math.E, maxdelay)
+			delayDuration = time.Duration(delay) * time.Second
+		}
+		c.trysleep(delayDuration)
 	}
 	close(c.Status)
 }
