@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/time/rate"
+
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
@@ -30,9 +32,10 @@ func TestShortMessage(t *testing.T) {
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
-		Addr:   s.Addr(),
-		User:   smpptest.DefaultUser,
-		Passwd: smpptest.DefaultPasswd,
+		Addr:        s.Addr(),
+		User:        smpptest.DefaultUser,
+		Passwd:      smpptest.DefaultPasswd,
+		RateLimiter: rate.NewLimiter(rate.Limit(10), 1),
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()

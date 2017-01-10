@@ -30,14 +30,15 @@ const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	TLS         *tls.Config
+	Addr        string        // Server address in form of host:port.
+	User        string        // Username.
+	Passwd      string        // Password.
+	SystemType  string        // System type, default empty.
+	EnquireLink time.Duration // Enquire link interval, default 10s.
+	RespTimeout time.Duration // Response timeout, default 1s.
 	WindowSize  uint
+	RateLimiter RateLimiter // Rate limiter, optional.
+	TLS         *tls.Config // TLS client settings, optional.
 	r           *rand.Rand
 
 	conn struct {
@@ -73,11 +74,12 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 	c := &client{
 		Addr:        t.Addr,
 		TLS:         t.TLS,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
+		EnquireLink: t.EnquireLink,
+		RespTimeout: t.RespTimeout,
 		WindowSize:  t.WindowSize,
+		RateLimiter: t.RateLimiter,
 	}
 	t.conn.client = c
 	c.init()
@@ -159,17 +161,6 @@ func newUnsucessDest(p pdufield.UnSme) UnsucessDest {
 	unDest.Error = pdu.Status(binary.BigEndian.Uint32(p.ErrCode.Bytes()))
 	return unDest
 }
-
-// DeliverySetting is used to configure registered delivery
-// for short messages.
-type DeliverySetting uint8
-
-// Supported delivery settings.
-const (
-	NoDeliveryReceipt      DeliverySetting = 0x00
-	FinalDeliveryReceipt   DeliverySetting = 0x01
-	FailureDeliveryReceipt DeliverySetting = 0x02
-)
 
 // ShortMessage configures a short message that can be submitted via
 // the Transmitter. When returned from Submit, the ShortMessage

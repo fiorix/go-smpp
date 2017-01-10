@@ -5,6 +5,7 @@
 package smpp
 
 import (
+	"context"
 	"crypto/tls"
 	"io"
 	"math"
@@ -66,6 +67,19 @@ type ClientConn interface {
 	Closer
 }
 
+// RateLimiter is defines an interface for pacing the sending
+// of short messages to a client connection.
+//
+// The Transmitter or Transceiver using the RateLimiter holds a
+// single context.Context per client connection, passed to Wait
+// prior to sending short messages.
+//
+// Suitable for use with package github.com/golang/time/rate.
+type RateLimiter interface {
+	// Wait blocks until the limiter permits an event to happen.
+	Wait(ctx context.Context) error
+}
+
 // client provides a persistent client connection.
 type client struct {
 	Addr        string
@@ -75,18 +89,23 @@ type client struct {
 	EnquireLink time.Duration
 	RespTimeout time.Duration
 	WindowSize  uint
+	RateLimiter RateLimiter
 
 	// internal stuff.
 	inbox chan pdu.Body
 	conn  *connSwitch
 	stop  chan struct{}
 	once  sync.Once
+	lmctx context.Context
 }
 
 func (c *client) init() {
 	c.inbox = make(chan pdu.Body)
 	c.conn = &connSwitch{}
 	c.stop = make(chan struct{})
+	if c.RateLimiter != nil {
+		c.lmctx = context.Background()
+	}
 	if c.EnquireLink < 10*time.Second {
 		c.EnquireLink = 10 * time.Second
 	}
@@ -181,6 +200,9 @@ func (c *client) Read() (pdu.Body, error) {
 
 // Write serializes the given PDU and writes to the connection.
 func (c *client) Write(w pdu.Body) error {
+	if c.RateLimiter != nil {
+		c.RateLimiter.Wait(c.lmctx)
+	}
 	return c.conn.Write(w)
 }
 

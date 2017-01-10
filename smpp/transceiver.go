@@ -18,15 +18,16 @@ import (
 //
 // The API is a combination of the Transmitter and Receiver.
 type Transceiver struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	TLS         *tls.Config
+	Addr        string        // Server address in form of host:port.
+	User        string        // Username.
+	Passwd      string        // Password.
+	SystemType  string        // System type, default empty.
+	EnquireLink time.Duration // Enquire link interval, default 10s.
+	RespTimeout time.Duration // Response timeout, default 1s.
+	TLS         *tls.Config   // TLS client settings, optional.
+	Handler     HandlerFunc   // Receiver handler, optional.
+	RateLimiter RateLimiter   // Rate limiter, optional.
 	WindowSize  uint
-	Handler     HandlerFunc
 
 	Transmitter
 }
@@ -45,11 +46,12 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 	c := &client{
 		Addr:        t.Addr,
 		TLS:         t.TLS,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
 		Status:      make(chan ConnStatus, 1),
 		BindFunc:    t.bindFunc,
+		EnquireLink: t.EnquireLink,
+		RespTimeout: t.RespTimeout,
 		WindowSize:  t.WindowSize,
+		RateLimiter: t.RateLimiter,
 	}
 	t.conn.client = c
 	c.init()
