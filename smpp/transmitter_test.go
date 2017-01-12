@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/time/rate"
+
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
@@ -30,9 +32,10 @@ func TestShortMessage(t *testing.T) {
 	s.Start()
 	defer s.Close()
 	tx := &Transmitter{
-		Addr:   s.Addr(),
-		User:   smpptest.DefaultUser,
-		Passwd: smpptest.DefaultPasswd,
+		Addr:        s.Addr(),
+		User:        smpptest.DefaultUser,
+		Passwd:      smpptest.DefaultPasswd,
+		RateLimiter: rate.NewLimiter(rate.Limit(10), 1),
 	}
 	defer tx.Close()
 	conn := <-tx.Bind()
@@ -46,7 +49,7 @@ func TestShortMessage(t *testing.T) {
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +105,7 @@ func TestShortMessageWindowSize(t *testing.T) {
 			Dst:      "foobar",
 			Text:     pdutext.Raw("Lorem ipsum"),
 			Validity: 10 * time.Minute,
-			Register: NoDeliveryReceipt,
+			Register: pdufield.NoDeliveryReceipt,
 		}
 	}
 	nerr := 0
@@ -148,7 +151,7 @@ func TestLongMessage(t *testing.T) {
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus."),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -185,7 +188,7 @@ func TestQuerySM(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	qr, err := tx.QuerySM("root", "13")
+	qr, err := tx.QuerySM("root", "13", uint8(5), uint8(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,7 +246,7 @@ func TestSubmitMulti(t *testing.T) {
 		DLs:      []string{"DistributionList1"},
 		Text:     pdutext.Raw("Lorem ipsum"),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -298,7 +301,7 @@ func TestNotConnected(t *testing.T) {
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != ErrNotConnected {
 		t.Fatalf("Error should be not connect, got %s", err.Error())

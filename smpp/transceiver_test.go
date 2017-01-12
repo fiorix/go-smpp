@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/time/rate"
+
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
@@ -49,10 +51,11 @@ func TestTransceiver(t *testing.T) {
 		}
 	}
 	tc := &Transceiver{
-		Addr:    s.Addr(),
-		User:    smpptest.DefaultUser,
-		Passwd:  smpptest.DefaultPasswd,
-		Handler: receiver,
+		Addr:        s.Addr(),
+		User:        smpptest.DefaultUser,
+		Passwd:      smpptest.DefaultPasswd,
+		Handler:     receiver,
+		RateLimiter: rate.NewLimiter(rate.Limit(10), 1),
 	}
 	defer tc.Close()
 	conn := <-tc.Bind()
@@ -65,7 +68,7 @@ func TestTransceiver(t *testing.T) {
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
-		Register: FinalDeliveryReceipt,
+		Register: pdufield.FinalDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)

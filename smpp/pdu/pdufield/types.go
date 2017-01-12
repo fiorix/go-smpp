@@ -149,6 +149,17 @@ func (sm *SM) SerializeTo(w io.Writer) error {
 	return err
 }
 
+// DeliverySetting is used to configure registered delivery
+// for short messages.
+type DeliverySetting uint8
+
+// Supported delivery settings.
+const (
+	NoDeliveryReceipt      DeliverySetting = 0x00
+	FinalDeliveryReceipt   DeliverySetting = 0x01
+	FailureDeliveryReceipt DeliverySetting = 0x02
+)
+
 // DestSme is a PDU field used for an sme addreses.
 type DestSme struct {
 	Flag     Fixed

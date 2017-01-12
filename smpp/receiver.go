@@ -16,15 +16,17 @@ import (
 
 // Receiver implements an SMPP client receiver.
 type Receiver struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	TLS         *tls.Config
-	Handler     HandlerFunc
+	Addr               string
+	User               string
+	Passwd             string
+	SystemType         string
+	EnquireLink        time.Duration
+	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
+	BindInterval       time.Duration // Binding retry interval
+	TLS                *tls.Config
+	Handler            HandlerFunc
 
-	conn struct {
+	cl struct {
 		sync.Mutex
 		*client
 	}
@@ -40,19 +42,21 @@ type HandlerFunc func(p pdu.Body)
 //
 // Bind implements the ClientConn interface.
 func (r *Receiver) Bind() <-chan ConnStatus {
-	r.conn.Lock()
-	defer r.conn.Unlock()
-	if r.conn.client != nil {
-		return r.conn.Status
+	r.cl.Lock()
+	defer r.cl.Unlock()
+	if r.cl.client != nil {
+		return r.cl.Status
 	}
 	c := &client{
-		Addr:        r.Addr,
-		TLS:         r.TLS,
-		EnquireLink: r.EnquireLink,
-		Status:      make(chan ConnStatus, 1),
-		BindFunc:    r.bindFunc,
+		Addr:               r.Addr,
+		TLS:                r.TLS,
+		EnquireLink:        r.EnquireLink,
+		EnquireLinkTimeout: r.EnquireLinkTimeout,
+		Status:             make(chan ConnStatus, 1),
+		BindFunc:           r.bindFunc,
+		BindInterval:       r.BindInterval,
 	}
-	r.conn.client = c
+	r.cl.client = c
 	c.init()
 	go c.Bind()
 	return c.Status
@@ -80,20 +84,26 @@ func (r *Receiver) bindFunc(c Conn) error {
 
 func (r *Receiver) handlePDU() {
 	for {
-		pdu, err := r.conn.Read()
+		p, err := r.cl.Read()
 		if err != nil {
 			break
 		}
-		r.Handler(pdu)
+
+		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
+			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
+			r.cl.Write(pResp)
+		}
+
+		r.Handler(p)
 	}
 }
 
 // Close implements the ClientConn interface.
 func (r *Receiver) Close() error {
-	r.conn.Lock()
-	defer r.conn.Unlock()
-	if r.conn.client == nil {
+	r.cl.Lock()
+	defer r.cl.Unlock()
+	if r.cl.client == nil {
 		return ErrNotConnected
 	}
-	return r.conn.Close()
+	return r.cl.Close()
 }
