@@ -202,7 +202,12 @@ var cmdQueryMessage = cli.Command{
 		log.Println("Connected to", tx.Addr)
 		sender, msgid := c.Args()[0], c.Args()[1]
 		log.Printf("Command: query %q %q", sender, msgid)
-		qr, err := tx.QuerySM(sender, msgid)
+		qr, err := tx.QuerySM(
+			sender,
+			msgid,
+			uint8(c.Int("source-addr-ton")),
+			uint8(c.Int("source-addr-npi")),
+		)
 		if err != nil {
 			log.Fatalln("Failed:", err)
 		}
