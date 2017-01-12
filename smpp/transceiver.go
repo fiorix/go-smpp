@@ -37,10 +37,10 @@ type Transceiver struct {
 // Bind implements the ClientConn interface.
 func (t *Transceiver) Bind() <-chan ConnStatus {
 	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	t.conn.Lock()
-	defer t.conn.Unlock()
-	if t.conn.client != nil {
-		return t.conn.Status
+	t.cl.Lock()
+	defer t.cl.Unlock()
+	if t.cl.client != nil {
+		return t.cl.Status
 	}
 	t.tx.Lock()
 	t.tx.inflight = make(map[uint32]chan *tx)
@@ -57,7 +57,7 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 		RateLimiter:        t.RateLimiter,
 		BindInterval:       t.BindInterval,
 	}
-	t.conn.client = c
+	t.cl.client = c
 	c.init()
 	go c.Bind()
 	return c.Status

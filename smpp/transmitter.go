@@ -43,10 +43,11 @@ type Transmitter struct {
 	WindowSize         uint
 	r                  *rand.Rand
 
-	conn struct {
+	cl struct {
 		sync.Mutex
 		*client
 	}
+
 	tx struct {
 		count int32
 		sync.Mutex
@@ -65,10 +66,10 @@ type tx struct {
 // return ErrNotConnected.
 func (t *Transmitter) Bind() <-chan ConnStatus {
 	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	t.conn.Lock()
-	defer t.conn.Unlock()
-	if t.conn.client != nil {
-		return t.conn.Status
+	t.cl.Lock()
+	defer t.cl.Unlock()
+	if t.cl.client != nil {
+		return t.cl.Status
 	}
 	t.tx.Lock()
 	t.tx.inflight = make(map[uint32]chan *tx)
@@ -85,7 +86,7 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 		RateLimiter:        t.RateLimiter,
 		BindInterval:       t.BindInterval,
 	}
-	t.conn.client = c
+	t.cl.client = c
 	c.init()
 	go c.Bind()
 	return c.Status
@@ -112,7 +113,7 @@ func (t *Transmitter) bindFunc(c Conn) error {
 // f is only set on transceiver.
 func (t *Transmitter) handlePDU(f HandlerFunc) {
 	for {
-		p, err := t.conn.Read()
+		p, err := t.cl.Read()
 		if err != nil {
 			break
 		}
@@ -127,7 +128,7 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 		}
 		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
 			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
-			t.conn.Write(pResp)
+			t.cl.Write(pResp)
 		}
 	}
 	t.tx.Lock()
@@ -139,12 +140,12 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 
 // Close implements the ClientConn interface.
 func (t *Transmitter) Close() error {
-	t.conn.Lock()
-	defer t.conn.Unlock()
-	if t.conn.client == nil {
+	t.cl.Lock()
+	defer t.cl.Unlock()
+	if t.cl.client == nil {
 		return ErrNotConnected
 	}
-	return t.conn.Close()
+	return t.cl.Close()
 }
 
 // UnsucessDest contains information about unsuccessful delivery to an address
@@ -267,16 +268,16 @@ func (sm *ShortMessage) UnsuccessSmes() ([]UnsucessDest, error) {
 }
 
 func (t *Transmitter) do(p pdu.Body) (*tx, error) {
-	t.conn.Lock()
-	notbound := t.conn.client == nil
-	t.conn.Unlock()
+	t.cl.Lock()
+	notbound := t.cl.client == nil
+	t.cl.Unlock()
 	if notbound {
 		return nil, ErrNotBound
 	}
-	if t.conn.WindowSize > 0 {
+	if t.cl.WindowSize > 0 {
 		inflight := uint(atomic.AddInt32(&t.tx.count, 1))
 		defer func(t *Transmitter) { atomic.AddInt32(&t.tx.count, -1) }(t)
-		if inflight > t.conn.WindowSize {
+		if inflight > t.cl.WindowSize {
 			return nil, ErrMaxWindowSize
 		}
 	}
@@ -291,7 +292,7 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 		delete(t.tx.inflight, seq)
 		t.tx.Unlock()
 	}()
-	err := t.conn.Write(p)
+	err := t.cl.Write(p)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +302,7 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 			return nil, resp.Err
 		}
 		return resp, nil
-	case <-t.conn.respTimeout():
+	case <-t.cl.respTimeout():
 		return nil, errors.New("timeout waiting for response")
 	}
 }
