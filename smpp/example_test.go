@@ -100,7 +100,7 @@ func ExampleTransceiver() {
 			Src:      r.FormValue("src"),
 			Dst:      r.FormValue("dst"),
 			Text:     pdutext.Raw(r.FormValue("text")),
-			Register: smpp.FinalDeliveryReceipt,
+			Register: pdufield.FinalDeliveryReceipt,
 		})
 		if err == smpp.ErrNotConnected {
 			http.Error(w, "Oops.", http.StatusServiceUnavailable)

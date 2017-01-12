@@ -20,6 +20,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"github.com/fiorix/go-smpp/smpp"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 )
 
@@ -150,9 +151,9 @@ var cmdShortMessage = cli.Command{
 		recipient := c.Args()[1]
 		text := strings.Join(c.Args()[2:], " ")
 		log.Printf("Command: send %q %q %q", sender, recipient, text)
-		var register smpp.DeliverySetting
+		var register pdufield.DeliverySetting
 		if c.Bool("register") {
-			register = smpp.FinalDeliveryReceipt
+			register = pdufield.FinalDeliveryReceipt
 		}
 		var codec pdutext.Codec
 		switch c.String("encoding") {

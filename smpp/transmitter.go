@@ -177,7 +177,7 @@ type ShortMessage struct {
 	DLs      []string //List if destribution list for submit multi
 	Text     pdutext.Codec
 	Validity time.Duration
-	Register DeliverySetting
+	Register pdufield.DeliverySetting
 
 	// Other fields, normally optional.
 	ServiceType          string
