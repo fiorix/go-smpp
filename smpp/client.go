@@ -67,7 +67,7 @@ type ClientConn interface {
 	Closer
 }
 
-// RateLimiter is defines an interface for pacing the sending
+// RateLimiter defines an interface for pacing the sending
 // of short messages to a client connection.
 //
 // The Transmitter or Transceiver using the RateLimiter holds a
