@@ -37,9 +37,10 @@ type Transmitter struct {
 	EnquireLink        time.Duration // Enquire link interval, default 10s.
 	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
 	RespTimeout        time.Duration // Response timeout, default 1s.
+	BindInterval       time.Duration // Binding retry interval
+	TLS                *tls.Config   // TLS client settings, optional.
+	RateLimiter        RateLimiter   // Rate limiter, optional.
 	WindowSize         uint
-	RateLimiter        RateLimiter // Rate limiter, optional.
-	TLS                *tls.Config // TLS client settings, optional.
 	r                  *rand.Rand
 
 	conn struct {
@@ -82,6 +83,7 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 		RespTimeout:        t.RespTimeout,
 		WindowSize:         t.WindowSize,
 		RateLimiter:        t.RateLimiter,
+		BindInterval:       t.BindInterval,
 	}
 	t.conn.client = c
 	c.init()

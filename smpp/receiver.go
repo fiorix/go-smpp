@@ -22,6 +22,7 @@ type Receiver struct {
 	SystemType         string
 	EnquireLink        time.Duration
 	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
+	BindInterval       time.Duration // Binding retry interval
 	TLS                *tls.Config
 	Handler            HandlerFunc
 
@@ -53,6 +54,7 @@ func (r *Receiver) Bind() <-chan ConnStatus {
 		EnquireLinkTimeout: r.EnquireLinkTimeout,
 		Status:             make(chan ConnStatus, 1),
 		BindFunc:           r.bindFunc,
+		BindInterval:       r.BindInterval,
 	}
 	r.conn.client = c
 	c.init()
