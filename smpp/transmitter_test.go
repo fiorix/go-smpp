@@ -188,7 +188,7 @@ func TestQuerySM(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	qr, err := tx.QuerySM("root", "13")
+	qr, err := tx.QuerySM("root", "13", uint8(5), uint8(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +246,7 @@ func TestSubmitMulti(t *testing.T) {
 		DLs:      []string{"DistributionList1"},
 		Text:     pdutext.Raw("Lorem ipsum"),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -301,7 +301,7 @@ func TestNotConnected(t *testing.T) {
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
 		Validity: 10 * time.Minute,
-		Register: NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != ErrNotConnected {
 		t.Fatalf("Error should be not connect, got %s", err.Error())

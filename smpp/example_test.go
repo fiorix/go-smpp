@@ -60,7 +60,7 @@ func ExampleTransmitter() {
 		Src:      "sender",
 		Dst:      "recipient",
 		Text:     pdutext.Latin1("Olá mundo"),
-		Register: smpp.NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		log.Fatal(err)
