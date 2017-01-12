@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang/time/rate"
+	"golang.org/x/time/rate"
 
 	"github.com/fiorix/go-smpp/smpp"
 	"github.com/fiorix/go-smpp/smpp/pdu"

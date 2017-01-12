@@ -74,7 +74,7 @@ type ClientConn interface {
 // single context.Context per client connection, passed to Wait
 // prior to sending short messages.
 //
-// Suitable for use with package github.com/golang/time/rate.
+// Suitable for use with package golang.org/x/time/rate.
 type RateLimiter interface {
 	// Wait blocks until the limiter permits an event to happen.
 	Wait(ctx context.Context) error
