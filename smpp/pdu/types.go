@@ -219,6 +219,62 @@ func NewSubmitSMResp() Body {
 	return b
 }
 
+// SubmitMulti PDU.
+type SubmitMulti struct{ *codec }
+
+func newSubmitMulti(hdr *Header) *codec {
+	return &codec{
+		h: hdr,
+		l: pdufield.List{
+			pdufield.ServiceType,
+			pdufield.SourceAddrTON,
+			pdufield.SourceAddrNPI,
+			pdufield.SourceAddr,
+			pdufield.NumberDests,
+			pdufield.DestinationList, // contains DestFlag, DestAddrTON and DestAddrNPI for each address
+			pdufield.ESMClass,
+			pdufield.ProtocolID,
+			pdufield.PriorityFlag,
+			pdufield.ScheduleDeliveryTime,
+			pdufield.ValidityPeriod,
+			pdufield.RegisteredDelivery,
+			pdufield.ReplaceIfPresentFlag,
+			pdufield.DataCoding,
+			pdufield.SMDefaultMsgID,
+			pdufield.SMLength,
+			pdufield.ShortMessage,
+		},
+	}
+}
+
+// NewSubmitMulti creates and initializes a new SubmitMulti PDU.
+func NewSubmitMulti() Body {
+	b := newSubmitMulti(&Header{ID: SubmitMultiID})
+	b.init()
+	return b
+}
+
+// SubmitMultiResp PDU.
+type SubmitMultiResp struct{ *codec }
+
+func newSubmitMultiResp(hdr *Header) *codec {
+	return &codec{
+		h: hdr,
+		l: pdufield.List{
+			pdufield.MessageID,
+			pdufield.NoUnsuccess,
+			pdufield.UnsuccessSme,
+		},
+	}
+}
+
+// NewSubmitMultiResp creates and initializes a new SubmitMultiResp PDU.
+func NewSubmitMultiResp() Body {
+	b := newSubmitMultiResp(&Header{ID: SubmitMultiRespID})
+	b.init()
+	return b
+}
+
 // DeliverSM PDU.
 type DeliverSM struct{ *codec }
 
@@ -270,6 +326,13 @@ func newDeliverSMResp(hdr *Header) *codec {
 // NewDeliverSMResp creates and initializes a new DeliverSMResp PDU.
 func NewDeliverSMResp() Body {
 	b := newDeliverSMResp(&Header{ID: DeliverSMRespID})
+	b.init()
+	return b
+}
+
+// NewDeliverSMRespSeq creates and initializes a new DeliverSMResp PDU for a specific seq.
+func NewDeliverSMRespSeq(seq uint32) Body {
+	b := newDeliverSMResp(&Header{ID: DeliverSMRespID, Seq: seq})
 	b.init()
 	return b
 }
@@ -326,6 +389,13 @@ func newEnquireLinkResp(hdr *Header) *codec {
 // NewEnquireLinkResp creates and initializes a EnquireLinkResp PDU.
 func NewEnquireLinkResp() Body {
 	b := newEnquireLinkResp(&Header{ID: EnquireLinkRespID})
+	b.init()
+	return b
+}
+
+// NewEnquireLinkRespSeq creates and initializes a EnquireLinkResp PDU for a specific seq.
+func NewEnquireLinkRespSeq(seq uint32) Body {
+	b := newEnquireLinkResp(&Header{ID: EnquireLinkRespID, Seq: seq})
 	b.init()
 	return b
 }

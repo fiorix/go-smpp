@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/time/rate"
+	"golang.org/x/time/rate"
 
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
@@ -68,7 +68,7 @@ func TestTransceiver(t *testing.T) {
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum"),
-		Register: FinalDeliveryReceipt,
+		Register: pdufield.FinalDeliveryReceipt,
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -29,6 +29,8 @@ func New(n Name, data []byte) Body {
 		ErrorCode,
 		InterfaceVersion,
 		MessageState,
+		NumberDests,
+		NoUnsuccess,
 		PriorityFlag,
 		ProtocolID,
 		RegisteredDelivery,
@@ -44,6 +46,7 @@ func New(n Name, data []byte) Body {
 	case
 		AddressRange,
 		DestinationAddr,
+		DestinationList,
 		FinalDate,
 		MessageID,
 		Password,
@@ -52,6 +55,7 @@ func New(n Name, data []byte) Body {
 		SourceAddr,
 		SystemID,
 		SystemType,
+		UnsuccessSme,
 		ValidityPeriod:
 		if data == nil {
 			data = []byte{}

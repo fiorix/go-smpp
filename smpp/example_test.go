@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang/time/rate"
+	"golang.org/x/time/rate"
 
 	"github.com/fiorix/go-smpp/smpp"
 	"github.com/fiorix/go-smpp/smpp/pdu"
@@ -60,7 +60,7 @@ func ExampleTransmitter() {
 		Src:      "sender",
 		Dst:      "recipient",
 		Text:     pdutext.Latin1("Olá mundo"),
-		Register: smpp.NoDeliveryReceipt,
+		Register: pdufield.NoDeliveryReceipt,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -100,7 +100,7 @@ func ExampleTransceiver() {
 			Src:      r.FormValue("src"),
 			Dst:      r.FormValue("dst"),
 			Text:     pdutext.Raw(r.FormValue("text")),
-			Register: smpp.FinalDeliveryReceipt,
+			Register: pdufield.FinalDeliveryReceipt,
 		})
 		if err == smpp.ErrNotConnected {
 			http.Error(w, "Oops.", http.StatusServiceUnavailable)

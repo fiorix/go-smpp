@@ -37,6 +37,7 @@ type Server struct {
 	TLS     *tls.Config
 	Handler HandlerFunc
 
+	conns   []Conn
 	mu sync.Mutex
 	l  net.Listener
 }
@@ -101,7 +102,17 @@ func (srv *Server) Serve() {
 		if err != nil {
 			break // on srv.l.Close
 		}
-		go srv.handle(newConn(cli))
+
+		c := newConn(cli)
+		srv.conns = append(srv.conns, c)
+		go srv.handle(c)
+	}
+}
+
+// broadcasts a test PDU to all clients bind to this server
+func (srv *Server) BroadcastMessage(p pdu.Body) {
+	for i := range srv.conns {
+		srv.conns[i].Write(p)
 	}
 }
 
@@ -115,14 +126,14 @@ func (srv *Server) handle(c *conn) {
 		return
 	}
 	for {
-		pdu, err := c.Read()
+		p, err := c.Read()
 		if err != nil {
 			if err != io.EOF {
 				log.Println("smpptest: read failed:", err)
 			}
 			break
 		}
-		srv.Handler(c, pdu)
+		srv.Handler(c, p)
 	}
 }
 
@@ -165,6 +176,15 @@ func (srv *Server) auth(c *conn) error {
 // EchoHandler is the default Server HandlerFunc, and echoes back
 // any PDUs received.
 func EchoHandler(cli Conn, m pdu.Body) {
-	//log.Printf("smpptest: echo PDU from %s: %#v", cli.RemoteAddr(), m)
+	// log.Printf("smpptest: echo PDU from %s: %#v", cli.RemoteAddr(), m)
+	//
+	// Real servers will reply with at least the same sequence number
+	// from the request:
+	//     resp := pdu.NewSubmitSMResp()
+	//     resp.Header().Seq = m.Header().Seq
+	//     resp.Fields().Set(pdufield.MessageID, "1234")
+	//     cli.Write(resp)
+	//
+	// We just echo m back:
 	cli.Write(m)
 }
