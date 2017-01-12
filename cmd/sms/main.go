@@ -17,9 +17,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 
 	"github.com/fiorix/go-smpp/smpp"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 )
 
@@ -150,9 +151,9 @@ var cmdShortMessage = cli.Command{
 		recipient := c.Args()[1]
 		text := strings.Join(c.Args()[2:], " ")
 		log.Printf("Command: send %q %q %q", sender, recipient, text)
-		var register smpp.DeliverySetting
+		var register pdufield.DeliverySetting
 		if c.Bool("register") {
-			register = smpp.FinalDeliveryReceipt
+			register = pdufield.FinalDeliveryReceipt
 		}
 		var codec pdutext.Codec
 		switch c.String("encoding") {
@@ -181,7 +182,7 @@ var cmdShortMessage = cli.Command{
 			SMDefaultMsgID:       uint8(c.Int("sm-default-msg-id")),
 		})
 		if err != nil {
-			log.Println("Failed:", err)
+			log.Fatalln("Failed:", err)
 		}
 		log.Printf("Message ID: %q", sm.RespID())
 	},
@@ -201,7 +202,12 @@ var cmdQueryMessage = cli.Command{
 		log.Println("Connected to", tx.Addr)
 		sender, msgid := c.Args()[0], c.Args()[1]
 		log.Printf("Command: query %q %q", sender, msgid)
-		qr, err := tx.QuerySM(sender, msgid)
+		qr, err := tx.QuerySM(
+			sender,
+			msgid,
+			uint8(c.Int("source-addr-ton")),
+			uint8(c.Int("source-addr-npi")),
+		)
 		if err != nil {
 			log.Fatalln("Failed:", err)
 		}

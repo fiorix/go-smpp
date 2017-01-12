@@ -29,11 +29,9 @@ func TestReceiver(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	// cheat: inject GenericNACK PDU for the server to echo back.
+	// trigger inbound message from server
 	p := pdu.NewGenericNACK()
-	r.conn.Lock()
-	r.conn.Write(p)
-	r.conn.Unlock()
+	s.BroadcastMessage(p)
 	// check response.
 	select {
 	case m := <-rc:

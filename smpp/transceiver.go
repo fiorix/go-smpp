@@ -7,6 +7,7 @@ package smpp
 import (
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/fiorix/go-smpp/smpp/pdu"
@@ -17,39 +18,46 @@ import (
 //
 // The API is a combination of the Transmitter and Receiver.
 type Transceiver struct {
-	Addr        string        // Server address in form of host:port.
-	User        string        // Username.
-	Passwd      string        // Password.
-	SystemType  string        // System type, default empty.
-	EnquireLink time.Duration // Enquire link interval, default 10s.
-	RespTimeout time.Duration // Response timeout, default 1s.
-	TLS         *tls.Config   // TLS client settings, optional.
-	Handler     HandlerFunc   // Receiver handler, optional.
-	RateLimiter RateLimiter   // Rate limiter, optional.
+	Addr               string        // Server address in form of host:port.
+	User               string        // Username.
+	Passwd             string        // Password.
+	SystemType         string        // System type, default empty.
+	EnquireLink        time.Duration // Enquire link interval, default 10s.
+	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
+	RespTimeout        time.Duration // Response timeout, default 1s.
+	BindInterval       time.Duration // Binding retry interval
+	TLS                *tls.Config   // TLS client settings, optional.
+	Handler            HandlerFunc   // Receiver handler, optional.
+	RateLimiter        RateLimiter   // Rate limiter, optional.
+	WindowSize         uint
 
 	Transmitter
 }
 
 // Bind implements the ClientConn interface.
 func (t *Transceiver) Bind() <-chan ConnStatus {
-	t.conn.Lock()
-	defer t.conn.Unlock()
-	if t.conn.client != nil {
-		return t.conn.Status
+	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	t.cl.Lock()
+	defer t.cl.Unlock()
+	if t.cl.client != nil {
+		return t.cl.Status
 	}
 	t.tx.Lock()
 	t.tx.inflight = make(map[uint32]chan *tx)
 	t.tx.Unlock()
 	c := &client{
-		Addr:        t.Addr,
-		TLS:         t.TLS,
-		Status:      make(chan ConnStatus, 1),
-		BindFunc:    t.bindFunc,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
-		RateLimiter: t.RateLimiter,
+		Addr:               t.Addr,
+		TLS:                t.TLS,
+		Status:             make(chan ConnStatus, 1),
+		BindFunc:           t.bindFunc,
+		EnquireLink:        t.EnquireLink,
+		EnquireLinkTimeout: t.EnquireLinkTimeout,
+		RespTimeout:        t.RespTimeout,
+		WindowSize:         t.WindowSize,
+		RateLimiter:        t.RateLimiter,
+		BindInterval:       t.BindInterval,
 	}
-	t.conn.client = c
+	t.cl.client = c
 	c.init()
 	go c.Bind()
 	return c.Status

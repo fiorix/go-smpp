@@ -68,14 +68,14 @@ type ClientConn interface {
 	Closer
 }
 
-// RateLimiter is defines an interface for pacing the sending
+// RateLimiter defines an interface for pacing the sending
 // of short messages to a client connection.
 //
 // The Transmitter or Transceiver using the RateLimiter holds a
 // single context.Context per client connection, passed to Wait
 // prior to sending short messages.
 //
-// Suitable for use with package github.com/golang/time/rate.
+// Suitable for use with package golang.org/x/time/rate.
 type RateLimiter interface {
 	// Wait blocks until the limiter permits an event to happen.
 	Wait(ctx context.Context) error
@@ -83,13 +83,16 @@ type RateLimiter interface {
 
 // client provides a persistent client connection.
 type client struct {
-	Addr        string
-	TLS         *tls.Config
-	Status      chan ConnStatus
-	BindFunc    func(c Conn) error
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	RateLimiter RateLimiter
+	Addr               string
+	TLS                *tls.Config
+	Status             chan ConnStatus
+	BindFunc           func(c Conn) error
+	EnquireLink        time.Duration
+	EnquireLinkTimeout time.Duration
+	RespTimeout        time.Duration
+	BindInterval       time.Duration
+	WindowSize         uint
+	RateLimiter        RateLimiter
 
 	// internal stuff.
 	inbox chan pdu.Body
@@ -97,6 +100,8 @@ type client struct {
 	stop  chan struct{}
 	once  sync.Once
 	lmctx context.Context
+	// time of the last received EnquireLinkResp
+	eliTime time.Time
 }
 
 func (c *client) init() {
@@ -108,6 +113,9 @@ func (c *client) init() {
 	}
 	if c.EnquireLink < 10*time.Second {
 		c.EnquireLink = 10 * time.Second
+	}
+	if c.EnquireLinkTimeout == 0 {
+		c.EnquireLinkTimeout = 3 * c.EnquireLink
 	}
 }
 
@@ -145,9 +153,13 @@ func (c *client) Bind() {
 			}
 			switch p.Header().ID {
 			case pdu.EnquireLinkID:
-				// TODO: respond
+				pResp := pdu.NewEnquireLinkRespSeq(p.Header().Seq)
+				err := c.conn.Write(pResp)
+				if err != nil {
+					break
+				}
 			case pdu.EnquireLinkRespID:
-				// TODO: don't just ignore
+				c.eliTime = time.Now()
 			default:
 				c.inbox <- p
 			}
@@ -155,16 +167,29 @@ func (c *client) Bind() {
 	retry:
 		close(eli)
 		c.conn.Close()
-		delay = math.Min(delay*math.E, maxdelay)
-		c.trysleep(time.Duration(delay) * time.Second)
+		delayDuration := c.BindInterval
+		if delayDuration == 0 {
+			delay = math.Min(delay*math.E, maxdelay)
+			delayDuration = time.Duration(delay) * time.Second
+		}
+		c.trysleep(delayDuration)
 	}
 	close(c.Status)
 }
 
 func (c *client) enquireLink(stop chan struct{}) {
+	// for the first check set time as Now()
+	c.eliTime = time.Now()
 	for {
 		select {
 		case <-time.After(c.EnquireLink):
+			// check the time of the last received EnquireLinkResp
+			if time.Since(c.eliTime) >= c.EnquireLinkTimeout {
+				c.conn.Write(pdu.NewUnbind())
+				c.conn.Close()
+				return
+			}
+			// send the EnquireLink
 			err := c.conn.Write(pdu.NewEnquireLink())
 			if err != nil {
 				return

@@ -32,7 +32,9 @@ func (pdu *codec) init() {
 	}
 	pdu.f = make(pdufield.Map)
 	pdu.t = make(pdufield.TLVMap)
-	pdu.h.Seq = atomic.AddUint32(&nextSeq, 1)
+	if pdu.h.Seq == 0 { // If Seq not set
+		pdu.h.Seq = atomic.AddUint32(&nextSeq, 1)
+	}
 }
 
 // setup replaces the codec's current maps with the given ones.
@@ -165,9 +167,9 @@ func Decode(r io.Reader) (Body, error) {
 	case ReplaceSMRespID:
 		// TODO(fiorix): Implement ReplaceSMResp.
 	case SubmitMultiID:
-		// TODO(fiorix): Implement SubmitMulti.
+		return decodeFields(newSubmitMulti(hdr), b)
 	case SubmitMultiRespID:
-		// TODO(fiorix): Implement SubmitMultiResp.
+		return decodeFields(newSubmitMultiResp(hdr), b)
 	case SubmitSMID:
 		return decodeFields(newSubmitSM(hdr), b)
 	case SubmitSMRespID:
