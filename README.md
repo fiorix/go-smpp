@@ -37,7 +37,7 @@ func main() {
 			Src:      r.FormValue("src"),
 			Dst:      r.FormValue("dst"),
 			Text:     pdutext.Raw(r.FormValue("text")),
-			Register: smpp.NoDeliveryReceipt,
+			Register: pdufield.NoDeliveryReceipt,
 		})
 		if err == smpp.ErrNotConnected {
 			http.Error(w, "Oops.", http.StatusServiceUnavailable)
