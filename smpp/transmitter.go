@@ -41,6 +41,7 @@ type Transmitter struct {
 	TLS                *tls.Config   // TLS client settings, optional.
 	RateLimiter        RateLimiter   // Rate limiter, optional.
 	WindowSize         uint
+	rMutex             sync.Mutex
 	r                  *rand.Rand
 
 	cl struct {
@@ -330,7 +331,9 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 	rawMsg := sm.Text.Encode()
 	countParts := int((len(rawMsg)-1)/maxLen) + 1
 
+	t.rMutex.Lock()
 	ri := uint8(t.r.Intn(128))
+	t.rMutex.Unlock()
 	UDHHeader := make([]byte, 6)
 	UDHHeader[0] = 5
 	UDHHeader[1] = 0
