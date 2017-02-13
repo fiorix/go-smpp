@@ -102,6 +102,7 @@ type client struct {
 	lmctx context.Context
 	// time of the last received EnquireLinkResp
 	eliTime time.Time
+	eliMtx  sync.RWMutex
 }
 
 func (c *client) init() {
@@ -114,6 +115,7 @@ func (c *client) init() {
 	if c.EnquireLink < 10*time.Second {
 		c.EnquireLink = 10 * time.Second
 	}
+
 	if c.EnquireLinkTimeout == 0 {
 		c.EnquireLinkTimeout = 3 * c.EnquireLink
 	}
@@ -159,7 +161,7 @@ func (c *client) Bind() {
 					break
 				}
 			case pdu.EnquireLinkRespID:
-				c.eliTime = time.Now()
+				c.updateEliTime()
 			default:
 				c.inbox <- p
 			}
@@ -179,16 +181,19 @@ func (c *client) Bind() {
 
 func (c *client) enquireLink(stop chan struct{}) {
 	// for the first check set time as Now()
-	c.eliTime = time.Now()
+	c.updateEliTime()
 	for {
 		select {
 		case <-time.After(c.EnquireLink):
 			// check the time of the last received EnquireLinkResp
+			c.eliMtx.RLock()
 			if time.Since(c.eliTime) >= c.EnquireLinkTimeout {
 				c.conn.Write(pdu.NewUnbind())
 				c.conn.Close()
+				c.eliMtx.RUnlock()
 				return
 			}
+			c.eliMtx.RUnlock()
 			// send the EnquireLink
 			err := c.conn.Write(pdu.NewEnquireLink())
 			if err != nil {
@@ -200,6 +205,12 @@ func (c *client) enquireLink(stop chan struct{}) {
 			return
 		}
 	}
+}
+
+func (c *client) updateEliTime() {
+	c.eliMtx.Lock()
+	c.eliTime = time.Now()
+	c.eliMtx.Unlock()
 }
 
 func (c *client) notify(ev ConnStatus) {
