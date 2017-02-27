@@ -16,13 +16,14 @@ import (
 
 // Receiver implements an SMPP client receiver.
 type Receiver struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	TLS         *tls.Config
-	Handler     HandlerFunc
+	Addr            string
+	User            string
+	Passwd          string
+	SystemType      string
+	EnquireLink     time.Duration
+	TLS             *tls.Config
+	Handler         HandlerFunc
+	ConnInterceptor ConnMiddleware
 
 	conn struct {
 		sync.Mutex
@@ -46,11 +47,12 @@ func (r *Receiver) Bind() <-chan ConnStatus {
 		return r.conn.Status
 	}
 	c := &client{
-		Addr:        r.Addr,
-		TLS:         r.TLS,
-		EnquireLink: r.EnquireLink,
-		Status:      make(chan ConnStatus, 1),
-		BindFunc:    r.bindFunc,
+		Addr:            r.Addr,
+		TLS:             r.TLS,
+		EnquireLink:     r.EnquireLink,
+		Status:          make(chan ConnStatus, 1),
+		BindFunc:        r.bindFunc,
+		ConnInterceptor: r.ConnInterceptor,
 	}
 	r.conn.client = c
 	c.init()

@@ -30,15 +30,16 @@ const MaxDestinationAddress = 254
 
 // Transmitter implements an SMPP client transmitter.
 type Transmitter struct {
-	Addr        string
-	User        string
-	Passwd      string
-	SystemType  string
-	EnquireLink time.Duration
-	RespTimeout time.Duration
-	TLS         *tls.Config
-	WindowSize  uint
-	r           *rand.Rand
+	Addr            string
+	User            string
+	Passwd          string
+	SystemType      string
+	EnquireLink     time.Duration
+	RespTimeout     time.Duration
+	TLS             *tls.Config
+	ConnInterceptor ConnMiddleware
+	WindowSize      uint
+	r               *rand.Rand
 
 	conn struct {
 		sync.Mutex
@@ -71,13 +72,14 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 	t.tx.inflight = make(map[uint32]chan *tx)
 	t.tx.Unlock()
 	c := &client{
-		Addr:        t.Addr,
-		TLS:         t.TLS,
-		EnquireLink: t.EnquireLink,
-		RespTimeout: t.RespTimeout,
-		Status:      make(chan ConnStatus, 1),
-		BindFunc:    t.bindFunc,
-		WindowSize:  t.WindowSize,
+		Addr:            t.Addr,
+		TLS:             t.TLS,
+		EnquireLink:     t.EnquireLink,
+		RespTimeout:     t.RespTimeout,
+		Status:          make(chan ConnStatus, 1),
+		BindFunc:        t.bindFunc,
+		WindowSize:      t.WindowSize,
+		ConnInterceptor: t.ConnInterceptor,
 	}
 	t.conn.client = c
 	c.init()
