@@ -335,7 +335,7 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 	countParts := int((len(rawMsg)-1)/maxLen) + 1
 
 	t.rMutex.Lock()
-	rn := uint16(t.r.Intn(65535))
+	rn := uint16(t.r.Intn(0xFFFF))
 	t.rMutex.Unlock()
 	UDHHeader := make([]byte, 7)
 	UDHHeader[0] = 0x06              // length of user data header
