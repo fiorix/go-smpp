@@ -288,7 +288,6 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	t.tx.inflight[seq] = rc
 	t.tx.Unlock()
 	defer func() {
-		close(rc)
 		t.tx.Lock()
 		delete(t.tx.inflight, seq)
 		t.tx.Unlock()
