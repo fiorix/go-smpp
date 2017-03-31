@@ -326,21 +326,25 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 // and returns and updates the given sm with the response status.
 // It returns the same sm object.
 func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
-	maxLen := 134 // 140-6 (UDH)
+	maxLen := 133 // 140-7 (UDH with 2 byte reference number)
+	if sm.Text.Type() == pdutext.UCS2Type {
+		maxLen = 132 // to avoid a character being split between payloads
+	}
 	rawMsg := sm.Text.Encode()
 	countParts := int((len(rawMsg)-1)/maxLen) + 1
 
 	t.rMutex.Lock()
-	ri := uint8(t.r.Intn(128))
+	rn := uint16(t.r.Intn(0xFFFF))
 	t.rMutex.Unlock()
-	UDHHeader := make([]byte, 6)
-	UDHHeader[0] = 5
-	UDHHeader[1] = 0
-	UDHHeader[2] = 3
-	UDHHeader[3] = ri
-	UDHHeader[4] = uint8(countParts)
+	UDHHeader := make([]byte, 7)
+	UDHHeader[0] = 0x06              // length of user data header
+	UDHHeader[1] = 0x08              // information element identifier, CSMS 16 bit reference number
+	UDHHeader[2] = 0x04              // length of remaining header
+	UDHHeader[3] = uint8(rn >> 8)    // most significant byte of the reference number
+	UDHHeader[4] = uint8(rn)         // least significant byte of the reference number
+	UDHHeader[5] = uint8(countParts) // total number of message parts
 	for i := 0; i < countParts; i++ {
-		UDHHeader[5] = uint8(i + 1)
+		UDHHeader[6] = uint8(i + 1) // current message part
 		p := pdu.NewSubmitSM()
 		f := p.Fields()
 		f.Set(pdufield.SourceAddr, sm.Src)
