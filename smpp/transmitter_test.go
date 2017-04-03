@@ -165,6 +165,68 @@ func TestLongMessage(t *testing.T) {
 	}
 }
 
+func TestLongMessageAsUCS2(t *testing.T) {
+	s := smpptest.NewUnstartedServer()
+	var receivedMsg string
+	shortMsg := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus. ✓"
+	s.Handler = func(c smpptest.Conn, p pdu.Body) {
+		switch p.Header().ID {
+		case pdu.SubmitSMID:
+			r := pdu.NewSubmitSMResp()
+			r.Header().Seq = p.Header().Seq
+			r.Fields().Set(pdufield.MessageID, "foobar")
+			smByts := p.Fields()[pdufield.ShortMessage].Bytes()
+			switch pdutext.DataCoding(p.Fields()[pdufield.DataCoding].Raw().(uint8)) {
+			case pdutext.Latin1Type:
+				receivedMsg = receivedMsg + string(pdutext.Latin1(smByts)[7:].Decode())
+			case pdutext.UCS2Type:
+				receivedMsg = receivedMsg + string(pdutext.UCS2(smByts)[7:].Decode())
+			default:
+				receivedMsg = receivedMsg + string(smByts[7:])
+			}
+			c.Write(r)
+		default:
+			smpptest.EchoHandler(c, p)
+		}
+	}
+	s.Start()
+	defer s.Close()
+	tx := &Transmitter{
+		Addr:   s.Addr(),
+		User:   smpptest.DefaultUser,
+		Passwd: smpptest.DefaultPasswd,
+	}
+	defer tx.Close()
+	conn := <-tx.Bind()
+	switch conn.Status() {
+	case Connected:
+	default:
+		t.Fatal(conn.Error())
+	}
+	sm, err := tx.SubmitLongMsg(&ShortMessage{
+		Src:      "root",
+		Dst:      "foobar",
+		Text:     pdutext.UCS2(shortMsg),
+		Validity: 10 * time.Minute,
+		Register: pdufield.NoDeliveryReceipt,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgid := sm.RespID()
+	if msgid == "" {
+		t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+	}
+
+	if receivedMsg != shortMsg {
+		t.Fatalf("receivedMsg: %v, does not match shortMsg: %v", receivedMsg, shortMsg)
+	}
+
+	if msgid != "foobar" {
+		t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+	}
+}
+
 func TestQuerySM(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
