@@ -11,6 +11,7 @@ type DataCoding uint8
 const (
 	Latin1Type DataCoding = 0x03
 	UCS2Type   DataCoding = 0x08
+	SilentType DataCoding = 0xC0
 )
 
 // Codec defines a text codec.
@@ -32,6 +33,8 @@ func Encode(typ DataCoding, text []byte) []byte {
 		return Latin1(text).Encode()
 	case UCS2Type:
 		return UCS2(text).Encode()
+	case SilentType:
+		return Silent(text).Encode()
 	default:
 		return text
 	}
