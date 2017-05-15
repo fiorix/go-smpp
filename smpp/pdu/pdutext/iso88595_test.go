@@ -10,17 +10,22 @@ import (
 	"testing"
 )
 
+const (
+	iso88595TypeCode = 0x06
+	testDataDir      = "testdata"
+)
+
 var (
-	ISO88595_Bytes []byte = readBytesFromFile("test_text/iso88595_test.txt")
-	Utf8_Bytes     []byte = readBytesFromFile("test_text/iso88595_test_utf8.txt")
+	iso88595_Bytes     []byte = readBytesFromFile(testDataDir + "/iso88595_test.txt")
+	iso88595UTF8_Bytes []byte = readBytesFromFile(testDataDir + "/iso88595_test_utf8.txt")
 )
 
 func TestISO88595Encoder(t *testing.T) {
-	want := []byte(ISO88595_Bytes)
-	text := []byte(Utf8_Bytes)
+	want := []byte(iso88595_Bytes)
+	text := []byte(iso88595UTF8_Bytes)
 	s := ISO88595(text)
-	if s.Type() != 0x06 {
-		t.Fatalf("Unexpected data type; want 0x03, have %d", s.Type())
+	if s.Type() != iso88595TypeCode {
+		t.Fatalf("Unexpected data type; want %d, have %d", iso88595TypeCode, s.Type())
 	}
 	have := s.Encode()
 	if !bytes.Equal(want, have) {
@@ -29,11 +34,11 @@ func TestISO88595Encoder(t *testing.T) {
 }
 
 func TestISO88595Decoder(t *testing.T) {
-	want := []byte(Utf8_Bytes)
-	text := []byte(ISO88595_Bytes)
+	want := []byte(iso88595UTF8_Bytes)
+	text := []byte(iso88595_Bytes)
 	s := ISO88595(text)
-	if s.Type() != 0x06 {
-		t.Fatalf("Unexpected data type; want 0x03, have %d", s.Type())
+	if s.Type() != iso88595TypeCode {
+		t.Fatalf("Unexpected data type; want %d, have %d", iso88595TypeCode, s.Type())
 	}
 	have := s.Decode()
 	if !bytes.Equal(want, have) {
@@ -41,10 +46,10 @@ func TestISO88595Decoder(t *testing.T) {
 	}
 }
 
-func readBytesFromFile(aFileName string) []byte {
-	dat, err := ioutil.ReadFile(aFileName)
+func readBytesFromFile(filename string) []byte {
+	dat, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil
+		panic("Error reading testdata file; " + filename + ", err " + err.Error())
 	} else {
 		return dat
 	}
