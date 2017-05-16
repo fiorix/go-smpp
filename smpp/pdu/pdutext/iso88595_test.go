@@ -16,13 +16,13 @@ const (
 )
 
 var (
-	iso88595_Bytes     []byte = readBytesFromFile(testDataDir + "/iso88595_test.txt")
-	iso88595UTF8_Bytes []byte = readBytesFromFile(testDataDir + "/iso88595_test_utf8.txt")
+	iso88595Bytes     []byte = readBytesFromFile(testDataDir + "/iso88595_test.txt")
+	iso88595UTF8Bytes []byte = readBytesFromFile(testDataDir + "/iso88595_test_utf8.txt")
 )
 
 func TestISO88595Encoder(t *testing.T) {
-	want := []byte(iso88595_Bytes)
-	text := []byte(iso88595UTF8_Bytes)
+	want := []byte(iso88595Bytes)
+	text := []byte(iso88595UTF8Bytes)
 	s := ISO88595(text)
 	if s.Type() != iso88595TypeCode {
 		t.Fatalf("Unexpected data type; want %d, have %d", iso88595TypeCode, s.Type())
@@ -34,8 +34,8 @@ func TestISO88595Encoder(t *testing.T) {
 }
 
 func TestISO88595Decoder(t *testing.T) {
-	want := []byte(iso88595UTF8_Bytes)
-	text := []byte(iso88595_Bytes)
+	want := []byte(iso88595UTF8Bytes)
+	text := []byte(iso88595Bytes)
 	s := ISO88595(text)
 	if s.Type() != iso88595TypeCode {
 		t.Fatalf("Unexpected data type; want %d, have %d", iso88595TypeCode, s.Type())
