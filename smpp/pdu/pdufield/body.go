@@ -38,7 +38,8 @@ func New(n Name, data []byte) Body {
 		SMDefaultMsgID,
 		SMLength,
 		SourceAddrNPI,
-		SourceAddrTON:
+		SourceAddrTON,
+		UDHLength:
 		if data == nil {
 			data = []byte{0}
 		}
@@ -66,6 +67,23 @@ func New(n Name, data []byte) Body {
 			data = []byte{}
 		}
 		return &SM{Data: data}
+	case GSMUserData:
+		udhData := []UDH{}
+		if data != nil && len(data) > 2 {
+			for i := 0; i < len(data); {
+				udh := UDH{}
+				udh.IEI = Fixed{Data: data[i]}
+				udh.IELength = Fixed{Data: data[i+1]}
+				udh.IEData = Variable{}
+				l := int(data[i+1])
+				for j := 2; j < l+2; j++ {
+					udh.IEData.Data = append(udh.IEData.Data, data[i+j])
+				}
+				udhData = append(udhData, udh)
+				i += l + 3 // Ignore one byte after IEData (which is 0x00)
+			}
+		}
+		return &UDHList{Data: udhData}
 	default:
 		return nil
 	}
