@@ -185,8 +185,8 @@ loop:
 				msgID = int(udh.IEData.Data[0])
 				partsCount = int(udh.IEData.Data[1])
 
-				r.mg.Lock()
 				// Check if message part was already added to a MergeHolder
+				r.mg.Lock()
 				if mh, ok = r.mg.mergeHolders[msgID]; !ok {
 					mh = &MergeHolder{
 						MessageID:  msgID,
