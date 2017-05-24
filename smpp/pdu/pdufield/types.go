@@ -46,6 +46,8 @@ const (
 	SourceAddrTON        Name = "source_addr_ton"
 	SystemID             Name = "system_id"
 	SystemType           Name = "system_type"
+	UDHLength            Name = "gsm_sms_ud.udh.len"
+	GSMUserData          Name = "gsm_sms_ud.udh"
 	UnsuccessSme         Name = "unsuccess_sme"
 	ValidityPeriod       Name = "validity_period"
 )
@@ -321,5 +323,85 @@ func (usl *UnSmeList) Bytes() []byte {
 // SerializeTo implements the Data interface.
 func (usl *UnSmeList) SerializeTo(w io.Writer) error {
 	_, err := w.Write(usl.Bytes())
+	return err
+}
+
+// UDH is a PDU field used for user data header.
+type UDH struct {
+	IEI      Fixed
+	IELength Fixed
+	IEData   Variable
+}
+
+// Len implements the Data interface.
+func (udh *UDH) Len() int {
+	return udh.IEI.Len() + udh.IELength.Len() + udh.IEData.Len()
+}
+
+// Raw implements the Data interface.
+func (udh *UDH) Raw() interface{} {
+	return udh.Bytes()
+}
+
+// String implements the Data interface.
+func (udh *UDH) String() string {
+	return udh.IEI.String() + "," + udh.IELength.String() + "," + udh.IEData.String()
+}
+
+// Bytes implements the Data interface.
+func (udh *UDH) Bytes() []byte {
+	var ret []byte
+	ret = append(ret, udh.IEI.Bytes()...)
+	ret = append(ret, udh.IELength.Bytes()...)
+	ret = append(ret, udh.IEData.Bytes()...)
+	return ret
+}
+
+// SerializeTo implements the Data interface.
+func (udh *UDH) SerializeTo(w io.Writer) error {
+	_, err := w.Write(udh.Bytes())
+	return err
+}
+
+// UDHList contains a list of UDH.
+type UDHList struct {
+	Data []UDH
+}
+
+// Len implements the Data interface.
+func (udhl *UDHList) Len() int {
+	var ret int
+	for i := range udhl.Data {
+		ret = ret + udhl.Data[i].Len()
+	}
+	return ret
+}
+
+// Raw implements the Data interface.
+func (udhl *UDHList) Raw() interface{} {
+	return udhl.Bytes()
+}
+
+// String implements the Data interface.
+func (udhl *UDHList) String() string {
+	var ret string
+	for i := range udhl.Data {
+		ret = ret + udhl.Data[i].String() + ";"
+	}
+	return ret
+}
+
+// Bytes implements the Data interface.
+func (udhl *UDHList) Bytes() []byte {
+	var ret []byte
+	for i := range udhl.Data {
+		ret = append(ret, udhl.Data[i].Bytes()...)
+	}
+	return ret
+}
+
+// SerializeTo implements the Data interface.
+func (udhl *UDHList) SerializeTo(w io.Writer) error {
+	_, err := w.Write(udhl.Bytes())
 	return err
 }
