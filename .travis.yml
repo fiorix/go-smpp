@@ -1,12 +1,11 @@
 language: go
 go:
-        - 1.5
-        - 1.6
         - 1.7
+        - 1.8
         - tip
 install:
         - go get -d -v ./...
         - go get -d -v golang.org/x/tools/cmd/cover
         - go get golang.org/x/time/rate
 script:
-        - go test -v -cover ./...
+ - go test -v -cover ./...
