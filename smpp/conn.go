@@ -23,6 +23,9 @@ var (
 	// ErrNotBound is returned on attempts to use a Transmitter,
 	// Receiver or Transceiver before calling Bind.
 	ErrNotBound = errors.New("not bound")
+
+	// ErrTimeout is returned when we've reached timeout while waiting for response.
+	ErrTimeout = errors.New("timeout waiting for response")
 )
 
 // Conn is an SMPP connection.

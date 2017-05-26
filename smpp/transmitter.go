@@ -305,7 +305,7 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 		}
 		return resp, nil
 	case <-t.cl.respTimeout():
-		return nil, errors.New("timeout waiting for response")
+		return nil, ErrTimeout
 	}
 }
 
