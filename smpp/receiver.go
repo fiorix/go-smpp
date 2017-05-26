@@ -252,13 +252,11 @@ func (r *Receiver) mergeCleaner() {
 
 // Close implements the ClientConn interface.
 func (r *Receiver) Close() error {
-	close(r.chanClose)
-
-	// Close client
 	r.cl.Lock()
 	defer r.cl.Unlock()
 	if r.cl.client == nil {
 		return ErrNotConnected
 	}
+	close(r.chanClose)
 	return r.cl.Close()
 }
