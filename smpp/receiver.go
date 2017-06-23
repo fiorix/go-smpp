@@ -82,11 +82,15 @@ func (r *Receiver) bindFunc(c Conn) error {
 
 func (r *Receiver) handlePDU() {
 	for {
-		pdu, err := r.conn.Read()
+		p, err := r.conn.Read()
 		if err != nil {
 			break
 		}
-		r.Handler(pdu)
+		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
+			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
+			r.conn.Write(pResp)
+		}
+		r.Handler(p)
 	}
 }
 
