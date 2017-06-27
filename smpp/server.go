@@ -161,6 +161,12 @@ func (srv *server) Close() {
 	if srv.l == nil {
 		panic("smpptest: server is not started")
 	}
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+	for _, session := range srv.s {
+		session.Close()
+	}
+	srv.s = map[string]Session{}
 	srv.l.Close()
 }
 
