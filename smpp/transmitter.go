@@ -412,8 +412,11 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 	f.Set(pdufield.DataCoding, dataCoding)
 	//set the optional parameters in the submit pdu from sm
 	optParams := p.TLVFields()
-	for param, value := range sm.OptParams {
-		optParams.Set(param, value)
+	for _, value := range sm.OptParams {
+		err := optParams.Set(value.Tag, value.Bytes())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resp, err := t.do(p)
