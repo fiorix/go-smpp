@@ -28,6 +28,7 @@ type Receiver struct {
 	MergeCleanupInterval time.Duration // How often to cleanup expired message parts
 	TLS                  *tls.Config
 	Handler              HandlerFunc
+	SkipAutoRespondIDs   []pdu.ID
 
 	chanClose chan struct{}
 
@@ -134,6 +135,15 @@ func (r *Receiver) bindFunc(c Conn) error {
 	return nil
 }
 
+func idInList(id pdu.ID, list []pdu.ID) bool {
+	for _, x := range list {
+		if x == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *Receiver) handlePDU() {
 	var (
 		ok                bool
@@ -143,6 +153,7 @@ func (r *Receiver) handlePDU() {
 		mh                *MergeHolder
 		orderedBodies     []*bytes.Buffer
 	)
+	autoRespondDeliver := !idInList(pdu.DeliverSMID, r.SkipAutoRespondIDs)
 
 loop:
 	for {
@@ -151,7 +162,7 @@ loop:
 			break
 		}
 
-		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
+		if p.Header().ID == pdu.DeliverSMID && autoRespondDeliver { // Send DeliverSMResp
 			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
 			r.cl.Write(pResp)
 		}
