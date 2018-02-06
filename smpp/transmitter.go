@@ -377,6 +377,9 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 		sm.resp.Lock()
 		sm.resp.p = resp.PDU
 		sm.resp.Unlock()
+		if resp.PDU == nil {
+			return nil, fmt.Errorf("unexpected empty PDU")
+		}
 		if id := resp.PDU.Header().ID; id != pdu.SubmitSMRespID {
 			return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 		}
@@ -419,6 +422,9 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 	sm.resp.Lock()
 	sm.resp.p = resp.PDU
 	sm.resp.Unlock()
+	if resp.PDU == nil {
+		return nil, fmt.Errorf("unexpected empty PDU")
+	}
 	if id := resp.PDU.Header().ID; id != pdu.SubmitSMRespID {
 		return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 	}
@@ -483,6 +489,9 @@ func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding ui
 	sm.resp.Lock()
 	sm.resp.p = resp.PDU
 	sm.resp.Unlock()
+	if resp.PDU == nil {
+		return nil, fmt.Errorf("unexpected empty PDU")
+	}
 	if id := resp.PDU.Header().ID; id != pdu.SubmitMultiRespID {
 		return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 	}
