@@ -65,7 +65,9 @@ func main() {
 
 You can test from the command line:
 
-    curl localhost:8080 -X GET -F src=bart -F dst=lisa -F text=hello
+```bash
+curl localhost:8080 -X GET -F src=bart -F dst=lisa -F text=hello
+```
 
 If you don't have an SMPP server to test, check out
 [Selenium SMPPSim](http://www.seleniumsoftware.com/downloads.html).
