@@ -6,11 +6,11 @@ package pdutlv
 
 import (
 	"encoding/binary"
-	"io"
 	"encoding/hex"
+	"io"
 )
 
-// Fields
+// Fields is a map of tagged TLV fields
 type Fields map[Tag]interface{}
 
 // String is a text string that is not null-terminated.
@@ -22,6 +22,7 @@ type CString string
 // Tag is the tag of a Tag-Length-Value (TLV) field.
 type Tag uint16
 
+// Hex returns hexadecimal representation of tag
 func (t Tag) Hex() string {
 	bin := make([]byte, 2, 2)
 	binary.BigEndian.PutUint16(bin, uint16(t))
@@ -77,7 +78,7 @@ const (
 
 // Field is a PDU Tag-Length-Value (TLV) field
 type Field struct {
-	Tag Tag
+	Tag  Tag
 	Data []byte
 }
 
@@ -106,7 +107,7 @@ func (t *Field) Bytes() []byte {
 
 // SerializeTo implements the Data interface.
 func (t *Field) SerializeTo(w io.Writer) error {
-	b := make([]byte, len(t.Data) + 4)
+	b := make([]byte, len(t.Data)+4)
 	binary.BigEndian.PutUint16(b[0:2], uint16(t.Tag))
 	binary.BigEndian.PutUint16(b[2:4], uint16(len(t.Data)))
 	copy(b[4:], t.Data)

@@ -37,9 +37,9 @@ type Server struct {
 	TLS     *tls.Config
 	Handler HandlerFunc
 
-	conns   []Conn
-	mu sync.Mutex
-	l  net.Listener
+	conns []Conn
+	mu    sync.Mutex
+	l     net.Listener
 }
 
 // NewServer creates and initializes a new Server. Callers are supposed
@@ -109,7 +109,7 @@ func (srv *Server) Serve() {
 	}
 }
 
-// broadcasts a test PDU to all clients bind to this server
+// BroadcastMessage broadcasts a test PDU to the all bound clients
 func (srv *Server) BroadcastMessage(p pdu.Body) {
 	for i := range srv.conns {
 		srv.conns[i].Write(p)
@@ -167,10 +167,8 @@ func (srv *Server) auth(c *conn) error {
 		return errors.New("invalid passwd")
 	}
 	resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
-	if err = c.Write(resp); err != nil {
-		return err
-	}
-	return nil
+
+	return err
 }
 
 // EchoHandler is the default Server HandlerFunc, and echoes back
