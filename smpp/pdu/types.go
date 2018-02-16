@@ -4,7 +4,10 @@
 
 package pdu
 
-import "github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+import (
+	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdutlv"
+)
 
 // PDU Types.
 const (
@@ -194,9 +197,12 @@ func newSubmitSM(hdr *Header) *codec {
 }
 
 // NewSubmitSM creates and initializes a new SubmitSM PDU.
-func NewSubmitSM() Body {
+func NewSubmitSM(fields pdutlv.Fields) Body {
 	b := newSubmitSM(&Header{ID: SubmitSMID})
 	b.init()
+	for tag, value := range fields {
+		b.t.Set(tag, value)
+	}
 	return b
 }
 
@@ -248,9 +254,12 @@ func newSubmitMulti(hdr *Header) *codec {
 }
 
 // NewSubmitMulti creates and initializes a new SubmitMulti PDU.
-func NewSubmitMulti() Body {
+func NewSubmitMulti(fields pdutlv.Fields) Body {
 	b := newSubmitMulti(&Header{ID: SubmitMultiID})
 	b.init()
+	for tag, value := range fields {
+		b.t.Set(tag, value)
+	}
 	return b
 }
 

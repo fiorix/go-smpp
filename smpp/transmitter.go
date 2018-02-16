@@ -18,6 +18,7 @@ import (
 	"github.com/fiorix/go-smpp/smpp/pdu"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdutlv"
 )
 
 // ErrMaxWindowSize is returned when an operation (such as Submit) violates
@@ -181,6 +182,7 @@ type ShortMessage struct {
 	Register pdufield.DeliverySetting
 
 	// Other fields, normally optional.
+	TLVFields			 pdutlv.Fields
 	ServiceType          string
 	SourceAddrTON        uint8
 	SourceAddrNPI        uint8
@@ -315,10 +317,10 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 		if sm.Dst != "" {
 			sm.DstList = append(sm.DstList, sm.Dst)
 		}
-		p := pdu.NewSubmitMulti()
+		p := pdu.NewSubmitMulti(sm.TLVFields)
 		return t.submitMsgMulti(sm, p, uint8(sm.Text.Type()))
 	}
-	p := pdu.NewSubmitSM()
+	p := pdu.NewSubmitSM(sm.TLVFields)
 	return t.submitMsg(sm, p, uint8(sm.Text.Type()))
 }
 
@@ -345,7 +347,7 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 	UDHHeader[5] = uint8(countParts) // total number of message parts
 	for i := 0; i < countParts; i++ {
 		UDHHeader[6] = uint8(i + 1) // current message part
-		p := pdu.NewSubmitSM()
+		p := pdu.NewSubmitSM(sm.TLVFields)
 		f := p.Fields()
 		f.Set(pdufield.SourceAddr, sm.Src)
 		f.Set(pdufield.DestinationAddr, sm.Dst)
@@ -377,6 +379,9 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 		sm.resp.Lock()
 		sm.resp.p = resp.PDU
 		sm.resp.Unlock()
+		if resp.PDU == nil {
+			return nil, fmt.Errorf("unexpected empty PDU")
+		}
 		if id := resp.PDU.Header().ID; id != pdu.SubmitSMRespID {
 			return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 		}
@@ -419,6 +424,9 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 	sm.resp.Lock()
 	sm.resp.p = resp.PDU
 	sm.resp.Unlock()
+	if resp.PDU == nil {
+		return nil, fmt.Errorf("unexpected empty PDU")
+	}
 	if id := resp.PDU.Header().ID; id != pdu.SubmitSMRespID {
 		return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 	}
@@ -483,6 +491,9 @@ func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding ui
 	sm.resp.Lock()
 	sm.resp.p = resp.PDU
 	sm.resp.Unlock()
+	if resp.PDU == nil {
+		return nil, fmt.Errorf("unexpected empty PDU")
+	}
 	if id := resp.PDU.Header().ID; id != pdu.SubmitMultiRespID {
 		return sm, fmt.Errorf("unexpected PDU ID: %s", id)
 	}
