@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdutlv"
 )
 
 var nextSeq uint32
@@ -21,7 +22,7 @@ type codec struct {
 	h *Header
 	l pdufield.List
 	f pdufield.Map
-	t pdufield.TLVMap
+	t pdutlv.Map
 }
 
 // init initializes the codec's list and maps and sets the header
@@ -31,14 +32,14 @@ func (pdu *codec) init() {
 		pdu.l = pdufield.List{}
 	}
 	pdu.f = make(pdufield.Map)
-	pdu.t = make(pdufield.TLVMap)
+	pdu.t = make(pdutlv.Map)
 	if pdu.h.Seq == 0 { // If Seq not set
 		pdu.h.Seq = atomic.AddUint32(&nextSeq, 1)
 	}
 }
 
 // setup replaces the codec's current maps with the given ones.
-func (pdu *codec) setup(f pdufield.Map, t pdufield.TLVMap) {
+func (pdu *codec) setup(f pdufield.Map, t pdutlv.Map) {
 	pdu.f, pdu.t = f, t
 }
 
@@ -54,7 +55,7 @@ func (pdu *codec) Len() int {
 		l += f.Len()
 	}
 	for _, t := range pdu.t {
-		l += int(t.Len)
+		l += t.Len()
 	}
 	return l
 }
@@ -69,8 +70,8 @@ func (pdu *codec) Fields() pdufield.Map {
 	return pdu.f
 }
 
-// TLVFields implement the PDU interface.
-func (pdu *codec) TLVFields() pdufield.TLVMap {
+// Fields implement the PDU interface.
+func (pdu *codec) TLVFields() pdutlv.Map {
 	return pdu.t
 }
 
@@ -83,6 +84,11 @@ func (pdu *codec) SerializeTo(w io.Writer) error {
 			pdu.f.Set(k, nil)
 			f = pdu.f[k]
 		}
+		if err := f.SerializeTo(&b); err != nil {
+			return err
+		}
+	}
+	for _, f := range pdu.TLVFields() {
 		if err := f.SerializeTo(&b); err != nil {
 			return err
 		}
@@ -100,7 +106,7 @@ func (pdu *codec) SerializeTo(w io.Writer) error {
 // used for initializing new PDUs with map data decoded off the wire.
 type decoder interface {
 	Body
-	setup(f pdufield.Map, t pdufield.TLVMap)
+	setup(f pdufield.Map, t pdutlv.Map)
 }
 
 func decodeFields(pdu decoder, b []byte) (Body, error) {
@@ -110,7 +116,7 @@ func decodeFields(pdu decoder, b []byte) (Body, error) {
 	if err != nil {
 		return nil, err
 	}
-	t, err := l.DecodeTLV(r)
+	t, err := pdutlv.DecodeTLV(r)
 	if err != nil {
 		return nil, err
 	}
