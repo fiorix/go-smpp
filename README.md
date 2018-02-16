@@ -1,5 +1,7 @@
 # SMPP 3.4
 
+[![GoDoc](https://godoc.org/github.com/fiorix/go-smpp?status.svg)](https://godoc.org/github.com/fiorix/go-smpp) [![Go Report Card](https://goreportcard.com/badge/github.com/fiorix/go-smpp)](https://goreportcard.com/report/github.com/fiorix/go-smpp) [![Build Status](https://secure.travis-ci.org/fiorix/go-smpp.png)](https://travis-ci.org/fiorix/go-smpp)
+
 This is an implementation of SMPP 3.4 for Go, based on the original
 [smpp34](https://github.com/CodeMonkeyKevin/smpp34) from Kevin Patel.
 
@@ -10,55 +12,60 @@ transformation for LATIN-1 and UCS-2.
 
 It is not fully compliant, there are some TODOs in the code.
 
-[![Build Status](https://secure.travis-ci.org/fiorix/go-smpp.png)](https://travis-ci.org/fiorix/go-smpp)
-
-[![GoDoc](https://godoc.org/github.com/fiorix/go-smpp?status.svg)](https://godoc.org/github.com/fiorix/go-smpp)
-
-### Usage
+## Usage
 
 Following is an SMPP client transmitter wrapped by an HTTP server
 that can send Short Messages (SMS):
 
 ```go
 func main() {
-	tx := &smpp.Transmitter{
-		Addr:    "localhost:2775",
-		User:    "foobar",
-		Passwd:  "secret",
-	}
-	conn := tx.Bind() // make persistent connection.
-	go func() {
-		for c := range conn {
-			log.Println("SMPP connection status:", c.Status())
-		}
-	}()
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		sm, err := tx.Submit(&smpp.ShortMessage{
-			Src:      r.FormValue("src"),
-			Dst:      r.FormValue("dst"),
-			Text:     pdutext.Raw(r.FormValue("text")),
-			Register: pdufield.NoDeliveryReceipt,
-            TLVFields: pdutlv.TLVFields{
+    // make persistent connection
+    tx := &smpp.Transmitter{
+        Addr:   "localhost:2775",
+        User:   "foobar",
+        Passwd: "secret",
+    }
+    conn := tx.Bind()
+    // check initial connection status
+    var status smpp.ConnStatus
+    if status = <-conn; status.Error() != nil {
+        log.Fatalln("Unable to connect, aborting:", status.Error())
+    }
+    log.Println("Connection completed, status:", status.Status().String())
+    // example of connection checker goroutine
+    go func() {
+        for c := range conn {
+            log.Println("SMPP connection status:", c.Status())
+        }
+    }()
+    // example of sender handler func
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        sm, err := tx.Submit(&smpp.ShortMessage{
+            Src:      r.FormValue("src"),
+            Dst:      r.FormValue("dst"),
+            Text:     pdutext.Raw(r.FormValue("text")),
+            Register: pdufield.NoDeliveryReceipt,
+            TLVFields: pdutlv.Fields{
                 pdutlv.TagReceiptedMessageID: pdutlv.CString(r.FormValue("msgId")),
             },
-		})
-		if err == smpp.ErrNotConnected {
-			http.Error(w, "Oops.", http.StatusServiceUnavailable)
-			return
-		}
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		io.WriteString(w, sm.RespID())
-	})
-	log.Fatal(http.ListenAndServe(":8080", nil))
+        })
+        if err == smpp.ErrNotConnected {
+            http.Error(w, "Oops.", http.StatusServiceUnavailable)
+            return
+        }
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+            return
+        }
+        io.WriteString(w, sm.RespID())
+    })
+    log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
 
 You can test from the command line:
 
-	curl localhost:8080 -X GET -F src=bart -F dst=lisa -F text=hello
+    curl localhost:8080 -X GET -F src=bart -F dst=lisa -F text=hello
 
 If you don't have an SMPP server to test, check out
 [Selenium SMPPSim](http://www.seleniumsoftware.com/downloads.html).
