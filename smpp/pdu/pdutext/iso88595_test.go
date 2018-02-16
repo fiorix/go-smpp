@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	iso88595Bytes     []byte = readBytesFromFile(testDataDir + "/iso88595_test.txt")
-	iso88595UTF8Bytes []byte = readBytesFromFile(testDataDir + "/iso88595_test_utf8.txt")
+	iso88595Bytes     = readBytesFromFile(testDataDir + "/iso88595_test.txt")
+	iso88595UTF8Bytes = readBytesFromFile(testDataDir + "/iso88595_test_utf8.txt")
 )
 
 func TestISO88595Encoder(t *testing.T) {
