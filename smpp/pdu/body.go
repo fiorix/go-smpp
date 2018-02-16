@@ -8,6 +8,7 @@ import (
 	"io"
 
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/fiorix/go-smpp/smpp/pdu/pdutlv"
 )
 
 // MaxSize is the maximum size allowed for a PDU.
@@ -32,8 +33,8 @@ type Body interface {
 	// map can be modified before re-serializing the PDU.
 	Fields() pdufield.Map
 
-	// TLVFields return a decoded map of PDU TLV fields.
-	TLVFields() pdufield.TLVMap
+	// Fields return a decoded map of PDU TLV fields.
+	TLVFields() pdutlv.Map
 
 	// SerializeTo encodes the PDU to its binary form, including
 	// the header and all fields.

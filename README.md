@@ -38,6 +38,9 @@ func main() {
 			Dst:      r.FormValue("dst"),
 			Text:     pdutext.Raw(r.FormValue("text")),
 			Register: pdufield.NoDeliveryReceipt,
+            TLVFields: pdutlv.TLVFields{
+                pdutlv.TagReceiptedMessageID: pdutlv.CString(r.FormValue("msgId")),
+            },
 		})
 		if err == smpp.ErrNotConnected {
 			http.Error(w, "Oops.", http.StatusServiceUnavailable)
@@ -95,6 +98,7 @@ SMS from the command line, and an HTTP server with WebSocket support.
 - [x] enquire_link_resp
 - [ ] alert_notification
 - [x] generic_nack
+- [x] tag-length-value (TLV)
 
 ## Copyright
 

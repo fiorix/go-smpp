@@ -50,6 +50,3 @@ func (m Map) Set(k Name, v interface{}) error {
 	}
 	return nil
 }
-
-// TLVMap is a collection of PDU TLV field data indexed by type.
-type TLVMap map[TLVType]*TLVBody

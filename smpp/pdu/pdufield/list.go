@@ -6,7 +6,6 @@ package pdufield
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"io"
 )
@@ -236,25 +235,4 @@ loop:
 		}
 	}
 	return f, nil
-}
-
-// DecodeTLV scans the given byte slice to build a TLVMap from binary data.
-func (l List) DecodeTLV(r *bytes.Buffer) (TLVMap, error) {
-	t := make(TLVMap)
-	for r.Len() >= 4 {
-		b := r.Next(4)
-		ft := TLVType(binary.BigEndian.Uint16(b[0:2]))
-		fl := binary.BigEndian.Uint16(b[2:4])
-		if r.Len() < int(fl) {
-			return nil, fmt.Errorf("not enough data for tag %#x: want %d, have %d",
-				ft, fl, r.Len())
-		}
-		b = r.Next(int(fl))
-		t[ft] = &TLVBody{
-			Tag:  ft,
-			Len:  fl,
-			data: b,
-		}
-	}
-	return t, nil
 }
