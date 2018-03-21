@@ -168,7 +168,7 @@ func (srv *Server) auth(c *conn) error {
 	}
 	resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
 
-	return err
+	return c.Write(resp)
 }
 
 // EchoHandler is the default Server HandlerFunc, and echoes back
