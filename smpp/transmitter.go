@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -53,7 +54,7 @@ type Transmitter struct {
 	tx struct {
 		count int32
 		sync.Mutex
-		inflight map[uint32]chan *tx
+		inflight map[string]chan *tx
 	}
 }
 
@@ -74,7 +75,7 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 		return t.cl.Status
 	}
 	t.tx.Lock()
-	t.tx.inflight = make(map[uint32]chan *tx)
+	t.tx.inflight = make(map[string]chan *tx)
 	t.tx.Unlock()
 	c := &client{
 		Addr:               t.Addr,
@@ -119,9 +120,9 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 		if err != nil {
 			break
 		}
-		seq := p.Header().Seq
+		key := t.createInflightKey(p.Header())
 		t.tx.Lock()
-		rc := t.tx.inflight[seq]
+		rc := t.tx.inflight[key]
 		t.tx.Unlock()
 		if rc != nil {
 			rc <- &tx{PDU: p}
@@ -182,7 +183,7 @@ type ShortMessage struct {
 	Register pdufield.DeliverySetting
 
 	// Other fields, normally optional.
-	TLVFields			 pdutlv.Fields
+	TLVFields            pdutlv.Fields
 	ServiceType          string
 	SourceAddrTON        uint8
 	SourceAddrNPI        uint8
@@ -285,13 +286,13 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 		}
 	}
 	rc := make(chan *tx, 1)
-	seq := p.Header().Seq
+	key := t.createInflightKey(p.Header())
 	t.tx.Lock()
-	t.tx.inflight[seq] = rc
+	t.tx.inflight[key] = rc
 	t.tx.Unlock()
 	defer func() {
 		t.tx.Lock()
-		delete(t.tx.inflight, seq)
+		delete(t.tx.inflight, key)
 		t.tx.Unlock()
 	}()
 	err := t.cl.Write(p)
@@ -307,6 +308,12 @@ func (t *Transmitter) do(p pdu.Body) (*tx, error) {
 	case <-t.cl.respTimeout():
 		return nil, ErrTimeout
 	}
+}
+
+// createInflightKey returns identifier of a given header.
+func (t *Transmitter) createInflightKey(h *pdu.Header) string {
+	channelType := strings.Replace(h.ID.String(), "Resp", "", 1)
+	return fmt.Sprintf("id: %s, seq: %d", channelType, h.Seq)
 }
 
 // Submit sends a short message and returns and updates the given
