@@ -73,3 +73,64 @@ func TestDecodeHeader(t *testing.T) {
 		t.Fatalf("unexpected parsing of big Len: %#v", h)
 	}
 }
+
+func TestGroup(t *testing.T) {
+	testCases := []struct {
+		id    ID
+		group uint16
+	}{
+		{GenericNACKID, 0x00},
+		{BindReceiverID, 0x01},
+		{BindReceiverRespID, 0x01},
+		{BindTransmitterID, 0x02},
+		{BindTransmitterRespID, 0x02},
+		{QuerySMID, 0x03},
+		{QuerySMRespID, 0x03},
+		{SubmitSMID, 0x0004},
+		{SubmitSMRespID, 0x0004},
+		{DeliverSMID, 0x05},
+		{DeliverSMRespID, 0x05},
+		{UnbindID, 0x06},
+		{UnbindRespID, 0x06},
+		{ReplaceSMID, 0x07},
+		{ReplaceSMRespID, 0x07},
+		{CancelSMID, 0x08},
+		{CancelSMRespID, 0x08},
+		{BindTransceiverID, 0x09},
+		{BindTransceiverRespID, 0x09},
+		{OutbindID, 0x0B},
+		{EnquireLinkID, 0x15},
+		{EnquireLinkRespID, 0x15},
+		{SubmitMultiID, 0x21},
+		{SubmitMultiRespID, 0x21},
+		{AlertNotificationID, 0x102},
+		{DataSMID, 0x103},
+		{DataSMRespID, 0x103},
+	}
+
+	for _, tc := range testCases {
+		group := tc.id.Group()
+		if group != tc.group {
+			t.Fatalf("expected: %o, actual: %o", tc.group, group)
+		}
+	}
+}
+
+func TestKey(t *testing.T) {
+	sm := []byte{
+		0x00, 0x00, 0x00, 0x10, // 16 Len
+		0x00, 0x00, 0x00, 0x04, // SubmitSMID
+		0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00,
+	}
+
+	smH, err := DecodeHeader(bytes.NewBuffer(sm))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	k := smH.Key()
+	if k != "4-0" {
+		t.Fatalf("unexpected key: %s", k)
+	}
+}
