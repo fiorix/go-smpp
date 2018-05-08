@@ -10,8 +10,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/tsocial/go-smpp/smpp/pdu"
+	"github.com/tsocial/go-smpp/smpp/pdu/pdufield"
 )
 
 // Transceiver implements an SMPP transceiver.
@@ -43,7 +43,7 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 		return t.cl.Status
 	}
 	t.tx.Lock()
-	t.tx.inflight = make(map[uint32]chan *tx)
+	t.tx.inflight = make(map[string]chan *tx)
 	t.tx.Unlock()
 	c := &client{
 		Addr:               t.Addr,

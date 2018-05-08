@@ -13,8 +13,8 @@ import (
 	"net"
 	"sync"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
+	"github.com/tsocial/go-smpp/smpp/pdu"
+	"github.com/tsocial/go-smpp/smpp/pdu/pdufield"
 )
 
 // Default settings.
