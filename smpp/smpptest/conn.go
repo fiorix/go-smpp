@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"io"
 	"net"
+	"sync"
 
 	"github.com/tsocial/go-smpp/smpp/pdu"
 )
@@ -30,6 +31,7 @@ type conn struct {
 	rwc net.Conn
 	r   *bufio.Reader
 	w   *bufio.Writer
+	l   sync.RWMutex
 }
 
 func newConn(c net.Conn) *conn {
@@ -47,11 +49,17 @@ func (c *conn) RemoteAddr() net.Addr {
 
 // Read reads PDU off the wire.
 func (c *conn) Read() (pdu.Body, error) {
+	c.l.RLock()
+	defer c.l.RUnlock()
+
 	return pdu.Decode(c.r)
 }
 
 // Write implements the Conn interface.
 func (c *conn) Write(p pdu.Body) error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
 	var b bytes.Buffer
 	err := p.SerializeTo(&b)
 	if err != nil {
@@ -66,5 +74,8 @@ func (c *conn) Write(p pdu.Body) error {
 
 // Close implements the Conn interface.
 func (c *conn) Close() error {
+	c.l.Lock()
+	defer c.l.Unlock()
+
 	return c.rwc.Close()
 }
