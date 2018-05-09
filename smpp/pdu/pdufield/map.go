@@ -7,7 +7,7 @@ package pdufield
 import (
 	"fmt"
 
-	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
+	"github.com/tsocial/go-smpp/smpp/pdu/pdutext"
 )
 
 // Map is a collection of PDU field data indexed by name.
