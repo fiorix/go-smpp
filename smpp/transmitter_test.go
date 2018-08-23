@@ -14,6 +14,7 @@ import (
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 	"github.com/fiorix/go-smpp/smpp/smpptest"
+	"fmt"
 )
 
 func TestShortMessage(t *testing.T) {
@@ -121,12 +122,14 @@ func TestShortMessageWindowSize(t *testing.T) {
 
 func TestLongMessage(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
+	count := 0
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
+			r.Fields().Set(pdufield.MessageID, fmt.Sprintf("foobar%d", count))
+			count++
 			c.Write(r)
 		default:
 			smpptest.EchoHandler(c, p)
@@ -146,7 +149,7 @@ func TestLongMessage(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	sm, err := tx.SubmitLongMsg(&ShortMessage{
+	parts, err := tx.SubmitLongMsg(&ShortMessage{
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.Raw("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus."),
@@ -156,12 +159,17 @@ func TestLongMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	msgid := sm.RespID()
-	if msgid == "" {
-		t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+	if len(parts) != 2 {
+		t.Fatalf("expected %d responses, but received %d", 2, len(parts))
 	}
-	if msgid != "foobar" {
-		t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+	for index, sm := range parts {
+		msgid := sm.RespID()
+		if msgid == "" {
+			t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+		}
+		if msgid != fmt.Sprintf("foobar%d", index) {
+			t.Fatalf("unexpected msgid: want foobar%d, have %q", index, msgid)
+		}
 	}
 }
 
@@ -169,12 +177,14 @@ func TestLongMessageAsUCS2(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	var receivedMsg string
 	shortMsg := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consequat nisl enim, vel finibus neque aliquet sit amet. Interdum et malesuada fames ac ante ipsum primis in faucibus. ✓"
+	count := 0
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		switch p.Header().ID {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
+			r.Fields().Set(pdufield.MessageID, fmt.Sprintf("foobar%d", count))
+			count++
 			smByts := p.Fields()[pdufield.ShortMessage].Bytes()
 			switch pdutext.DataCoding(p.Fields()[pdufield.DataCoding].Raw().(uint8)) {
 			case pdutext.Latin1Type:
@@ -203,7 +213,7 @@ func TestLongMessageAsUCS2(t *testing.T) {
 	default:
 		t.Fatal(conn.Error())
 	}
-	sm, err := tx.SubmitLongMsg(&ShortMessage{
+	parts, err := tx.SubmitLongMsg(&ShortMessage{
 		Src:      "root",
 		Dst:      "foobar",
 		Text:     pdutext.UCS2(shortMsg),
@@ -213,17 +223,22 @@ func TestLongMessageAsUCS2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	msgid := sm.RespID()
-	if msgid == "" {
-		t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+	if len(parts) != 3 {
+		t.Fatalf("expected %d responses, but received %d", 3, len(parts))
 	}
+	for index, sm := range parts {
+		msgid := sm.RespID()
+		if msgid == "" {
+			t.Fatalf("pdu does not contain msgid: %#v", sm.Resp())
+		}
 
-	if receivedMsg != shortMsg {
-		t.Fatalf("receivedMsg: %v, does not match shortMsg: %v", receivedMsg, shortMsg)
-	}
+		if receivedMsg != shortMsg {
+			t.Fatalf("receivedMsg: %v, does not match shortMsg: %v", receivedMsg, shortMsg)
+		}
 
-	if msgid != "foobar" {
-		t.Fatalf("unexpected msgid: want foobar, have %q", msgid)
+		if msgid != fmt.Sprintf("foobar%d", index) {
+			t.Fatalf("unexpected msgid: want foobar%d, have %q", index, msgid)
+		}
 	}
 }
 

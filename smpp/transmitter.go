@@ -327,13 +327,15 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 // SubmitLongMsg sends a long message (more than 140 bytes)
 // and returns and updates the given sm with the response status.
 // It returns the same sm object.
-func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
+func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) ([]ShortMessage, error) {
 	maxLen := 133 // 140-7 (UDH with 2 byte reference number)
 	if sm.Text.Type() == pdutext.UCS2Type {
 		maxLen = 132 // to avoid a character being split between payloads
 	}
 	rawMsg := sm.Text.Encode()
 	countParts := int((len(rawMsg)-1)/maxLen) + 1
+
+	parts := make([]ShortMessage, 0, countParts)
 
 	t.rMutex.Lock()
 	rn := uint16(t.r.Intn(0xFFFF))
@@ -380,19 +382,20 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 		sm.resp.p = resp.PDU
 		sm.resp.Unlock()
 		if resp.PDU == nil {
-			return nil, fmt.Errorf("unexpected empty PDU")
+			return parts, fmt.Errorf("unexpected empty PDU")
 		}
 		if id := resp.PDU.Header().ID; id != pdu.SubmitSMRespID {
-			return sm, fmt.Errorf("unexpected PDU ID: %s", id)
+			return parts, fmt.Errorf("unexpected PDU ID: %s", id)
 		}
 		if s := resp.PDU.Header().Status; s != 0 {
-			return sm, s
+			return parts, s
 		}
 		if resp.Err != nil {
-			return sm, resp.Err
+			return parts, resp.Err
 		}
+		parts = append(parts, *sm)
 	}
-	return sm, nil
+	return parts, nil
 }
 
 func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) (*ShortMessage, error) {
