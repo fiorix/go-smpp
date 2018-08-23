@@ -9,7 +9,7 @@ type Raw []byte
 
 // Type implements the Codec interface.
 func (s Raw) Type() DataCoding {
-	return 0x00
+	return DefaultType
 }
 
 // Encode raw text.

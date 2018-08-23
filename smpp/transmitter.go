@@ -329,8 +329,16 @@ func (t *Transmitter) Submit(sm *ShortMessage) (*ShortMessage, error) {
 // It returns the same sm object.
 func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) ([]ShortMessage, error) {
 	maxLen := 133 // 140-7 (UDH with 2 byte reference number)
-	if sm.Text.Type() == pdutext.UCS2Type {
+	switch sm.Text.(type) {
+	case pdutext.GSM7:
+		maxLen = 152 // to avoid an escape character being split between payloads
+		break
+	case pdutext.GSM7Packed:
+		maxLen = 132 // to avoid an escape character being split between payloads
+		break
+	case pdutext.UCS2:
 		maxLen = 132 // to avoid a character being split between payloads
+		break
 	}
 	rawMsg := sm.Text.Encode()
 	countParts := int((len(rawMsg)-1)/maxLen) + 1
