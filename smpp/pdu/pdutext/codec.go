@@ -9,7 +9,7 @@ type DataCoding uint8
 
 // Supported text codecs.
 const (
-	//	DefaultType   DataCoding = 0x00 // SMSC Default Alphabet
+	DefaultType DataCoding = 0x00 // SMSC Default Alphabet
 	//	IA5Type       DataCoding = 0x01 // IA5 (CCITT T.50)/ASCII (ANSI X3.4)
 	//	BinaryType    DataCoding = 0x02 // Octet unspecified (8-bit binary)
 	Latin1Type DataCoding = 0x03 // Latin 1 (ISO-8859-1)
@@ -34,32 +34,4 @@ type Codec interface {
 
 	// Decode text.
 	Decode() []byte
-}
-
-// Encode text.
-func Encode(typ DataCoding, text []byte) []byte {
-	switch typ {
-	case Latin1Type:
-		return Latin1(text).Encode()
-	case UCS2Type:
-		return UCS2(text).Encode()
-	case ISO88595Type:
-		return ISO88595(text).Encode()
-	default:
-		return text
-	}
-}
-
-// Decode text.
-func Decode(typ DataCoding, text []byte) []byte {
-	switch typ {
-	case Latin1Type:
-		return Latin1(text).Decode()
-	case UCS2Type:
-		return UCS2(text).Decode()
-	case ISO88595Type:
-		return ISO88595(text).Decode()
-	default:
-		return text
-	}
 }
