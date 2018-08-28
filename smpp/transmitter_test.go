@@ -5,6 +5,7 @@
 package smpp
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
 	"github.com/fiorix/go-smpp/smpp/smpptest"
-	"fmt"
 )
 
 func TestShortMessage(t *testing.T) {
