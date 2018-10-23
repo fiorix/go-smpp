@@ -21,6 +21,7 @@ type Receiver struct {
 	User                 string
 	Passwd               string
 	SystemType           string
+	AddressRange         *pdu.AddressRange
 	EnquireLink          time.Duration
 	EnquireLinkTimeout   time.Duration // Time after last EnquireLink response when connection considered down
 	BindInterval         time.Duration // Binding retry interval
@@ -111,6 +112,7 @@ func (r *Receiver) bindFunc(c Conn) error {
 	f.Set(pdufield.SystemID, r.User)
 	f.Set(pdufield.Password, r.Passwd)
 	f.Set(pdufield.SystemType, r.SystemType)
+	r.AddressRange.SetFields(f)
 	resp, err := bind(c, p)
 	if err != nil {
 		return err

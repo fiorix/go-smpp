@@ -18,17 +18,18 @@ import (
 //
 // The API is a combination of the Transmitter and Receiver.
 type Transceiver struct {
-	Addr               string        // Server address in form of host:port.
-	User               string        // Username.
-	Passwd             string        // Password.
-	SystemType         string        // System type, default empty.
-	EnquireLink        time.Duration // Enquire link interval, default 10s.
-	EnquireLinkTimeout time.Duration // Time after last EnquireLink response when connection considered down
-	RespTimeout        time.Duration // Response timeout, default 1s.
-	BindInterval       time.Duration // Binding retry interval
-	TLS                *tls.Config   // TLS client settings, optional.
-	Handler            HandlerFunc   // Receiver handler, optional.
-	RateLimiter        RateLimiter   // Rate limiter, optional.
+	Addr               string            // Server address in form of host:port.
+	User               string            // Username.
+	Passwd             string            // Password.
+	SystemType         string            // System type, default empty.
+	AddressRange       *pdu.AddressRange // ESME address served via the SMPP session, optional.
+	EnquireLink        time.Duration     // Enquire link interval, default 10s.
+	EnquireLinkTimeout time.Duration     // Time after last EnquireLink response when connection considered down
+	RespTimeout        time.Duration     // Response timeout, default 1s.
+	BindInterval       time.Duration     // Binding retry interval
+	TLS                *tls.Config       // TLS client settings, optional.
+	Handler            HandlerFunc       // Receiver handler, optional.
+	RateLimiter        RateLimiter       // Rate limiter, optional.
 	WindowSize         uint
 
 	Transmitter
@@ -69,6 +70,8 @@ func (t *Transceiver) bindFunc(c Conn) error {
 	f.Set(pdufield.SystemID, t.User)
 	f.Set(pdufield.Password, t.Passwd)
 	f.Set(pdufield.SystemType, t.SystemType)
+	t.AddressRange.SetFields(f)
+
 	resp, err := bind(c, p)
 	if err != nil {
 		return err
