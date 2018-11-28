@@ -105,7 +105,6 @@ type client struct {
 }
 
 func (c *client) init() {
-	c.inbox = make(chan pdu.Body)
 	c.conn = &connSwitch{}
 	c.stop = make(chan struct{})
 	if c.RateLimiter != nil {
@@ -127,6 +126,7 @@ func (c *client) Bind() {
 	const maxdelay = 120.0
 	for !c.closed() {
 		eli := make(chan struct{})
+		c.inbox = make(chan pdu.Body)
 		conn, err := Dial(c.Addr, c.TLS)
 		if err != nil {
 			c.notify(&connStatus{
@@ -168,6 +168,7 @@ func (c *client) Bind() {
 	retry:
 		close(eli)
 		c.conn.Close()
+		close(c.inbox)
 		delayDuration := c.BindInterval
 		if delayDuration == 0 {
 			delay = math.Min(delay*math.E, maxdelay)

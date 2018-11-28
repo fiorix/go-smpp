@@ -116,7 +116,7 @@ func (t *Transmitter) bindFunc(c Conn) error {
 func (t *Transmitter) handlePDU(f HandlerFunc) {
 	for {
 		p, err := t.cl.Read()
-		if err != nil {
+		if err != nil || p == nil {
 			break
 		}
 		seq := p.Header().Seq
