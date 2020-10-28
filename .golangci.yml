@@ -1,0 +1,72 @@
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - depguard
+    - dogsled
+    - errcheck
+    - errorlint
+    - exhaustive
+    - exhaustivestruct
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - golint
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - rowserrcheck
+    - scopelint
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - whitespace
+
+# output configuration options
+output:
+# colored-line-number|line-number|json|tab|checkstyle|code-climate, default is "colored-line-number"
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+  gocritic:
+    disabled-checks:
+      - ifElseChain
+  golint:
+    min-confidence: 0
+  maligned:
+    suggest-new: true
+  dogsled:
+    max-blank-identifiers: 3
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - goconst
+        - gosec
+        - scopelint
+        - ineffassign
+    - path: \.go
+      linters:
+        - goconst
+        - nakedret
+        - typecheck
+        - gofmt
+
+run:
+  timeout: 10m

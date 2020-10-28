@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  push:
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+      GOPRIVATE: github.com/tsocial
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          go mod download
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.32
+          args: --config=./.golangci.yml
+
+      - name: Run lint & vet
+        run: |
+          go get -u golang.org/x/lint/golint
+          golint $(go list ./...)
+          go vet $(go list ./...)
+      - name: Run unit test
+        run: |
+          go clean -testcache ./...
+          go test $(go list ./... | grep -v cmd) -race -coverprofile=output/cover.out
+      - name: Calculate coverage
+        run: go tool cover -func output/cover.out | grep total | awk '{print $3}' >output/coverage.txt
+
+      - name: Write coverage
+        uses: pCYSl5EDgo/cat@master
+        id: coverage
+        with:
+          path: output/coverage.txt
+          trim: true
+
+      - name: Notify result
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: workflow,job,commit,repo,ref,author,took,message
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+                text: `*${process.env.AS_REPO}*\n- Coverage: *${process.env.COVERAGE}* of statements!\n- Message: ${process.env.AS_MESSAGE} (${process.env.AS_COMMIT})`,
+              }]
+            }
+        env:
+          COVERAGE: ${{ steps.coverage.outputs.text }}
+        if: github.ref == 'refs/heads/main'

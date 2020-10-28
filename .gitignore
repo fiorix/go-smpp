@@ -1,2 +1,13 @@
 *.swp
-/vendor
+vendor/
+tmp/
+*.log
+*.bak
+production.*
+.DS_Store
+tags
+.idea
+cover.out
+rocksdb/var
+output/
+
