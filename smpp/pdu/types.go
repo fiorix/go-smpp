@@ -68,7 +68,8 @@ func newBind(hdr *Header) *codec {
 			pdufield.AddrTON,
 			pdufield.AddrNPI,
 			pdufield.AddressRange,
-		}}
+		},
+	}
 }
 
 // NewBindReceiver creates a new Bind PDU.

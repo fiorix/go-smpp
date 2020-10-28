@@ -10,12 +10,11 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/time/rate"
-
 	"github.com/tsocial/go-smpp/smpp"
 	"github.com/tsocial/go-smpp/smpp/pdu"
 	"github.com/tsocial/go-smpp/smpp/pdu/pdufield"
 	"github.com/tsocial/go-smpp/smpp/pdu/pdutext"
+	"golang.org/x/time/rate"
 )
 
 func ExampleReceiver() {

@@ -8,12 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/time/rate"
-
 	"github.com/tsocial/go-smpp/smpp/pdu"
 	"github.com/tsocial/go-smpp/smpp/pdu/pdufield"
 	"github.com/tsocial/go-smpp/smpp/pdu/pdutext"
 	"github.com/tsocial/go-smpp/smpp/smpptest"
+	"golang.org/x/time/rate"
 )
 
 func TestShortMessage(t *testing.T) {
@@ -263,7 +262,7 @@ func TestQuerySM(t *testing.T) {
 }
 
 func TestSubmitMulti(t *testing.T) {
-	//construct a byte array with the UnsuccessSme
+	// construct a byte array with the UnsuccessSme
 	var bArray []byte
 	bArray = append(bArray, byte(0x00))       // TON
 	bArray = append(bArray, byte(0x00))       // NPI
@@ -368,5 +367,4 @@ func TestNotConnected(t *testing.T) {
 	if err != ErrNotConnected {
 		t.Fatalf("Error should be not connect, got %s", err.Error())
 	}
-
 }

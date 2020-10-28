@@ -69,7 +69,7 @@ func New(n Name, data []byte) Body {
 		return &SM{Data: data}
 	case GSMUserData:
 		udhData := []UDH{}
-		if data != nil && len(data) > 2 {
+		if len(data) > 2 {
 			for i := 0; i < len(data); {
 				udh := UDH{}
 				udh.IEI = Fixed{Data: data[i]}

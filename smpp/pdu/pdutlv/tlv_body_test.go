@@ -5,13 +5,13 @@
 package pdutlv
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 )
 
 func TestNewTLV_Raw(t *testing.T) {
 	want := []byte("hello")
-	wb := []byte{ 0x05, 0x01, 0x00, 0x05 }
+	wb := []byte{0x05, 0x01, 0x00, 0x05}
 	wb = append(wb, want...)
 	d := NewTLV(0x0501, want)
 	f, ok := d.(*Field)
@@ -32,7 +32,7 @@ func TestNewTLV_Raw(t *testing.T) {
 
 func TestNewTLV_Nil(t *testing.T) {
 	want := make([]byte, 0)
-	wb := []byte{ 0x05, 0x01, 0x00, 0x00 }
+	wb := []byte{0x05, 0x01, 0x00, 0x00}
 	d := NewTLV(0x0501, nil)
 	f, ok := d.(*Field)
 	if !ok {

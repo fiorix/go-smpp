@@ -5,8 +5,8 @@
 package pdutlv
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 )
 
 func TestTag_Hex(t *testing.T) {
@@ -25,11 +25,11 @@ func TestTag_Hex(t *testing.T) {
 
 func TestTLVField(t *testing.T) {
 	var want []byte
-	want = append(want, []byte{ 0x13, 0x0C }...)	// Tag
-	want = append(want, []byte{ 0x00, 0x06 }...)	// Length
-	want = append(want, []byte("foobar")...)		// Value
+	want = append(want, []byte{0x13, 0x0C}...) // Tag
+	want = append(want, []byte{0x00, 0x06}...) // Length
+	want = append(want, []byte("foobar")...)   // Value
 
-	f := &Field{Tag:0x130C, Data: []byte("foobar")}
+	f := &Field{Tag: 0x130C, Data: []byte("foobar")}
 	if f.Len() != len(want) {
 		t.Fatalf("unexpected len: want %d, have %d", len(want), f.Len())
 	}
@@ -50,11 +50,11 @@ func TestTLVField(t *testing.T) {
 
 func TestTLVField_NullTerminated(t *testing.T) {
 	var want []byte
-	want = append(want, []byte{ 0x13, 0x0C }...)	// Tag
-	want = append(want, []byte{ 0x00, 0x07 }...)	// Length
-	want = append(want, []byte("foobar\x00")...)	// Value
+	want = append(want, []byte{0x13, 0x0C}...)   // Tag
+	want = append(want, []byte{0x00, 0x07}...)   // Length
+	want = append(want, []byte("foobar\x00")...) // Value
 
-	f := &Field{Tag:0x130C, Data: []byte("foobar\x00")}
+	f := &Field{Tag: 0x130C, Data: []byte("foobar\x00")}
 	if f.Len() != len(want) {
 		t.Fatalf("unexpected len: want %d, have %d", len(want), f.Len())
 	}

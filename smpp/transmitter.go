@@ -180,7 +180,7 @@ type ShortMessage struct {
 	Src      string
 	Dst      string
 	DstList  []string // List of destination addreses for submit multi
-	DLs      []string //List if destribution list for submit multi
+	DLs      []string // List if destribution list for submit multi
 	Text     pdutext.Codec
 	Validity time.Duration
 	Register pdufield.DeliverySetting

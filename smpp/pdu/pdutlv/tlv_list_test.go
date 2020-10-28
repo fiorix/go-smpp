@@ -1,8 +1,8 @@
 package pdutlv
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 )
 
 func TestDecodeTLV(t *testing.T) {
@@ -31,7 +31,7 @@ func TestDecodeTLV(t *testing.T) {
 
 func TestDecodeTLV_Error(t *testing.T) {
 	want := []byte("hello")
-	b := bytes.NewBuffer([]byte{ 0x00, 0x05, 0x00, 0x08 })
+	b := bytes.NewBuffer([]byte{0x00, 0x05, 0x00, 0x08})
 	b.Write(want)
 
 	m, err := DecodeTLV(b)
