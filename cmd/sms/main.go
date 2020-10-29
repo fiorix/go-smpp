@@ -64,7 +64,7 @@ func main() {
 		cmdShortMessage,
 		cmdQueryMessage,
 	}
-	app.Run(os.Args)
+	_ = app.Run(os.Args)
 }
 
 var cmdShortMessage = cli.Command{
@@ -144,7 +144,9 @@ var cmdShortMessage = cli.Command{
 		}
 		log.Println("Connecting...")
 		tx := newTransmitter(c)
-		defer tx.Close()
+		defer func() {
+			_ = tx.Close()
+		}()
 		log.Println("Connected to", tx.Addr)
 		sender := c.Args()[0]
 		recipient := c.Args()[1]
@@ -197,7 +199,9 @@ var cmdQueryMessage = cli.Command{
 		}
 		log.Println("Connecting...")
 		tx := newTransmitter(c)
-		defer tx.Close()
+		defer func() {
+			_ = tx.Close()
+		}()
 		log.Println("Connected to", tx.Addr)
 		sender, msgid := c.Args()[0], c.Args()[1]
 		log.Printf("Command: query %q %q", sender, msgid)
@@ -228,7 +232,7 @@ func newTransmitter(c *cli.Context) *smpp.Transmitter {
 	}
 	if c.GlobalBool("tls") {
 		host, _, _ := net.SplitHostPort(tx.Addr)
-		tx.TLS = &tls.Config{
+		tx.TLS = &tls.Config{ //nolint:gosec
 			ServerName: host,
 		}
 		if c.GlobalBool("precaire") {
@@ -236,9 +240,7 @@ func newTransmitter(c *cli.Context) *smpp.Transmitter {
 		}
 	}
 	conn := <-tx.Bind()
-	switch conn.Status() {
-	case smpp.Connected:
-	default:
+	if conn.Status() != smpp.Connected {
 		log.Fatalln("Connection failed:", conn.Error())
 	}
 	return tx

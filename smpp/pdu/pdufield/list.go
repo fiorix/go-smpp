@@ -6,6 +6,7 @@ package pdufield
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -18,6 +19,7 @@ type List []Name
 // If the ShortMessage field is present, and DataCoding as well,
 // we attempt to decode text automatically. See pdutext package
 // for more information.
+//nolint:gocyclo
 func (l List) Decode(r *bytes.Buffer) (Map, error) {
 	var (
 		unsuccessCount, numDest, udhLength, smLength int
@@ -43,7 +45,7 @@ loop:
 			SystemType,
 			ValidityPeriod:
 			b, err := r.ReadBytes(0x00)
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break loop
 			}
 			if err != nil {
@@ -69,7 +71,7 @@ loop:
 			SourceAddrTON,
 			SMLength:
 			b, err := r.ReadByte()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break loop
 			}
 			if err != nil {
@@ -92,7 +94,7 @@ loop:
 				continue
 			}
 			b, err := r.ReadByte()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break loop
 			}
 			if err != nil {
@@ -110,7 +112,7 @@ loop:
 				var udh UDH
 				// Read IEI
 				b, err := r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -119,7 +121,7 @@ loop:
 				udh.IEI = Fixed{Data: b}
 				// Read IELength
 				b, err = r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -142,7 +144,7 @@ loop:
 				var dest DestSme
 				// Read DestFlag
 				b, err := r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -151,7 +153,7 @@ loop:
 				dest.Flag = Fixed{Data: b}
 				// Read Ton
 				b, err = r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -160,7 +162,7 @@ loop:
 				dest.Ton = Fixed{Data: b}
 				// Read npi
 				b, err = r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -169,7 +171,7 @@ loop:
 				dest.Npi = Fixed{Data: b}
 				// Read address
 				bt, err := r.ReadBytes(0x00)
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -185,7 +187,7 @@ loop:
 				var uns UnSme
 				// Read Ton
 				b, err := r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -194,7 +196,7 @@ loop:
 				uns.Ton = Fixed{Data: b}
 				// Read npi
 				b, err = r.ReadByte()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {
@@ -203,7 +205,7 @@ loop:
 				uns.Npi = Fixed{Data: b}
 				// Read address
 				bt, err := r.ReadBytes(0x00)
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break loop
 				}
 				if err != nil {

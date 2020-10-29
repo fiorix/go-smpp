@@ -81,7 +81,7 @@ func (pdu *codec) SerializeTo(w io.Writer) error {
 	for _, k := range pdu.FieldList() {
 		f, ok := pdu.f[k]
 		if !ok {
-			pdu.f.Set(k, nil)
+			_ = pdu.f.Set(k, nil)
 			f = pdu.f[k]
 		}
 		if err := f.SerializeTo(&b); err != nil {

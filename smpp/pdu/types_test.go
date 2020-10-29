@@ -24,9 +24,9 @@ func TestBind(t *testing.T) {
 	}
 	pdu := NewBindTransmitter()
 	f := pdu.Fields()
-	f.Set(pdufield.SystemID, "smppclient1")
-	f.Set(pdufield.Password, "password")
-	f.Set(pdufield.InterfaceVersion, 0x34)
+	_ = f.Set(pdufield.SystemID, "smppclient1")
+	_ = f.Set(pdufield.Password, "password")
+	_ = f.Set(pdufield.InterfaceVersion, 0x34)
 	pdu.Header().Seq = 1
 	var b bytes.Buffer
 	if err := pdu.SerializeTo(&b); err != nil {

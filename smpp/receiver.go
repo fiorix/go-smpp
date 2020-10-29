@@ -109,9 +109,9 @@ func (r *Receiver) Bind() <-chan ConnStatus {
 func (r *Receiver) bindFunc(c Conn) error {
 	p := pdu.NewBindReceiver()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, r.User)
-	f.Set(pdufield.Password, r.Passwd)
-	f.Set(pdufield.SystemType, r.SystemType)
+	_ = f.Set(pdufield.SystemID, r.User)
+	_ = f.Set(pdufield.Password, r.Passwd)
+	_ = f.Set(pdufield.SystemType, r.SystemType)
 	r.AddressRange.SetFields(f)
 	resp, err := bind(c, p)
 	if err != nil {
@@ -166,7 +166,7 @@ loop:
 
 		if p.Header().ID == pdu.DeliverSMID && autoRespondDeliver { // Send DeliverSMResp
 			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
-			r.cl.Write(pResp)
+			_ = r.cl.Write(pResp)
 		}
 
 		if r.MergeInterval == 0 { // Handle the PDU if merging is not needed
@@ -234,7 +234,7 @@ loop:
 					buf.Write(body.Bytes())
 				}
 
-				p.Fields().Set(pdufield.ShortMessage, buf.Bytes())
+				_ = p.Fields().Set(pdufield.ShortMessage, buf.Bytes())
 
 				// Handle
 				r.Handler(p)

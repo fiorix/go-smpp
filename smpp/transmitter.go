@@ -69,7 +69,7 @@ type tx struct {
 // Any commands (e.g. Submit) attempted on a dead connection will
 // return ErrNotConnected.
 func (t *Transmitter) Bind() <-chan ConnStatus {
-	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	t.r = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	t.cl.Lock()
 	defer t.cl.Unlock()
 	if t.cl.client != nil {
@@ -99,9 +99,9 @@ func (t *Transmitter) Bind() <-chan ConnStatus {
 func (t *Transmitter) bindFunc(c Conn) error {
 	p := pdu.NewBindTransmitter()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, t.User)
-	f.Set(pdufield.Password, t.Passwd)
-	f.Set(pdufield.SystemType, t.SystemType)
+	_ = f.Set(pdufield.SystemID, t.User)
+	_ = f.Set(pdufield.Password, t.Passwd)
+	_ = f.Set(pdufield.SystemType, t.SystemType)
 	t.AddressRange.SetFields(f)
 
 	resp, err := bind(c, p)
@@ -134,7 +134,7 @@ func (t *Transmitter) handlePDU(f HandlerFunc) {
 		}
 		if p.Header().ID == pdu.DeliverSMID { // Send DeliverSMResp
 			pResp := pdu.NewDeliverSMRespSeq(p.Header().Seq)
-			t.cl.Write(pResp)
+			_ = t.cl.Write(pResp)
 		}
 	}
 	t.tx.Lock()
@@ -236,15 +236,15 @@ func (sm *ShortMessage) NumbUnsuccess() (int, error) {
 	sm.resp.Lock()
 	defer sm.resp.Unlock()
 	if sm.resp.p == nil {
-		return 0, errors.New("Response PDU not available")
+		return 0, errors.New("response PDU not available")
 	}
 	f := sm.resp.p.Fields()[pdufield.NoUnsuccess]
 	if f == nil {
-		return 0, errors.New("Response PDU does not contain NoUnsuccess field")
+		return 0, errors.New("response PDU does not contain NoUnsuccess field")
 	}
 	i, err := strconv.Atoi(f.String())
 	if err != nil {
-		return 0, fmt.Errorf("Failed to convert PDU value to string, error: %s", err.Error())
+		return 0, fmt.Errorf("failed to convert PDU value to string, error: %w", err)
 	}
 	return i, nil
 }
@@ -257,11 +257,11 @@ func (sm *ShortMessage) UnsuccessSmes() ([]UnsucessDest, error) {
 	sm.resp.Lock()
 	defer sm.resp.Unlock()
 	if sm.resp.p == nil {
-		return nil, errors.New("Response PDU not available")
+		return nil, errors.New("response PDU not available")
 	}
 	f := sm.resp.p.Fields()[pdufield.UnsuccessSme]
 	if f == nil {
-		return nil, errors.New("Response PDU does not contain UnsuccessSme field")
+		return nil, errors.New("response PDU does not contain UnsuccessSme field")
 	}
 	usl, ok := f.(*pdufield.UnSmeList)
 	if ok {
@@ -271,7 +271,7 @@ func (sm *ShortMessage) UnsuccessSmes() ([]UnsucessDest, error) {
 		}
 		return udl, nil
 	}
-	return nil, errors.New("Cannot convert PDU field to UnSmeList")
+	return nil, errors.New("cannot convert PDU field to UnSmeList")
 }
 
 func (t *Transmitter) do(p pdu.Body) (*tx, error) {
@@ -337,7 +337,7 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 		maxLen = 132 // to avoid a character being split between payloads
 	}
 	rawMsg := sm.Text.Encode()
-	countParts := int((len(rawMsg)-1)/maxLen) + 1
+	countParts := (len(rawMsg)-1)/maxLen + 1
 
 	t.rMutex.Lock()
 	rn := uint16(t.r.Intn(0xFFFF))
@@ -353,29 +353,29 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 		UDHHeader[6] = uint8(i + 1) // current message part
 		p := pdu.NewSubmitSM(sm.TLVFields)
 		f := p.Fields()
-		f.Set(pdufield.SourceAddr, sm.Src)
-		f.Set(pdufield.DestinationAddr, sm.Dst)
+		_ = f.Set(pdufield.SourceAddr, sm.Src)
+		_ = f.Set(pdufield.DestinationAddr, sm.Dst)
 		if i != countParts-1 {
-			f.Set(pdufield.ShortMessage, pdutext.Raw(append(UDHHeader, rawMsg[i*maxLen:(i+1)*maxLen]...)))
+			_ = f.Set(pdufield.ShortMessage, pdutext.Raw(append(UDHHeader, rawMsg[i*maxLen:(i+1)*maxLen]...)))
 		} else {
-			f.Set(pdufield.ShortMessage, pdutext.Raw(append(UDHHeader, rawMsg[i*maxLen:]...)))
+			_ = f.Set(pdufield.ShortMessage, pdutext.Raw(append(UDHHeader, rawMsg[i*maxLen:]...)))
 		}
-		f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
+		_ = f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
 		if sm.Validity != time.Duration(0) {
-			f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
+			_ = f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
 		}
-		f.Set(pdufield.ServiceType, sm.ServiceType)
-		f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
-		f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
-		f.Set(pdufield.DestAddrTON, sm.DestAddrTON)
-		f.Set(pdufield.DestAddrNPI, sm.DestAddrNPI)
-		f.Set(pdufield.ESMClass, 0x40)
-		f.Set(pdufield.ProtocolID, sm.ProtocolID)
-		f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
-		f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
-		f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
-		f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
-		f.Set(pdufield.DataCoding, uint8(sm.Text.Type()))
+		_ = f.Set(pdufield.ServiceType, sm.ServiceType)
+		_ = f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
+		_ = f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
+		_ = f.Set(pdufield.DestAddrTON, sm.DestAddrTON)
+		_ = f.Set(pdufield.DestAddrNPI, sm.DestAddrNPI)
+		_ = f.Set(pdufield.ESMClass, 0x40)
+		_ = f.Set(pdufield.ProtocolID, sm.ProtocolID)
+		_ = f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
+		_ = f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
+		_ = f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
+		_ = f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
+		_ = f.Set(pdufield.DataCoding, uint8(sm.Text.Type()))
 		resp, err := t.do(p)
 		if err != nil {
 			return nil, err
@@ -401,26 +401,26 @@ func (t *Transmitter) SubmitLongMsg(sm *ShortMessage) (*ShortMessage, error) {
 
 func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) (*ShortMessage, error) {
 	f := p.Fields()
-	f.Set(pdufield.SourceAddr, sm.Src)
-	f.Set(pdufield.DestinationAddr, sm.Dst)
-	f.Set(pdufield.ShortMessage, sm.Text)
-	f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
+	_ = f.Set(pdufield.SourceAddr, sm.Src)
+	_ = f.Set(pdufield.DestinationAddr, sm.Dst)
+	_ = f.Set(pdufield.ShortMessage, sm.Text)
+	_ = f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
 	// Check if the message has validity set.
 	if sm.Validity != time.Duration(0) {
-		f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
+		_ = f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
 	}
-	f.Set(pdufield.ServiceType, sm.ServiceType)
-	f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
-	f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
-	f.Set(pdufield.DestAddrTON, sm.DestAddrTON)
-	f.Set(pdufield.DestAddrNPI, sm.DestAddrNPI)
-	f.Set(pdufield.ESMClass, sm.ESMClass)
-	f.Set(pdufield.ProtocolID, sm.ProtocolID)
-	f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
-	f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
-	f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
-	f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
-	f.Set(pdufield.DataCoding, dataCoding)
+	_ = f.Set(pdufield.ServiceType, sm.ServiceType)
+	_ = f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
+	_ = f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
+	_ = f.Set(pdufield.DestAddrTON, sm.DestAddrTON)
+	_ = f.Set(pdufield.DestAddrNPI, sm.DestAddrNPI)
+	_ = f.Set(pdufield.ESMClass, sm.ESMClass)
+	_ = f.Set(pdufield.ProtocolID, sm.ProtocolID)
+	_ = f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
+	_ = f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
+	_ = f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
+	_ = f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
+	_ = f.Set(pdufield.DataCoding, dataCoding)
 	resp, err := t.do(p)
 	if err != nil {
 		return nil, err
@@ -443,7 +443,7 @@ func (t *Transmitter) submitMsg(sm *ShortMessage, p pdu.Body, dataCoding uint8) 
 func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding uint8) (*ShortMessage, error) {
 	numberOfDest := len(sm.DstList) + len(sm.DLs) // TODO: Validate numbers and lists according to size
 	if numberOfDest > MaxDestinationAddress {
-		return nil, fmt.Errorf("Error: Max number of destination addresses allowed is %d, trying to send to %d",
+		return nil, fmt.Errorf("error: Max number of destination addresses allowed is %d, trying to send to %d",
 			MaxDestinationAddress, numberOfDest)
 	}
 	// Put destination addresses and lists inside an byte array
@@ -452,8 +452,8 @@ func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding ui
 	for _, destAddr := range sm.DstList {
 		// 1 - SME Address
 		bArray = append(bArray, byte(0x01))
-		bArray = append(bArray, byte(sm.DestAddrTON))
-		bArray = append(bArray, byte(sm.DestAddrNPI))
+		bArray = append(bArray, sm.DestAddrTON)
+		bArray = append(bArray, sm.DestAddrNPI)
 		bArray = append(bArray, []byte(destAddr)...)
 		// null terminator
 		bArray = append(bArray, byte(0x00))
@@ -469,25 +469,25 @@ func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding ui
 	}
 
 	f := p.Fields()
-	f.Set(pdufield.SourceAddr, sm.Src)
-	f.Set(pdufield.DestinationList, bArray)
-	f.Set(pdufield.ShortMessage, sm.Text)
-	f.Set(pdufield.NumberDests, uint8(numberOfDest))
-	f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
+	_ = f.Set(pdufield.SourceAddr, sm.Src)
+	_ = f.Set(pdufield.DestinationList, bArray)
+	_ = f.Set(pdufield.ShortMessage, sm.Text)
+	_ = f.Set(pdufield.NumberDests, uint8(numberOfDest))
+	_ = f.Set(pdufield.RegisteredDelivery, uint8(sm.Register))
 	// Check if the message has validity set.
 	if sm.Validity != time.Duration(0) {
-		f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
+		_ = f.Set(pdufield.ValidityPeriod, convertValidity(sm.Validity))
 	}
-	f.Set(pdufield.ServiceType, sm.ServiceType)
-	f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
-	f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
-	f.Set(pdufield.ESMClass, sm.ESMClass)
-	f.Set(pdufield.ProtocolID, sm.ProtocolID)
-	f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
-	f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
-	f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
-	f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
-	f.Set(pdufield.DataCoding, dataCoding)
+	_ = f.Set(pdufield.ServiceType, sm.ServiceType)
+	_ = f.Set(pdufield.SourceAddrTON, sm.SourceAddrTON)
+	_ = f.Set(pdufield.SourceAddrNPI, sm.SourceAddrNPI)
+	_ = f.Set(pdufield.ESMClass, sm.ESMClass)
+	_ = f.Set(pdufield.ProtocolID, sm.ProtocolID)
+	_ = f.Set(pdufield.PriorityFlag, sm.PriorityFlag)
+	_ = f.Set(pdufield.ScheduleDeliveryTime, sm.ScheduleDeliveryTime)
+	_ = f.Set(pdufield.ReplaceIfPresentFlag, sm.ReplaceIfPresentFlag)
+	_ = f.Set(pdufield.SMDefaultMsgID, sm.SMDefaultMsgID)
+	_ = f.Set(pdufield.DataCoding, dataCoding)
 	resp, err := t.do(p)
 	if err != nil {
 		return nil, err
@@ -520,10 +520,10 @@ type QueryResp struct {
 func (t *Transmitter) QuerySM(src, msgid string, srcTON, srcNPI uint8) (*QueryResp, error) {
 	p := pdu.NewQuerySM()
 	f := p.Fields()
-	f.Set(pdufield.SourceAddr, src)
-	f.Set(pdufield.SourceAddrTON, srcTON)
-	f.Set(pdufield.SourceAddrNPI, srcNPI)
-	f.Set(pdufield.MessageID, msgid)
+	_ = f.Set(pdufield.SourceAddr, src)
+	_ = f.Set(pdufield.SourceAddrTON, srcTON)
+	_ = f.Set(pdufield.SourceAddrNPI, srcNPI)
+	_ = f.Set(pdufield.MessageID, msgid)
 
 	resp, err := t.do(p)
 	if err != nil {

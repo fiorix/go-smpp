@@ -91,7 +91,7 @@ func (srv *Server) Close() {
 	if srv.l == nil {
 		panic("smpptest: server is not started")
 	}
-	srv.l.Close()
+	_ = srv.l.Close()
 }
 
 // Serve accepts new clients and handle them by authenticating the
@@ -112,15 +112,17 @@ func (srv *Server) Serve() {
 // BroadcastMessage broadcasts a test PDU to the all bound clients
 func (srv *Server) BroadcastMessage(p pdu.Body) {
 	for i := range srv.conns {
-		srv.conns[i].Write(p)
+		_ = srv.conns[i].Write(p)
 	}
 }
 
 // handle new clients.
 func (srv *Server) handle(c *conn) {
-	defer c.Close()
+	defer func() {
+		_ = c.Close()
+	}()
 	if err := srv.auth(c); err != nil {
-		if err != io.EOF {
+		if !errors.Is(err, io.EOF) {
 			log.Println("smpptest: server auth failed:", err)
 		}
 		return
@@ -128,7 +130,7 @@ func (srv *Server) handle(c *conn) {
 	for {
 		p, err := c.Read()
 		if err != nil {
-			if err != io.EOF {
+			if !errors.Is(err, io.EOF) {
 				log.Println("smpptest: read failed:", err)
 			}
 			break
@@ -166,7 +168,7 @@ func (srv *Server) auth(c *conn) error {
 	if passwd.String() != srv.Passwd {
 		return errors.New("invalid passwd")
 	}
-	resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
+	_ = resp.Fields().Set(pdufield.SystemID, DefaultSystemID)
 
 	return c.Write(resp)
 }
@@ -184,5 +186,5 @@ func EchoHandler(cli Conn, m pdu.Body) {
 	//     cli.Write(resp)
 	//
 	// We just echo m back:
-	cli.Write(m)
+	_ = cli.Write(m)
 }

@@ -5,6 +5,7 @@
 package smpp_test
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -19,8 +20,7 @@ import (
 
 func ExampleReceiver() {
 	f := func(p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.DeliverSMID:
+		if p.Header().ID == pdu.DeliverSMID {
 			f := p.Fields()
 			src := f[pdufield.SourceAddr]
 			dst := f[pdufield.DestinationAddr]
@@ -37,7 +37,7 @@ func ExampleReceiver() {
 	}
 	// Create persistent connection.
 	conn := r.Bind()
-	time.AfterFunc(10*time.Second, func() { r.Close() })
+	time.AfterFunc(10*time.Second, func() { _ = r.Close() })
 	// Print connection status (Connected, Disconnected, etc).
 	for c := range conn {
 		log.Println("SMPP connection status:", c.Status())
@@ -69,8 +69,7 @@ func ExampleTransmitter() {
 
 func ExampleTransceiver() {
 	f := func(p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.DeliverSMID:
+		if p.Header().ID == pdu.DeliverSMID {
 			f := p.Fields()
 			src := f[pdufield.SourceAddr]
 			dst := f[pdufield.DestinationAddr]
@@ -101,7 +100,7 @@ func ExampleTransceiver() {
 			Text:     pdutext.Raw(r.FormValue("text")),
 			Register: pdufield.FinalDeliveryReceipt,
 		})
-		if err == smpp.ErrNotConnected {
+		if errors.Is(err, smpp.ErrNotConnected) {
 			http.Error(w, "Oops.", http.StatusServiceUnavailable)
 			return
 		}
@@ -109,7 +108,7 @@ func ExampleTransceiver() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		io.WriteString(w, sm.RespID())
+		_, _ = io.WriteString(w, sm.RespID())
 	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

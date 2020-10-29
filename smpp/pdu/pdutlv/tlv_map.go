@@ -34,9 +34,9 @@ func (m Map) Set(t Tag, v interface{}) error {
 		}
 		m[t] = NewTLV(t, value)
 	case []byte:
-		m[t] = NewTLV(t, []byte(v.([]byte)))
+		m[t] = NewTLV(t, v.([]byte))
 	case Body:
-		m[t] = v.(Body)
+		m[t], _ = v.(Body)
 	default:
 		return fmt.Errorf("unsupported Tag-Length-Value field data: %#v", v)
 	}

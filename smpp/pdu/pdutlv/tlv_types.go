@@ -24,7 +24,7 @@ type Tag uint16
 
 // Hex returns hexadecimal representation of tag
 func (t Tag) Hex() string {
-	bin := make([]byte, 2, 2)
+	bin := make([]byte, 2)
 	binary.BigEndian.PutUint16(bin, uint16(t))
 	return hex.EncodeToString(bin)
 }

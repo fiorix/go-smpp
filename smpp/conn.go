@@ -55,7 +55,7 @@ type Closer interface {
 
 // Dial dials to the SMPP server and returns a Conn, or error.
 // TLS is only used if provided.
-func Dial(addr string, TLS *tls.Config) (Conn, error) {
+func Dial(addr string, cfg *tls.Config) (Conn, error) {
 	if addr == "" {
 		addr = "localhost:2775"
 	}
@@ -63,8 +63,8 @@ func Dial(addr string, TLS *tls.Config) (Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	if TLS != nil {
-		fd = tls.Client(fd, TLS)
+	if cfg != nil {
+		fd = tls.Client(fd, cfg)
 	}
 	c := &conn{
 		rwc: fd,
@@ -121,7 +121,7 @@ type connSwitch struct {
 func (cs *connSwitch) Set(c Conn) {
 	cs.mu.Lock()
 	if cs.c != nil {
-		cs.c.Close()
+		_ = cs.c.Close()
 	}
 	cs.c = c
 	cs.mu.Unlock()

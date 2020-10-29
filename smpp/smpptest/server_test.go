@@ -22,14 +22,16 @@ func TestServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer c.Close()
+	defer func() {
+		_ = c.Close()
+	}()
 	rw := newConn(c)
 	// bind
 	p := pdu.NewBindTransmitter()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, "client")
-	f.Set(pdufield.Password, "secret")
-	f.Set(pdufield.InterfaceVersion, 0x34)
+	_ = f.Set(pdufield.SystemID, "client")
+	_ = f.Set(pdufield.Password, "secret")
+	_ = f.Set(pdufield.InterfaceVersion, 0x34)
 	if err = rw.Write(p); err != nil {
 		t.Fatal(err)
 	}
@@ -48,9 +50,9 @@ func TestServer(t *testing.T) {
 	// submit_sm
 	p = pdu.NewSubmitSM(nil)
 	f = p.Fields()
-	f.Set(pdufield.SourceAddr, "foobar")
-	f.Set(pdufield.DestinationAddr, "bozo")
-	f.Set(pdufield.ShortMessage, pdutext.Latin1("Lorem ipsum"))
+	_ = f.Set(pdufield.SourceAddr, "foobar")
+	_ = f.Set(pdufield.DestinationAddr, "bozo")
+	_ = f.Set(pdufield.ShortMessage, pdutext.Latin1("Lorem ipsum"))
 	if err = rw.Write(p); err != nil {
 		t.Fatal(err)
 	}
@@ -77,9 +79,9 @@ func TestServer(t *testing.T) {
 	// submit_sm + tlv field
 	p = pdu.NewSubmitSM(pdutlv.Fields{pdutlv.TagReceiptedMessageID: pdutlv.CString("xyz123")})
 	f = p.Fields()
-	f.Set(pdufield.SourceAddr, "foobar")
-	f.Set(pdufield.DestinationAddr, "bozo")
-	f.Set(pdufield.ShortMessage, pdutext.Latin1("Lorem ipsum"))
+	_ = f.Set(pdufield.SourceAddr, "foobar")
+	_ = f.Set(pdufield.DestinationAddr, "bozo")
+	_ = f.Set(pdufield.ShortMessage, pdutext.Latin1("Lorem ipsum"))
 	if err = rw.Write(p); err != nil {
 		t.Fatal(err)
 	}

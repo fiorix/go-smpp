@@ -19,7 +19,7 @@ func TestFixed(t *testing.T) {
 		t.Fatalf("unexpected type: want uint8, have %#v", v)
 	}
 	ws := strconv.Itoa(0x34)
-	if v := f.String(); v != string(ws) {
+	if v := f.String(); v != ws {
 		t.Fatalf("unexpected string: want %q, have %q", ws, v)
 	}
 	wb := []byte{0x34}
@@ -107,7 +107,7 @@ func TestDestSme(t *testing.T) {
 	if v, ok := f.Raw().([]byte); !ok {
 		t.Fatalf("unexpected type: want []byte, have %#v", v)
 	}
-	if v := f.String(); v != string(strRep) {
+	if v := f.String(); v != strRep {
 		t.Fatalf("unexpected string: want %q have %q", strRep, v)
 	}
 	if v := f.Bytes(); !bytes.Equal(want, v) {
@@ -144,7 +144,7 @@ func TestDestSmeList(t *testing.T) {
 	if v, ok := f.Raw().([]byte); !ok {
 		t.Fatalf("unexpected type: want []byte, have %#v", v)
 	}
-	if v := f.String(); v != string(strRep) {
+	if v := f.String(); v != strRep {
 		t.Fatalf("unexpected string: want %q have %q", strRep, v)
 	}
 	if v := f.Bytes(); !bytes.Equal(bytesRep, v) {
@@ -174,7 +174,7 @@ func TestUnSme(t *testing.T) {
 	destAddr := Variable{Data: []byte("123")}
 	errCode := Variable{Data: err}
 	fieldLen := ton.Len() + npi.Len() + destAddr.Len() + errCode.Len()
-	strRep := ton.String() + "," + npi.String() + "," + destAddr.String() + "," + strconv.Itoa(17) // convertion to uint
+	strRep := ton.String() + "," + npi.String() + "," + destAddr.String() + "," + strconv.Itoa(17) // conversion to uint
 
 	f := UnSme{Ton: ton, Npi: npi, DestAddr: destAddr, ErrCode: errCode}
 	if f.Len() != fieldLen {
@@ -183,7 +183,7 @@ func TestUnSme(t *testing.T) {
 	if v, ok := f.Raw().([]byte); !ok {
 		t.Fatalf("unexpected type: want []byte, have %#v", v)
 	}
-	if v := f.String(); v != string(strRep) {
+	if v := f.String(); v != strRep {
 		t.Fatalf("unexpected string: want %q have %q", strRep, v)
 	}
 	if v := f.Bytes(); !bytes.Equal(want, v) {
@@ -221,7 +221,7 @@ func TestUnSmeList(t *testing.T) {
 	if v, ok := f.Raw().([]byte); !ok {
 		t.Fatalf("unexpected type: want []byte, have %#v", v)
 	}
-	if v := f.String(); v != string(strRep) {
+	if v := f.String(); v != strRep {
 		t.Fatalf("unexpected string: want %q have %q", strRep, v)
 	}
 	if v := f.Bytes(); !bytes.Equal(bytesRep, v) {

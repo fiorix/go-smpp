@@ -17,7 +17,7 @@ func TestEncode(t *testing.T) {
 	}{
 		{Latin1Type, []byte("áéíóú moço"), []byte("\xe1\xe9\xed\xf3\xfa mo\xe7o")},
 		{UCS2Type, []byte("áéíóú moço"), []byte("\x00\xe1\x00\xe9\x00\xed\x00\xf3\x00\xfa\x00 \x00m\x00o\x00\xe7\x00o")},
-		{ISO88595Type, []byte(iso88595UTF8Bytes), []byte(iso88595Bytes)},
+		{ISO88595Type, iso88595UTF8Bytes, iso88595Bytes},
 	}
 	for _, tc := range test {
 		have := Encode(tc.typ, tc.text)
@@ -36,7 +36,7 @@ func TestDecode(t *testing.T) {
 	}{
 		{Latin1Type, []byte("áéíóú moço"), []byte("\xe1\xe9\xed\xf3\xfa mo\xe7o")},
 		{UCS2Type, []byte("áéíóú moço"), []byte("\x00\xe1\x00\xe9\x00\xed\x00\xf3\x00\xfa\x00 \x00m\x00o\x00\xe7\x00o")},
-		{ISO88595Type, []byte(iso88595UTF8Bytes), []byte(iso88595Bytes)},
+		{ISO88595Type, iso88595UTF8Bytes, iso88595Bytes},
 	}
 	for _, tc := range test {
 		have := Decode(tc.typ, tc.text)

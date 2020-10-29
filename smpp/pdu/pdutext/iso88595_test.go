@@ -21,8 +21,8 @@ var (
 )
 
 func TestISO88595Encoder(t *testing.T) {
-	want := []byte(iso88595Bytes)
-	text := []byte(iso88595UTF8Bytes)
+	want := iso88595Bytes
+	text := iso88595UTF8Bytes
 	s := ISO88595(text)
 	if s.Type() != iso88595TypeCode {
 		t.Fatalf("Unexpected data type; want %d, have %d", iso88595TypeCode, s.Type())
@@ -34,8 +34,8 @@ func TestISO88595Encoder(t *testing.T) {
 }
 
 func TestISO88595Decoder(t *testing.T) {
-	want := []byte(iso88595UTF8Bytes)
-	text := []byte(iso88595Bytes)
+	want := iso88595UTF8Bytes
+	text := iso88595Bytes
 	s := ISO88595(text)
 	if s.Type() != iso88595TypeCode {
 		t.Fatalf("Unexpected data type; want %d, have %d", iso88595TypeCode, s.Type())

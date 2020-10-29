@@ -19,12 +19,11 @@ import (
 func TestTransceiver(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.SubmitSMID:
+		if p.Header().ID == pdu.SubmitSMID {
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(r)
+			_ = r.Fields().Set(pdufield.MessageID, "foobar")
+			_ = c.Write(r)
 			pf := p.Fields()
 			rd := pf[pdufield.RegisteredDelivery]
 			if rd.Bytes()[0] == 0 {
@@ -32,11 +31,11 @@ func TestTransceiver(t *testing.T) {
 			}
 			r = pdu.NewDeliverSM()
 			f := r.Fields()
-			f.Set(pdufield.SourceAddr, pf[pdufield.SourceAddr])
-			f.Set(pdufield.DestinationAddr, pf[pdufield.DestinationAddr])
-			f.Set(pdufield.ShortMessage, pf[pdufield.ShortMessage])
-			c.Write(r)
-		default:
+			_ = f.Set(pdufield.SourceAddr, pf[pdufield.SourceAddr])
+			_ = f.Set(pdufield.DestinationAddr, pf[pdufield.DestinationAddr])
+			_ = f.Set(pdufield.ShortMessage, pf[pdufield.ShortMessage])
+			_ = c.Write(r)
+		} else {
 			smpptest.EchoHandler(c, p)
 		}
 	}
@@ -56,7 +55,9 @@ func TestTransceiver(t *testing.T) {
 		Handler:     receiver,
 		RateLimiter: rate.NewLimiter(rate.Limit(10), 1),
 	}
-	defer tc.Close()
+	defer func() {
+		_ = tc.Close()
+	}()
 	conn := <-tc.Bind()
 	switch conn.Status() {
 	case Connected:

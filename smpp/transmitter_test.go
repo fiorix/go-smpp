@@ -5,6 +5,7 @@
 package smpp
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -18,13 +19,12 @@ import (
 func TestShortMessage(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.SubmitSMID:
+		if p.Header().ID == pdu.SubmitSMID {
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(r)
-		default:
+			_ = r.Fields().Set(pdufield.MessageID, "foobar")
+			_ = c.Write(r)
+		} else {
 			smpptest.EchoHandler(c, p)
 		}
 	}
@@ -36,11 +36,11 @@ func TestShortMessage(t *testing.T) {
 		Passwd:      smpptest.DefaultPasswd,
 		RateLimiter: rate.NewLimiter(rate.Limit(10), 1),
 	}
-	defer tx.Close()
+	defer func() {
+		_ = tx.Close()
+	}()
 	conn := <-tx.Bind()
-	switch conn.Status() {
-	case Connected:
-	default:
+	if conn.Status() != Connected {
 		t.Fatal(conn.Error())
 	}
 	sm, err := tx.Submit(&ShortMessage{
@@ -68,8 +68,8 @@ func TestShortMessageWindowSize(t *testing.T) {
 		time.Sleep(200 * time.Millisecond)
 		r := pdu.NewSubmitSMResp()
 		r.Header().Seq = p.Header().Seq
-		r.Fields().Set(pdufield.MessageID, "foobar")
-		c.Write(r)
+		_ = r.Fields().Set(pdufield.MessageID, "foobar")
+		_ = c.Write(r)
 	}
 	s.Start()
 	defer s.Close()
@@ -80,7 +80,9 @@ func TestShortMessageWindowSize(t *testing.T) {
 		WindowSize:  2,
 		RespTimeout: time.Second,
 	}
-	defer tx.Close()
+	defer func() {
+		_ = tx.Close()
+	}()
 	conn := <-tx.Bind()
 	switch conn.Status() {
 	case Connected:
@@ -109,7 +111,7 @@ func TestShortMessageWindowSize(t *testing.T) {
 	}
 	nerr := 0
 	for i := 0; i < 3; i++ {
-		if <-errc == ErrMaxWindowSize {
+		if errors.Is(<-errc, ErrMaxWindowSize) {
 			nerr++
 		}
 	}
@@ -121,13 +123,12 @@ func TestShortMessageWindowSize(t *testing.T) {
 func TestLongMessage(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.SubmitSMID:
+		if p.Header().ID == pdu.SubmitSMID {
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(r)
-		default:
+			_ = r.Fields().Set(pdufield.MessageID, "foobar")
+			_ = c.Write(r)
+		} else {
 			smpptest.EchoHandler(c, p)
 		}
 	}
@@ -138,11 +139,11 @@ func TestLongMessage(t *testing.T) {
 		User:   smpptest.DefaultUser,
 		Passwd: smpptest.DefaultPasswd,
 	}
-	defer tx.Close()
+	defer func() {
+		_ = tx.Close()
+	}()
 	conn := <-tx.Bind()
-	switch conn.Status() {
-	case Connected:
-	default:
+	if conn.Status() != Connected {
 		t.Fatal(conn.Error())
 	}
 	sm, err := tx.SubmitLongMsg(&ShortMessage{
@@ -173,17 +174,17 @@ func TestLongMessageAsUCS2(t *testing.T) {
 		case pdu.SubmitSMID:
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
+			_ = r.Fields().Set(pdufield.MessageID, "foobar")
 			smByts := p.Fields()[pdufield.ShortMessage].Bytes()
 			switch pdutext.DataCoding(p.Fields()[pdufield.DataCoding].Raw().(uint8)) {
 			case pdutext.Latin1Type:
-				receivedMsg = receivedMsg + string(pdutext.Latin1(smByts)[7:].Decode())
+				receivedMsg += string(pdutext.Latin1(smByts)[7:].Decode())
 			case pdutext.UCS2Type:
-				receivedMsg = receivedMsg + string(pdutext.UCS2(smByts)[7:].Decode())
+				receivedMsg += string(pdutext.UCS2(smByts)[7:].Decode())
 			default:
-				receivedMsg = receivedMsg + string(smByts[7:])
+				receivedMsg += string(smByts[7:])
 			}
-			c.Write(r)
+			_ = c.Write(r)
 		default:
 			smpptest.EchoHandler(c, p)
 		}
@@ -195,11 +196,11 @@ func TestLongMessageAsUCS2(t *testing.T) {
 		User:   smpptest.DefaultUser,
 		Passwd: smpptest.DefaultPasswd,
 	}
-	defer tx.Close()
+	defer func() {
+		_ = tx.Close()
+	}()
 	conn := <-tx.Bind()
-	switch conn.Status() {
-	case Connected:
-	default:
+	if conn.Status() != Connected {
 		t.Fatal(conn.Error())
 	}
 	sm, err := tx.SubmitLongMsg(&ShortMessage{
@@ -231,9 +232,9 @@ func TestQuerySM(t *testing.T) {
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
 		r := pdu.NewQuerySMResp()
 		r.Header().Seq = p.Header().Seq
-		r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
-		r.Fields().Set(pdufield.MessageState, 2)
-		c.Write(r)
+		_ = r.Fields().Set(pdufield.MessageID, p.Fields()[pdufield.MessageID])
+		_ = r.Fields().Set(pdufield.MessageState, 2)
+		_ = c.Write(r)
 	}
 	s.Start()
 	defer s.Close()
@@ -242,7 +243,9 @@ func TestQuerySM(t *testing.T) {
 		User:   smpptest.DefaultUser,
 		Passwd: smpptest.DefaultPasswd,
 	}
-	defer tx.Close()
+	defer func() {
+		_ = tx.Close()
+	}()
 	conn := <-tx.Bind()
 	switch conn.Status() {
 	case Connected:
@@ -275,15 +278,14 @@ func TestSubmitMulti(t *testing.T) {
 
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.SubmitMultiID:
+		if p.Header().ID == pdu.SubmitMultiID {
 			r := pdu.NewSubmitMultiResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
-			r.Fields().Set(pdufield.NoUnsuccess, uint8(1))
-			r.Fields().Set(pdufield.UnsuccessSme, bArray)
-			c.Write(r)
-		default:
+			_ = r.Fields().Set(pdufield.MessageID, "foobar")
+			_ = r.Fields().Set(pdufield.NoUnsuccess, uint8(1))
+			_ = r.Fields().Set(pdufield.UnsuccessSme, bArray)
+			_ = c.Write(r)
+		} else {
 			smpptest.EchoHandler(c, p)
 		}
 	}
@@ -294,11 +296,11 @@ func TestSubmitMulti(t *testing.T) {
 		User:   smpptest.DefaultUser,
 		Passwd: smpptest.DefaultPasswd,
 	}
-	defer tx.Close()
+	defer func() {
+		_ = tx.Close()
+	}()
 	conn := <-tx.Bind()
-	switch conn.Status() {
-	case Connected:
-	default:
+	if conn.Status() != Connected {
 		t.Fatal(conn.Error())
 	}
 	sm, err := tx.Submit(&ShortMessage{
@@ -332,13 +334,12 @@ func TestSubmitMulti(t *testing.T) {
 func TestNotConnected(t *testing.T) {
 	s := smpptest.NewUnstartedServer()
 	s.Handler = func(c smpptest.Conn, p pdu.Body) {
-		switch p.Header().ID {
-		case pdu.SubmitSMID:
+		if p.Header().ID == pdu.SubmitSMID {
 			r := pdu.NewSubmitSMResp()
 			r.Header().Seq = p.Header().Seq
-			r.Fields().Set(pdufield.MessageID, "foobar")
-			c.Write(r)
-		default:
+			_ = r.Fields().Set(pdufield.MessageID, "foobar")
+			_ = c.Write(r)
+		} else {
 			smpptest.EchoHandler(c, p)
 		}
 	}
@@ -351,12 +352,10 @@ func TestNotConnected(t *testing.T) {
 	}
 	// Open connection and then close it
 	conn := <-tx.Bind()
-	switch conn.Status() {
-	case Connected:
-	default:
+	if conn.Status() != Connected {
 		t.Fatal(conn.Error())
 	}
-	tx.Close()
+	_ = tx.Close()
 	_, err := tx.Submit(&ShortMessage{
 		Src:      "root",
 		Dst:      "foobar",
@@ -364,7 +363,7 @@ func TestNotConnected(t *testing.T) {
 		Validity: 10 * time.Minute,
 		Register: pdufield.NoDeliveryReceipt,
 	})
-	if err != ErrNotConnected {
+	if !errors.Is(err, ErrNotConnected) {
 		t.Fatalf("Error should be not connect, got %s", err.Error())
 	}
 }

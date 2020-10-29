@@ -210,7 +210,7 @@ type DestSmeList struct {
 func (dsl *DestSmeList) Len() int {
 	var ret int
 	for i := range dsl.Data {
-		ret = ret + dsl.Data[i].Len()
+		ret += dsl.Data[i].Len()
 	}
 	return ret
 }
@@ -292,7 +292,7 @@ type UnSmeList struct {
 func (usl *UnSmeList) Len() int {
 	var ret int
 	for i := range usl.Data {
-		ret = ret + usl.Data[i].Len()
+		ret += usl.Data[i].Len()
 	}
 	return ret
 }
@@ -372,7 +372,7 @@ type UDHList struct {
 func (udhl *UDHList) Len() int {
 	var ret int
 	for i := range udhl.Data {
-		ret = ret + udhl.Data[i].Len()
+		ret += udhl.Data[i].Len()
 	}
 	return ret
 }

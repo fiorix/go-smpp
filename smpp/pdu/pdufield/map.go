@@ -31,13 +31,13 @@ func (m Map) Set(k Name, v interface{}) error {
 	case string:
 		m[k] = New(k, []byte(v.(string)))
 	case []byte:
-		m[k] = New(k, []byte(v.([]byte)))
+		m[k] = New(k, v.([]byte))
 	case DeliverySetting:
 		m[k] = New(k, []byte{uint8(v.(DeliverySetting))})
 	case Body:
-		m[k] = v.(Body)
+		m[k] = v.(Body) //nolint:errcheck
 	case pdutext.Codec:
-		c := v.(pdutext.Codec)
+		c := v.(pdutext.Codec) //nolint:errcheck
 		m[k] = New(k, c.Encode())
 		if k == ShortMessage {
 			m[DataCoding] = &Fixed{Data: uint8(c.Type())}

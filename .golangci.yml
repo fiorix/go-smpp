@@ -67,6 +67,19 @@ issues:
         - nakedret
         - typecheck
         - gofmt
+    - path: cmd/
+      linters:
+        - exhaustive
+        - exhaustivestruct
+        - gocritic
+        - gosimple
+    - path: smpp/
+      linters:
+        - exhaustive
+        - exhaustivestruct
+        - gocritic
+        - gosimple
+        - structcheck
 
 run:
   timeout: 10m

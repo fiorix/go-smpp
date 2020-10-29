@@ -17,7 +17,7 @@ func (a *AddressRange) SetFields(f pdufield.Map) {
 		return
 	}
 
-	f.Set(pdufield.AddrNPI, a.NPI)
-	f.Set(pdufield.AddrTON, a.TON)
-	f.Set(pdufield.AddressRange, a.Address)
+	_ = f.Set(pdufield.AddrNPI, a.NPI)
+	_ = f.Set(pdufield.AddrTON, a.TON)
+	_ = f.Set(pdufield.AddressRange, a.Address)
 }

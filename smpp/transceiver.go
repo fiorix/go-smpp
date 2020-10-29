@@ -37,7 +37,7 @@ type Transceiver struct {
 
 // Bind implements the ClientConn interface.
 func (t *Transceiver) Bind() <-chan ConnStatus {
-	t.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	t.r = rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	t.cl.Lock()
 	defer t.cl.Unlock()
 	if t.cl.client != nil {
@@ -67,9 +67,9 @@ func (t *Transceiver) Bind() <-chan ConnStatus {
 func (t *Transceiver) bindFunc(c Conn) error {
 	p := pdu.NewBindTransceiver()
 	f := p.Fields()
-	f.Set(pdufield.SystemID, t.User)
-	f.Set(pdufield.Password, t.Passwd)
-	f.Set(pdufield.SystemType, t.SystemType)
+	_ = f.Set(pdufield.SystemID, t.User)
+	_ = f.Set(pdufield.Password, t.Passwd)
+	_ = f.Set(pdufield.SystemType, t.SystemType)
 	t.AddressRange.SetFields(f)
 
 	resp, err := bind(c, p)
