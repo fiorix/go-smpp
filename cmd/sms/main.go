@@ -17,7 +17,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 
 	"github.com/fiorix/go-smpp/smpp"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
