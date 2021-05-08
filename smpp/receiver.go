@@ -245,6 +245,14 @@ loop:
 	}
 }
 
+// DeliverSMResp will send a DeliverSMResp. It can be used
+// to manually send a DeliverSMResp when you have configured
+// the receiver to not autorespond to all DeliverSM received
+func (r *Receiver) DeliverSMResp(seq uint32) error {
+	pResp := pdu.NewDeliverSMRespSeq(seq)
+	return r.cl.Write(pResp)
+}
+
 func (r *Receiver) mergeCleaner() {
 	timer := time.NewTimer(r.MergeCleanupInterval)
 
