@@ -12,6 +12,8 @@ transformation for LATIN-1 and UCS-2.
 
 It is not fully compliant, there are some TODOs in the code.
 
+Be sure to use `import "/github.com/fiorix/go-smpp/v2"`.
+
 ## Usage
 
 Following is an SMPP client transmitter wrapped by an HTTP server
