@@ -89,6 +89,23 @@ func TestGenericNACK(t *testing.T) {
 	assert.Equal(t, input.TLVFields(), output.TLVFields())
 }
 
+func TestGenericNACKSeq(t *testing.T) {
+	input := NewGenericNACKSeq(42)
+	assert.Equal(t, GenericNACKID, input.Header().ID)
+	assert.Equal(t, uint32(42), input.Header().Seq)
+	assert.Equal(t, pdufield.List{}, input.FieldList())
+
+	var buf bytes.Buffer
+	err := input.SerializeTo(&buf)
+	assert.NoError(t, err)
+
+	output, err := Decode(&buf)
+	assert.NoError(t, err)
+	assert.Equal(t, input.Header(), output.Header())
+	assert.Equal(t, input.Fields(), output.Fields())
+	assert.Equal(t, input.TLVFields(), output.TLVFields())
+}
+
 func TestBindReceiver(t *testing.T) {
 	input := NewBindReceiver()
 	assert.Equal(t, BindReceiverID, input.Header().ID)

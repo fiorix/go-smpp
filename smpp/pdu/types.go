@@ -54,6 +54,13 @@ func NewGenericNACK() Body {
 	return b
 }
 
+// NewGenericNACKSeq creates and initializes a new GenericNACK PDU for a specific seq.
+func NewGenericNACKSeq(seq uint32) Body {
+	b := newGenericNACK(&Header{ID: GenericNACKID, Seq: seq})
+	b.init()
+	return b
+}
+
 // Bind PDU.
 type Bind struct{ *codec }
 
