@@ -11,10 +11,10 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
-	"github.com/fiorix/go-smpp/smpp/smpptest"
+	"github.com/fiorix/go-smpp/v2/smpp/pdu"
+	"github.com/fiorix/go-smpp/v2/smpp/pdu/pdufield"
+	"github.com/fiorix/go-smpp/v2/smpp/pdu/pdutext"
+	"github.com/fiorix/go-smpp/v2/smpp/smpptest"
 )
 
 func TestShortMessage(t *testing.T) {
