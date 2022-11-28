@@ -41,7 +41,7 @@ var packedTests = []struct {
 	{Text: "1234", Buff: []byte{0x31, 0xD9, 0x8C, 0x06}},
 	{Text: "12345", Buff: []byte{0x31, 0xD9, 0x8C, 0x56, 0x03}},
 	{Text: "123456", Buff: []byte{0x31, 0xD9, 0x8C, 0x56, 0xB3, 0x01}},
-	{Text: "1234567", Buff: []byte{0x31, 0xD9, 0x8C, 0x56, 0xB3, 0xDD, 0x00}},
+	{Text: "1234567", Buff: []byte{0x31, 0xD9, 0x8C, 0x56, 0xB3, 0xDD, 0x1A}},
 	{Text: "12345678", Buff: []byte{0x31, 0xD9, 0x8C, 0x56, 0xB3, 0xDD, 0x70}},
 	{Text: "123456789", Buff: []byte{0x31, 0xD9, 0x8C, 0x56, 0xB3, 0xDD, 0x70, 0x39}},
 	{Text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur nec nunc venenatis, ultricies ipsum id, volutpat ante. Sed pretium ac metus a interdum metus.", Buff: []byte("\xCC\xB7\xBC\xDC\x06\xA5\xE1\xF3\x7A\x1B\x44\x7E\xB3\xDF\x72\xD0\x3C\x4D\x07\x85\xDB\x65\x3A\x0B\x34\x7E\xBB\xE7\xE5\x31\xBD\x4C\xAF\xCB\x41\x61\x72\x1A\x9E\x9E\x8F\xD3\xEE\x33\xA8\xCC\x4E\xD3\x5D\xA0\x61\x5D\x1E\x16\xA7\xE9\x75\x39\xC8\x5D\x1E\x83\xDC\x75\xF7\x18\x64\x2F\xBB\xCB\xEE\x30\x3D\x3D\x67\x81\xEA\x6C\xBA\x3C\x3D\x4E\x97\xE7\xA0\x34\x7C\x5E\x6F\x83\xD2\x64\x16\xC8\xFE\x66\xD7\xE9\xF0\x30\x1D\x14\x76\xD3\xCB\x2E\xD0\xB4\x4C\x06\xC1\xE5\x65\x7A\xBA\xDE\x06\x85\xC7\xA0\x76\x99\x5E\x9F\x83\xC2\xA0\xB4\x9B\x5E\x96\x93\xEB\x6D\x50\xBB\x4C\xAF\xCF\x5D")},
@@ -201,6 +201,37 @@ func TestInvalidByte(t *testing.T) {
 		}
 		if err != ErrInvalidByte {
 			t.Fatalf("%2d: expected '%s' but got '%s'", index, ErrInvalidByte, err.Error())
+		}
+	}
+}
+
+func TestExtraCR(t *testing.T) {
+	for _, item := range []struct {
+		name    string
+		content string
+	}{
+		{name: "would have CR", content: "1234567890abcdefghijklm"},
+		{name: "would have CR, last byte is \\r", content: "1234567890abcdefghijkl\r"},
+		{name: "would not have CR, but last byte is 1", content: "123456"},
+		{name: "woud have CR, also has escape", content: "12345678[abcdefghijklmn"},
+		{name: "would not have CR, not have escape", content: "012345678[abcdefghijklmno"},
+	} {
+		encoder := GSM7(true).NewEncoder()
+		es, _, err := transform.Bytes(encoder, []byte(item.content))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// t.Log(es, len(es))
+
+		decoder := GSM7(true).NewDecoder()
+		res, _, err := transform.Bytes(decoder, es)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if string(res) != item.content {
+			t.Fatalf("== %s not equal. %s vs %s", item.name, item.content, string(res))
 		}
 	}
 }
