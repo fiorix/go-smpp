@@ -6,6 +6,7 @@ package pdu
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"sync/atomic"
@@ -119,7 +120,16 @@ func decodeFields(pdu decoder, b []byte) (Body, error) {
 	r := bytes.NewBuffer(b)
 	f, err := l.Decode(r)
 	if err != nil {
-		return nil, err
+		// A response may legitimately come without a body: SMPP 3.4
+		// omits the body of e.g. bind_*_resp and submit_sm_resp when
+		// command_status is non-zero, and some SMSCs do the same on
+		// success. A request has no such allowance, and neither has a
+		// body that stops part-way through its fields.
+		var te *pdufield.TruncatedError
+		if !errors.As(err, &te) || len(b) != 0 || !isResponse(pdu.Header().ID) {
+			return nil, err
+		}
+		f = make(pdufield.Map)
 	}
 	t, err := pdutlv.DecodeTLV(r)
 	if err != nil {
@@ -192,4 +202,10 @@ func Decode(r io.Reader) (Body, error) {
 	default:
 		return nil, fmt.Errorf("unknown PDU type: %#x", hdr.ID)
 	}
+}
+
+// isResponse reports whether id is a response command: bit 31 set, as
+// SMPP 3.4 section 5.1.2.1 defines.
+func isResponse(id ID) bool {
+	return uint32(id)&0x80000000 != 0
 }

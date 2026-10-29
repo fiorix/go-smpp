@@ -10,10 +10,35 @@ import (
 	"io"
 )
 
+// TruncatedError reports a PDU body that ends inside its mandatory
+// fields: Field is the first field that could not be read in full, and
+// Offset is where that field starts in the body. It wraps
+// io.ErrUnexpectedEOF.
+type TruncatedError struct {
+	Field  Name
+	Offset int
+}
+
+func (e *TruncatedError) Error() string {
+	return fmt.Sprintf("pdu body truncated: mandatory field %q at offset %d is incomplete", e.Field, e.Offset)
+}
+
+// Unwrap allows errors.Is(err, io.ErrUnexpectedEOF).
+func (e *TruncatedError) Unwrap() error { return io.ErrUnexpectedEOF }
+
+func truncated(k Name, off int) error {
+	return &TruncatedError{Field: k, Offset: off}
+}
+
 // List is a list of PDU fields.
 type List []Name
 
 // Decode decodes binary data in the given buffer to build a Map.
+//
+// Every field in the list is mandatory. If the buffer ends before the
+// last one has been read in full, Decode returns a *TruncatedError
+// naming the field it could not read, instead of a Map that silently
+// lacks it and every field after it.
 //
 // If the ShortMessage field is present, and DataCoding as well,
 // we attempt to decode text automatically. See pdutext package
@@ -25,8 +50,9 @@ func (l List) Decode(r *bytes.Buffer) (Map, error) {
 		udhiFlag bool
 	)
 	f := make(Map)
-loop:
+	size := r.Len()
 	for _, k := range l {
+		off := size - r.Len()
 		switch k {
 		case
 			AddressRange,
@@ -43,7 +69,7 @@ loop:
 			ValidityPeriod:
 			b, err := r.ReadBytes(0x00)
 			if err == io.EOF {
-				break loop
+				return nil, truncated(k, off)
 			}
 			if err != nil {
 				return nil, err
@@ -73,7 +99,7 @@ loop:
 			SMLength:
 			b, err := r.ReadByte()
 			if err == io.EOF {
-				break loop
+				return nil, truncated(k, off)
 			}
 			if err != nil {
 				return nil, err
@@ -96,7 +122,7 @@ loop:
 			}
 			b, err := r.ReadByte()
 			if err == io.EOF {
-				break loop
+				return nil, truncated(k, off)
 			}
 			if err != nil {
 				return nil, err
@@ -114,7 +140,7 @@ loop:
 				// Read IEI
 				b, err := r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -123,7 +149,7 @@ loop:
 				// Read IELength
 				b, err = r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -135,7 +161,7 @@ loop:
 				udh.IEData = SM{Data: bt}
 				udhList = append(udhList, udh)
 				if len(bt) != l {
-					break loop
+					return nil, truncated(k, off)
 				}
 			}
 			f[k] = &UDHList{Data: udhList}
@@ -146,7 +172,7 @@ loop:
 				// Read DestFlag
 				b, err := r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -155,7 +181,7 @@ loop:
 				// Read Ton
 				b, err = r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -164,7 +190,7 @@ loop:
 				// Read npi
 				b, err = r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -173,7 +199,7 @@ loop:
 				// Read address
 				bt, err := r.ReadBytes(0x00)
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -189,7 +215,7 @@ loop:
 				// Read Ton
 				b, err := r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -198,7 +224,7 @@ loop:
 				// Read npi
 				b, err = r.ReadByte()
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -207,7 +233,7 @@ loop:
 				// Read address
 				bt, err := r.ReadBytes(0x00)
 				if err == io.EOF {
-					break loop
+					return nil, truncated(k, off)
 				}
 				if err != nil {
 					return nil, err
@@ -215,7 +241,7 @@ loop:
 				uns.DestAddr = Variable{Data: bt}
 				// Read error code (4 bytes, big-endian uint32)
 				if r.Len() < 4 {
-					return nil, fmt.Errorf("short read for unsuccess_sme err_code: want 4, have %d", r.Len())
+					return nil, truncated(k, off)
 				}
 				copy(uns.ErrCode[:], r.Next(4))
 				// Add unSme to the list
@@ -234,8 +260,7 @@ loop:
 			}
 			// Check SMLength
 			if r.Len() < smLength {
-				return nil, fmt.Errorf("short read for smlength: want %d, have %d",
-					smLength, r.Len())
+				return nil, truncated(k, off)
 			}
 			f[ShortMessage] = &SM{Data: r.Next(smLength)}
 		}
