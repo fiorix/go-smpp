@@ -192,3 +192,25 @@ func TestOutbindRoundTrip(t *testing.T) {
 		t.Fatalf("password: %q", v)
 	}
 }
+
+// message_state and error_code are 1-octet integers (SMPP 3.4 section
+// 4.8.2); decoding them as C-octet strings loses both.
+func TestQuerySMRespRoundTrip(t *testing.T) {
+	p := NewQuerySMResp()
+	f := p.Fields()
+	f.Set(pdufield.MessageID, "13")
+	f.Set(pdufield.FinalDate, "")
+	f.Set(pdufield.MessageState, uint8(5))
+	f.Set(pdufield.ErrorCode, uint8(7))
+
+	got := roundTrip(t, p, QuerySMRespID)
+	if v := got.Fields()[pdufield.MessageID].String(); v != "13" {
+		t.Fatalf("message_id: %q", v)
+	}
+	if v := got.Fields()[pdufield.MessageState]; v == nil || !bytes.Equal(v.Bytes(), []byte{5}) {
+		t.Fatalf("message_state: %v", v)
+	}
+	if v := got.Fields()[pdufield.ErrorCode]; v == nil || !bytes.Equal(v.Bytes(), []byte{7}) {
+		t.Fatalf("error_code: %v", v)
+	}
+}
