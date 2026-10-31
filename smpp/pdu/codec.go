@@ -35,7 +35,14 @@ func (pdu *codec) init() {
 	pdu.f = make(pdufield.Map)
 	pdu.t = make(pdutlv.Map)
 	if pdu.h.Seq == 0 { // If Seq not set
-		pdu.h.Seq = atomic.AddUint32(&nextSeq, 1)
+		// SMPP 3.4 §5.1.4 restricts sequence_number to 0x00000001..0x7FFFFFFF.
+		// Wrap within that range (skipping 0) so a long-lived connection never
+		// emits a value strict SMSCs would reject as an invalid header.
+		next := atomic.AddUint32(&nextSeq, 1) & 0x7FFFFFFF
+		if next == 0 {
+			next = atomic.AddUint32(&nextSeq, 1) & 0x7FFFFFFF
+		}
+		pdu.h.Seq = next
 	}
 }
 

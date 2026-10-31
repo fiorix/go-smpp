@@ -5,6 +5,7 @@
 package pdutlv
 
 import (
+	"encoding/binary"
 	"fmt"
 )
 
@@ -21,7 +22,20 @@ func (m Map) Set(t Tag, v interface{}) error {
 		m[t] = NewTLV(t, nil) // use default value
 	case uint8:
 		m[t] = NewTLV(t, []byte{v.(uint8)})
+	case uint16:
+		// 2-octet Integer TLV (e.g. sar_msg_ref_num), big-endian per SMPP 3.4.
+		b := make([]byte, 2)
+		binary.BigEndian.PutUint16(b, v.(uint16))
+		m[t] = NewTLV(t, b)
+	case uint32:
+		// 4-octet Integer TLV, big-endian per SMPP 3.4.
+		b := make([]byte, 4)
+		binary.BigEndian.PutUint32(b, v.(uint32))
+		m[t] = NewTLV(t, b)
 	case int:
+		// Backward-compatible: int is encoded as a single octet. Callers that
+		// need a 2- or 4-octet integer TLV must pass a uint16/uint32 (above);
+		// an int value >255 would otherwise be silently truncated here.
 		m[t] = NewTLV(t, []byte{uint8(v.(int))})
 	case string:
 		m[t] = NewTLV(t, []byte(v.(string)))
